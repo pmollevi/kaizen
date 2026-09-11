@@ -15,7 +15,6 @@ export interface AreaConfig {
   topeMetaSemanal: number; // tope máximo tras progresión por etapas
   peso: number; // 0-1, deben sumar 1 entre todas las áreas activas
   color: string; // color hex, ej. "#5b8def"
-  emoji: string;
   nivel: number;
   semanasConsecutivas: number; // contador hacia el siguiente nivel de área
   vinculoFinanciero?: boolean; // si true, su cumplimiento incluye la submétrica financiera (§8.5)

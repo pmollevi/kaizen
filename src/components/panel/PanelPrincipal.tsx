@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ShieldCheck, Coins, Flag, Wallet, Plus, CalendarRange } from "lucide-react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, ProgressBar, Stat, Badge, Button, EmptyState } from "@/components/ui/Primitives";
 import { RadarChart } from "@/components/RadarChart";
 import { PlanMensualWizard } from "@/components/planeacion/PlanMensualWizard";
+import { iconoDeHabito } from "@/config/habitIcons";
 import {
   cumplimientoGlobalSemanal,
   cumplimientoSemanalArea,
@@ -23,6 +24,13 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
   const nivel = nivelDesdePP(usuario.ppTotales, config);
   const [wizardAbierto, setWizardAbierto] = useState(false);
   const mesPlaneado = state.planesMensuales.includes(mesDe(hoy));
+  const esPerfilNuevo = state.planesMensuales.length === 0;
+
+  // Primera vez que entra este perfil: lo llevamos derecho al asistente de planeación.
+  useEffect(() => {
+    if (esPerfilNuevo) setWizardAbierto(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const inicio = inicioSemana(hoy);
   const fin = finSemana(hoy);
@@ -138,19 +146,23 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
           </div>
 
           <div className="mt-6 space-y-3">
-            {areas.map((a) => (
-              <div key={a.id}>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="font-medium text-base-200">
-                    {a.emoji ?? "✨"} {a.nombre} · Nv. {a.nivel}
-                  </span>
-                  <span className="text-base-500">
-                    racha {a.semanasConsecutivas}/{config.economia.semanasParaNivelArea}
-                  </span>
+            {areas.map((a) => {
+              const Icono = iconoDeHabito(a.id);
+              return (
+                <div key={a.id}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="font-medium text-base-200 inline-flex items-center gap-1.5">
+                      <Icono className="w-3.5 h-3.5" style={{ color: a.color }} />
+                      {a.nombre} · Nv. {a.nivel}
+                    </span>
+                    <span className="text-base-500">
+                      racha {a.semanasConsecutivas}/{config.economia.semanasParaNivelArea}
+                    </span>
+                  </div>
+                  <ProgressBar value={cumplimientoPorArea[a.id] ?? 0} color={a.color} />
                 </div>
-                <ProgressBar value={cumplimientoPorArea[a.id] ?? 0} color={a.color} />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
 

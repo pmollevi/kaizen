@@ -24,7 +24,6 @@ export function areaDesdeCatalogo(id: string, peso: number): AreaConfig {
     topeMetaSemanal: p.topeMetaSemanalSugerida,
     peso,
     color: p.color,
-    emoji: p.emoji,
     nivel: 1,
     semanasConsecutivas: 0,
     vinculoFinanciero: p.vinculoFinanciero,

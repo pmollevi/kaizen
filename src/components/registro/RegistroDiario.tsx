@@ -4,6 +4,7 @@ import { Card, SectionTitle, Field, Input, Textarea, Button, Badge } from "@/com
 import { formatoLargo, hoyISO, sumarDias } from "@/lib/dates";
 import type { AreaId, Gasto } from "@/types";
 import { plantillaPorId } from "@/config/areaCatalog";
+import { iconoDeHabito } from "@/config/habitIcons";
 import { CheckCircle2, Minus, Plus, Trash2 } from "lucide-react";
 
 function valoresVacios(areas: { id: AreaId }[]): Record<AreaId, number> {
@@ -18,10 +19,10 @@ const PASO_POR_TIPO: Record<string, number> = {
 };
 
 const FRASES_EXITO = [
-  "¡Buen trabajo hoy! 🎉",
-  "Un día más, un paso más. ✨",
-  "Así se construye la racha. 🔥",
-  "Kaizen: mejora sostenida, no perfección. 🌱",
+  "Buen trabajo hoy.",
+  "Un día más, un paso más.",
+  "Así se construye la racha.",
+  "Kaizen: mejora sostenida, no perfección.",
 ];
 
 function HabitoCard({
@@ -29,7 +30,7 @@ function HabitoCard({
   valor,
   onCambiar,
 }: {
-  area: { id: AreaId; nombre: string; metrica: string; color: string; emoji: string };
+  area: { id: AreaId; nombre: string; metrica: string; color: string };
   valor: number;
   onCambiar: (v: number) => void;
 }) {
@@ -37,6 +38,7 @@ function HabitoCard({
   const tipo = plantilla?.tipoMeta ?? "horas";
   const paso = PASO_POR_TIPO[tipo] ?? 1;
   const contestado = tipo !== "binaria" && tipo !== "conteo3" && valor > 0;
+  const Icono = iconoDeHabito(area.id);
 
   return (
     <div
@@ -48,10 +50,10 @@ function HabitoCard({
     >
       <div className="flex items-center gap-2.5 mb-3">
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0"
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: `${area.color}26` }}
         >
-          {area.emoji ?? "✨"}
+          <Icono className="w-4 h-4" style={{ color: area.color }} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-base-100 truncate">{area.nombre}</div>
@@ -230,7 +232,7 @@ export function RegistroDiarioView() {
         </Field>
 
         <div className="mt-6 border-t border-white/10 pt-5">
-          <div className="text-xs uppercase tracking-wide text-base-400 mb-3">💸 Gastos del día</div>
+          <div className="text-xs uppercase tracking-wide text-base-400 mb-3">Gastos del día</div>
           {gastosDelDia.length > 0 && (
             <ul className="space-y-1.5 mb-3">
               {gastosDelDia.map((g) => (

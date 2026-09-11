@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { CATALOGO_AREAS, type PlantillaArea } from "@/config/areaCatalog";
+import { iconoDeHabito } from "@/config/habitIcons";
 import { Button, Field, Input, Badge } from "@/components/ui/Primitives";
 import { formatoMes, hoyISO, mesDe } from "@/lib/dates";
 import { generarId } from "@/lib/id";
@@ -128,6 +129,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
               <div className="grid grid-cols-2 gap-2">
                 {CATALOGO_AREAS.map((c) => {
                   const activo = seleccionados.includes(c.id);
+                  const Icono = iconoDeHabito(c.id);
                   return (
                     <button
                       key={c.id}
@@ -138,13 +140,13 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                       style={activo ? { borderColor: `${c.color}88`, background: `${c.color}18` } : undefined}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-lg leading-none">{c.emoji}</span>
+                        <Icono className="w-4 h-4 shrink-0" style={{ color: activo ? c.color : undefined }} />
                         <span className="text-sm font-medium flex-1" style={{ color: activo ? c.color : undefined }}>
                           {c.nombre}
                         </span>
                         {activo && <Check className="w-3.5 h-3.5 text-sky-400" />}
                       </div>
-                      <div className="text-xs text-base-500 mt-0.5 pl-7">{c.dominio}</div>
+                      <div className="text-xs text-base-500 mt-0.5 pl-6">{c.dominio}</div>
                     </button>
                   );
                 })}
@@ -190,10 +192,11 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                   const diaria = esMetaDiaria(c.tipoMeta);
                   const valor = metas[id] ?? 0;
                   const semanal = metaSemanalDesdeValor(c, valor);
+                  const Icono = iconoDeHabito(c.id);
                   return (
                     <div key={id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-base leading-none">{c.emoji}</span>
+                        <Icono className="w-4 h-4" style={{ color: c.color }} />
                         <span className="text-sm font-medium">{c.nombre}</span>
                         <span className="text-xs text-base-500">· {c.metrica}</span>
                       </div>

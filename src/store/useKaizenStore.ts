@@ -290,7 +290,6 @@ export const useKaizenStore = create<KaizenStore>()(
             topeMetaSemanal,
             peso,
             color: plantilla.color,
-            emoji: plantilla.emoji,
             vinculoFinanciero: plantilla.vinculoFinanciero,
             nivel: existente?.nivel ?? 1,
             semanasConsecutivas: existente?.semanasConsecutivas ?? 0,

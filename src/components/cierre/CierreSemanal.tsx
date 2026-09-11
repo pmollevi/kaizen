@@ -66,7 +66,7 @@ function ResultadoCierre({ id }: { id: string }) {
     <Card className="border border-emerald-900 bg-emerald-950/20">
       <SectionTitle title="Semana cerrada" subtitle={`${formatoLargo(cierre.semanaInicio)} – ${formatoLargo(cierre.semanaFin)}`} />
       {cierre.protegida ? (
-        <Badge tone="blue">Semana protegida — sin PP, racha conservada</Badge>
+        <Badge tone="blue">Semana protegida, sin PP, racha conservada</Badge>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-4 mb-4">

@@ -106,10 +106,10 @@ function Economia() {
           <Field label="PP base semanal">
             <Input type="number" value={e.ppBase} onChange={(ev) => actualizar({ ppBase: parseFloat(ev.target.value) || 0 })} />
           </Field>
-          <Field label="Curva — base">
+          <Field label="Curva: base">
             <Input type="number" value={e.curvaBase} onChange={(ev) => actualizar({ curvaBase: parseFloat(ev.target.value) || 0 })} />
           </Field>
-          <Field label="Curva — exponente">
+          <Field label="Curva: exponente">
             <Input
               type="number"
               step={0.05}

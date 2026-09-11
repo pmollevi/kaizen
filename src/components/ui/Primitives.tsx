@@ -123,7 +123,7 @@ function anchoBase(className: string): string {
 }
 
 const CAMPO_BASE =
-  "bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm text-base-100 transition-colors focus:outline-none focus:border-sky-500/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-sky-500/20";
+  "bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm text-base-100 transition-colors focus:outline-none focus:border-sky-400 focus:bg-white/[0.06] focus:ring-2 focus:ring-sky-400/50";
 
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const { className = "", ...rest } = props;
