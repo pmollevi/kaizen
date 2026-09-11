@@ -305,7 +305,7 @@ function CatalogoRecompensas() {
       {state.config.catalogoRecompensas.length === 0 && <EmptyState text="Catálogo vacío: revísalo antes de que empiece a resentirse la economía." />}
       <div className="space-y-2">
         {state.config.catalogoRecompensas.map((r) => (
-          <div key={r.id} className="grid grid-cols-12 gap-2 items-center bg-base-850 rounded-lg px-3 py-2.5">
+          <div key={r.id} className="grid grid-cols-12 gap-2 items-center bg-white/[0.04] rounded-lg px-3 py-2.5">
             <Input className="col-span-3" value={r.nombre} onChange={(e) => actualizar(r.id, { nombre: e.target.value })} />
             <Input className="col-span-2" placeholder="categoría" value={r.categoria} onChange={(e) => actualizar(r.id, { categoria: e.target.value })} />
             <Input
@@ -366,7 +366,7 @@ function CatalogoReconocimientos() {
       />
       <div className="space-y-2">
         {state.config.catalogoReconocimientos.map((r) => (
-          <div key={r.id} className="grid grid-cols-12 gap-2 items-center bg-base-850 rounded-lg px-3 py-2.5">
+          <div key={r.id} className="grid grid-cols-12 gap-2 items-center bg-white/[0.04] rounded-lg px-3 py-2.5">
             <Input className="col-span-3" value={r.nombre} onChange={(e) => actualizar(r.id, { nombre: e.target.value })} />
             <Input className="col-span-4" value={r.descripcion} onChange={(e) => actualizar(r.id, { descripcion: e.target.value })} />
             <Select className="col-span-2" value={r.rareza} onChange={(e) => actualizar(r.id, { rareza: e.target.value as any })}>
@@ -474,7 +474,7 @@ export function ConfiguracionView() {
   return (
     <div className="space-y-5">
       <SectionTitle title="Configuración" subtitle="Todo valor de las fórmulas se lee de aquí. Cero números mágicos en el código." />
-      <div className="flex gap-1 border-b border-base-800 overflow-x-auto">
+      <div className="flex gap-1 border-b border-white/10 overflow-x-auto">
         {SECCIONES.map((s) => (
           <button
             key={s}

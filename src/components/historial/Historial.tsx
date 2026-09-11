@@ -21,7 +21,7 @@ export function HistorialView() {
         ) : (
           <div className="space-y-3">
             {h.temporadas.map((t) => (
-              <div key={t.id} className="bg-base-850 rounded-lg p-4">
+              <div key={t.id} className="bg-white/[0.04] rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="font-medium">{t.nombre}</div>
                   <Badge tone={t.retoFinalCompletado ? "green" : "neutral"}>

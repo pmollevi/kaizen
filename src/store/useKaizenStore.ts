@@ -67,7 +67,7 @@ interface Acciones {
 
   aplicarPlanMensual: (input: {
     mes: string;
-    habitos: { id: string; peso: number; metaMensual: number }[];
+    habitos: { id: string; peso: number; metaSemanal: number }[];
     dineroUtil: number;
     gastosFijos: { nombre: string; monto: number }[];
     ahorro: number;
@@ -263,12 +263,11 @@ export const useKaizenStore = create<KaizenStore>()(
 
       aplicarPlanMensual: ({ mes, habitos, dineroUtil, gastosFijos, ahorro }) => {
         const s = get();
-        const semanas = diasDelMes(mes) / 7;
 
-        const areas = habitos.map(({ id, peso, metaMensual }) => {
+        const areas = habitos.map(({ id, peso, metaSemanal }) => {
           const plantilla = plantillaPorId(id);
           const existente = s.areas.find((a) => a.id === id);
-          const metaSemanalBase = Math.round((metaMensual / semanas) * 100) / 100;
+          const metaSemanalBase = Math.round(metaSemanal * 100) / 100;
           if (!plantilla) {
             // hábito ya activo que no está en el catálogo (no debería pasar, pero por seguridad)
             return existente ? { ...existente, peso, metaSemanalBase } : areaDesdeCatalogo(id, peso);
@@ -298,14 +297,41 @@ export const useKaizenStore = create<KaizenStore>()(
           };
         });
 
+        // Si ya existía un presupuesto para este mes, reutilizamos el id de las categorías
+        // con el mismo nombre y tipo para no huérfanar los gastos ya registrados contra ellas.
+        const categoriasPrevias = s.finanzas.presupuestos.find((p) => p.mes === mes)?.categorias ?? [];
+        const idPrevio = (nombre: string, tipo: string) =>
+          categoriasPrevias.find((c) => c.tipo === tipo && c.nombre.trim().toLowerCase() === nombre.trim().toLowerCase())
+            ?.id;
+
         const categorias: CategoriaPresupuesto[] = [
           ...gastosFijos
             .filter((g) => g.nombre.trim() && g.monto > 0)
-            .map((g) => ({ id: generarId("cat"), nombre: g.nombre.trim(), tipo: "gasto" as const, modo: "fijo" as const, valor: g.monto })),
+            .map((g) => ({
+              id: idPrevio(g.nombre, "gasto") ?? generarId("cat"),
+              nombre: g.nombre.trim(),
+              tipo: "gasto" as const,
+              modo: "fijo" as const,
+              valor: g.monto,
+            })),
           ...(ahorro > 0
-            ? [{ id: generarId("cat"), nombre: "Ahorro", tipo: "ahorro" as const, modo: "fijo" as const, valor: ahorro }]
+            ? [
+                {
+                  id: idPrevio("Ahorro", "ahorro") ?? generarId("cat"),
+                  nombre: "Ahorro",
+                  tipo: "ahorro" as const,
+                  modo: "fijo" as const,
+                  valor: ahorro,
+                },
+              ]
             : []),
-          { id: generarId("cat"), nombre: "Recompensas (el juego)", tipo: "recompensas" as const, modo: "resto" as const, valor: 0 },
+          {
+            id: idPrevio("Recompensas (el juego)", "recompensas") ?? generarId("cat"),
+            nombre: "Recompensas (el juego)",
+            tipo: "recompensas" as const,
+            modo: "resto" as const,
+            valor: 0,
+          },
         ];
 
         const yaExistePresupuesto = s.finanzas.presupuestos.some((p) => p.mes === mes);

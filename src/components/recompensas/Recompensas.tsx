@@ -30,7 +30,7 @@ export function RecompensasView() {
       </div>
 
       {mensaje && (
-        <div className="text-sm px-4 py-2.5 rounded-lg bg-base-850 border border-base-700">{mensaje}</div>
+        <div className="text-sm px-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/10">{mensaje}</div>
       )}
 
       <Card>
@@ -43,7 +43,7 @@ export function RecompensasView() {
               const canjesEsteMes = state.canjes.filter((c) => c.recompensaId === r.id && mesDe(c.fecha) === esteMes).length;
               const limiteAlcanzado = r.limitePorMes !== null && canjesEsteMes >= r.limitePorMes;
               return (
-                <div key={r.id} className="bg-base-850 rounded-lg p-4 flex flex-col">
+                <div key={r.id} className="bg-white/[0.04] rounded-lg p-4 flex flex-col">
                   <div className="font-medium mb-1">{r.nombre}</div>
                   <Badge>{r.categoria}</Badge>
                   <div className="text-sm text-base-400 mt-2">

@@ -226,7 +226,7 @@ export function TemporadaView() {
               <div className="text-xs uppercase tracking-wide text-base-400 mb-2 capitalize">{tipo}</div>
               <div className="space-y-1.5">
                 {lista.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between bg-base-850 rounded-lg px-3 py-2.5 text-sm">
+                  <div key={d.id} className="flex items-center justify-between bg-white/[0.04] rounded-lg px-3 py-2.5 text-sm">
                     <div>
                       <div className={d.completado ? "line-through text-base-500" : "text-base-200"}>{d.nombre}</div>
                       <div className="text-xs text-base-500">

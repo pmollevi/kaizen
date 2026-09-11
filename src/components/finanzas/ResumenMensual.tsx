@@ -41,7 +41,7 @@ export function ResumenMensualTab() {
         ) : (
           <div className="space-y-3">
             {resumenes.map((r) => (
-              <div key={r.mes} className="rounded-lg bg-base-850 overflow-hidden">
+              <div key={r.mes} className="rounded-lg bg-white/[0.04] overflow-hidden">
                 <button
                   onClick={() => setAbierto(abierto === r.mes ? null : r.mes)}
                   className="w-full flex items-center justify-between px-4 py-3 text-left"

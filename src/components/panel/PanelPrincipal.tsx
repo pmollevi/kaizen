@@ -68,7 +68,7 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
       </div>
 
       {!mesPlaneado && (
-        <Card className="border border-sky-900 bg-sky-950/30">
+        <Card className="border border-sky-500/20 bg-sky-500/[0.06]">
           <div className="flex items-center justify-between">
             <div className="text-sm text-sky-300">
               Aún no planeas {formatoMes(mesDe(hoy))}: elige tus hábitos, sus metas y tu presupuesto del mes.
@@ -79,7 +79,7 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
       )}
 
       {pendientes.length > 0 && (
-        <Card className="border border-amber-900 bg-amber-950/40">
+        <Card className="border border-amber-500/20 bg-amber-500/[0.06]">
           <div className="flex items-center justify-between">
             <div className="text-sm text-amber-300">
               Tienes {pendientes.length} {pendientes.length === 1 ? "semana pendiente" : "semanas pendientes"} de cierre.

@@ -29,7 +29,7 @@ export function ReconocimientosView() {
             return (
               <div
                 key={r.id}
-                className={`rounded-lg p-4 border ${desbloqueado ? "bg-base-850 border-base-700" : "bg-base-900 border-base-800 opacity-60"}`}
+                className={`rounded-lg p-4 border ${desbloqueado ? "bg-white/[0.04] border-white/10" : "bg-base-900 border-white/10 opacity-60"}`}
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="font-medium flex items-center gap-1.5">

@@ -19,7 +19,7 @@ function FormularioCierre({ inicio, onCerrado }: { inicio: string; onCerrado: ()
   const toggleBono = (id: string) => setBonosIds((b) => (b.includes(id) ? b.filter((x) => x !== id) : [...b, id]));
 
   return (
-    <Card className="border border-sky-900">
+    <Card className="border border-sky-500/20">
       <SectionTitle title={`Cerrar semana`} subtitle={`${formatoLargo(inicio)} – ${formatoLargo(fin)}`} />
       <div className="mb-4">
         <div className="text-xs uppercase tracking-wide text-base-400 mb-2">Bonos por resultados reales</div>
@@ -30,7 +30,7 @@ function FormularioCierre({ inicio, onCerrado }: { inicio: string; onCerrado: ()
               onClick={() => toggleBono(b.id)}
               disabled={proteger}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-40 ${
-                bonosIds.includes(b.id) ? "border-sky-600 bg-sky-600/10 text-sky-400" : "border-base-800 text-base-400"
+                bonosIds.includes(b.id) ? "border-sky-600 bg-sky-600/10 text-sky-400" : "border-white/10 text-base-400"
               }`}
             >
               {b.nombre} (+{b.valorPP} PP)
@@ -131,7 +131,7 @@ export function CierreSemanalView() {
         ) : (
           <div className="space-y-2">
             {historico.map((c) => (
-              <div key={c.id} className="flex items-center justify-between text-sm bg-base-850 rounded-lg px-3 py-2.5">
+              <div key={c.id} className="flex items-center justify-between text-sm bg-white/[0.04] rounded-lg px-3 py-2.5">
                 <span className="text-base-300">
                   {formatoLargo(c.semanaInicio)} – {formatoLargo(c.semanaFin)}
                 </span>

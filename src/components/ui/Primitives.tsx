@@ -1,7 +1,13 @@
 import React from "react";
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-2xl bg-base-900 shadow-card p-5 ${className}`}>{children}</div>;
+  return (
+    <div
+      className={`rounded-2xl bg-white/[0.035] backdrop-blur-xl border border-white/[0.08] p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_40px_-28px_rgba(0,0,0,0.7)] ${className}`}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function SectionTitle({
@@ -28,7 +34,7 @@ export function ProgressBar({
   value,
   colorClass,
   color,
-  height = "h-2",
+  height = "h-1.5",
 }: {
   value: number; // 0-1
   colorClass?: string; // clase tailwind (ej. "bg-sky-500")
@@ -37,9 +43,9 @@ export function ProgressBar({
 }) {
   const pct = Math.max(0, Math.min(1, value)) * 100;
   return (
-    <div className={`w-full ${height} rounded-full bg-base-800 overflow-hidden`}>
+    <div className={`w-full ${height} rounded-full bg-white/[0.06] overflow-hidden`}>
       <div
-        className={`h-full ${colorClass ?? ""} transition-all duration-500`}
+        className={`h-full ${colorClass ?? "bg-sky-500"} transition-all duration-500 rounded-full`}
         style={{ width: `${pct}%`, backgroundColor: color }}
       />
     </div>
@@ -49,9 +55,9 @@ export function ProgressBar({
 export function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-base-400">{label}</div>
-      <div className="text-2xl font-semibold text-base-100 mt-1">{value}</div>
-      {hint && <div className="text-xs text-base-400 mt-0.5">{hint}</div>}
+      <div className="text-[11px] uppercase tracking-wider text-base-500 font-medium">{label}</div>
+      <div className="text-2xl font-semibold text-base-100 mt-1 tracking-tight">{value}</div>
+      {hint && <div className="text-xs text-base-500 mt-0.5">{hint}</div>}
     </div>
   );
 }
@@ -64,13 +70,15 @@ export function Badge({
   tone?: "neutral" | "green" | "yellow" | "red" | "blue";
 }) {
   const tones: Record<string, string> = {
-    neutral: "bg-base-800 text-base-300",
-    green: "bg-emerald-950 text-emerald-400",
-    yellow: "bg-amber-950 text-amber-400",
-    red: "bg-rose-950 text-rose-400",
-    blue: "bg-sky-950 text-sky-400",
+    neutral: "bg-white/[0.06] text-base-300 border-white/10",
+    green: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    yellow: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    red: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    blue: "bg-sky-500/10 text-sky-400 border-sky-500/20",
   };
-  return <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${tones[tone]}`}>{children}</span>;
+  return (
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${tones[tone]}`}>{children}</span>
+  );
 }
 
 export function Button({
@@ -89,17 +97,18 @@ export function Button({
   className?: string;
 }) {
   const variants: Record<string, string> = {
-    primary: "bg-gradient-to-r from-sky-500 to-fuchsia-500 hover:brightness-110 text-white",
-    secondary: "bg-base-800 hover:bg-base-700 text-base-100",
-    ghost: "bg-transparent hover:bg-base-800 text-base-300",
-    danger: "bg-rose-900 hover:bg-rose-800 text-rose-100",
+    primary:
+      "bg-sky-500 hover:bg-sky-400 text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.3),0_8px_20px_-8px_rgba(59,130,246,0.6)]",
+    secondary: "bg-white/[0.06] hover:bg-white/[0.1] text-base-100 border border-white/10",
+    ghost: "bg-transparent hover:bg-white/[0.06] text-base-300",
+    danger: "bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/20",
   };
   return (
     <button
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${variants[variant]} ${className}`}
+      className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${variants[variant]} ${className}`}
     >
       {children}
     </button>
@@ -113,12 +122,15 @@ function anchoBase(className: string): string {
   return TIENE_ANCHO_PROPIO.test(className) ? "" : "w-full";
 }
 
+const CAMPO_BASE =
+  "bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm text-base-100 transition-colors focus:outline-none focus:border-sky-500/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-sky-500/20";
+
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const { className = "", ...rest } = props;
   return (
     <input
       {...rest}
-      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
+      className={`${anchoBase(className)} ${CAMPO_BASE} placeholder:text-base-500 ${className}`}
     />
   );
 }
@@ -129,10 +141,7 @@ export function Select({
   ...rest
 }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select
-      {...rest}
-      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm text-base-100 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
-    >
+    <select {...rest} className={`${anchoBase(className)} ${CAMPO_BASE} ${className}`}>
       {children}
     </select>
   );
@@ -143,7 +152,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return (
     <textarea
       {...rest}
-      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
+      className={`${anchoBase(className)} ${CAMPO_BASE} placeholder:text-base-500 ${className}`}
     />
   );
 }
@@ -151,7 +160,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
 export function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
     <label className="block">
-      <span className="block text-xs font-medium text-base-300 mb-1.5">{label}</span>
+      <span className="block text-xs font-medium text-base-400 mb-1.5">{label}</span>
       {children}
       {hint && <span className="block text-xs text-base-500 mt-1">{hint}</span>}
     </label>
@@ -171,9 +180,9 @@ export function Modal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-base-900 rounded-2xl shadow-card max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 animate-pop"
+        className="bg-base-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)] max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 animate-pop"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">

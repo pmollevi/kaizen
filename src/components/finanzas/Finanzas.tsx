@@ -19,7 +19,7 @@ export function FinanzasView() {
   return (
     <div className="space-y-5">
       <SectionTitle title="Finanzas" subtitle="Control de gastos real, independiente del resto del sistema." />
-      <div className="flex gap-1 border-b border-base-800">
+      <div className="flex gap-1 border-b border-white/10">
         {SUBTABS.map((t) => (
           <button
             key={t.id}

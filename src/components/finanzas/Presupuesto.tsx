@@ -70,7 +70,7 @@ export function PresupuestoTab() {
                 type="month"
                 value={mesSeleccionado}
                 onChange={(e) => cargarMes(e.target.value)}
-                className="bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm"
+                className="bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm"
               />
               {presupuestoAnterior && !presupuesto && (
                 <Button variant="secondary" onClick={() => clonarPresupuesto(presupuestoAnterior.mes, mesSeleccionado)}>
@@ -104,7 +104,7 @@ export function PresupuestoTab() {
           {categorias.map((c) => {
             const monto = asignaciones.get(c.id) ?? 0;
             return (
-              <div key={c.id} className="grid grid-cols-12 gap-2 items-center bg-base-850 rounded-lg px-3 py-2.5">
+              <div key={c.id} className="grid grid-cols-12 gap-2 items-center bg-white/[0.04] rounded-lg px-3 py-2.5">
                 <Input
                   className="col-span-3"
                   value={c.nombre}
@@ -155,7 +155,7 @@ export function PresupuestoTab() {
           </Button>
         </div>
 
-        <div className="mt-5 flex items-center justify-between border-t border-base-800 pt-4">
+        <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
           <div className="space-y-1">
             {excedePresupuesto && <Badge tone="red">La suma de fijo + porcentaje supera el dinero útil</Badge>}
             {masDeUnResto && <Badge tone="red">Solo una categoría puede ser "resto"</Badge>}

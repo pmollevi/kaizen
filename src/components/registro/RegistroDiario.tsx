@@ -65,7 +65,7 @@ function HabitoCard({
           <button
             onClick={() => onCambiar(1)}
             className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-              valor === 1 ? "text-white" : "bg-base-850 text-base-400"
+              valor === 1 ? "text-white" : "bg-white/[0.04] text-base-400"
             }`}
             style={valor === 1 ? { background: area.color } : undefined}
           >
@@ -74,7 +74,7 @@ function HabitoCard({
           <button
             onClick={() => onCambiar(0)}
             className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-              valor === 0 ? "bg-base-700 text-base-100" : "bg-base-850 text-base-400"
+              valor === 0 ? "bg-base-700 text-base-100" : "bg-white/[0.04] text-base-400"
             }`}
           >
             No
@@ -89,7 +89,7 @@ function HabitoCard({
               key={n}
               onClick={() => onCambiar(n)}
               className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-                valor === n ? "text-white" : "bg-base-850 text-base-400"
+                valor === n ? "text-white" : "bg-white/[0.04] text-base-400"
               }`}
               style={valor === n ? { background: area.color } : undefined}
             >
@@ -103,7 +103,7 @@ function HabitoCard({
         <div className="flex items-center gap-3">
           <button
             onClick={() => onCambiar(Math.max(0, Math.round((valor - paso) * 100) / 100))}
-            className="w-11 h-11 rounded-xl bg-base-850 text-base-300 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+            className="w-11 h-11 rounded-xl bg-white/[0.04] text-base-300 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
           >
             <Minus className="w-4 h-4" />
           </button>
@@ -189,7 +189,7 @@ export function RegistroDiarioView() {
               className={`px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap border transition-all disabled:opacity-30 ${
                 d === fecha
                   ? "border-sky-500 bg-sky-500/15 text-sky-300 scale-105"
-                  : "border-base-800 text-base-400 hover:text-base-100"
+                  : "border-white/10 text-base-400 hover:text-base-100"
               }`}
             >
               {d === hoy ? "Hoy" : formatoLargo(d).split(" de ")[0]}
@@ -229,12 +229,12 @@ export function RegistroDiarioView() {
           />
         </Field>
 
-        <div className="mt-6 border-t border-base-800 pt-5">
+        <div className="mt-6 border-t border-white/10 pt-5">
           <div className="text-xs uppercase tracking-wide text-base-400 mb-3">💸 Gastos del día</div>
           {gastosDelDia.length > 0 && (
             <ul className="space-y-1.5 mb-3">
               {gastosDelDia.map((g) => (
-                <li key={g.id} className="flex items-center justify-between text-sm bg-base-850 rounded-xl px-3 py-2">
+                <li key={g.id} className="flex items-center justify-between text-sm bg-white/[0.04] rounded-xl px-3 py-2">
                   <span className="text-base-300">{g.palabraClave}</span>
                   <div className="flex items-center gap-3">
                     <span className="font-medium">${g.monto.toLocaleString()}</span>
@@ -257,7 +257,7 @@ export function RegistroDiarioView() {
                 onChange={(e) => setMontoGasto(e.target.value)}
               />
               <select
-                className="bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm"
+                className="bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm"
                 value={categoriaGasto}
                 onChange={(e) => setCategoriaGasto(e.target.value)}
               >
@@ -289,7 +289,7 @@ export function RegistroDiarioView() {
           ) : (
             <span className="text-xs text-base-500">Puedes registrar hasta {state.config.economia.diasRegistroRetroactivo} días atrás.</span>
           )}
-          <Button onClick={guardar} disabled={fecha < limiteAtras} className="shadow-glow shadow-sky-500/20">
+          <Button onClick={guardar} disabled={fecha < limiteAtras}>
             {registroExistente ? "Actualizar registro" : "Guardar registro"}
           </Button>
         </div>
@@ -297,7 +297,7 @@ export function RegistroDiarioView() {
 
       {confirmacion && (
         <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-40 animate-pop">
-          <div className="bg-gradient-to-r from-sky-500 to-fuchsia-500 text-white text-sm font-semibold px-5 py-3 rounded-full shadow-glow shadow-sky-500/40">
+          <div className="bg-sky-500 text-white text-sm font-semibold px-5 py-3 rounded-full shadow-[inset_0_1px_0_0_rgba(255,255,255,0.3),0_12px_28px_-8px_rgba(59,130,246,0.7)] border border-white/10">
             {confirmacion}
           </div>
         </div>

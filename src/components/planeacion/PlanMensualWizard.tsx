@@ -1,10 +1,30 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { CATALOGO_AREAS } from "@/config/areaCatalog";
+import { CATALOGO_AREAS, type PlantillaArea } from "@/config/areaCatalog";
 import { Button, Field, Input, Badge } from "@/components/ui/Primitives";
-import { diasDelMes, formatoMes, hoyISO, mesDe } from "@/lib/dates";
+import { formatoMes, hoyISO, mesDe } from "@/lib/dates";
 import { generarId } from "@/lib/id";
 import { X, Plus, Trash2, Check } from "lucide-react";
+
+// Para hábitos continuos (horas, páginas, minutos) el usuario pone la meta DIARIA
+// y la semanal se calcula sola. Para hábitos que ya son un conteo semanal
+// (días entrenados, veces con amigos) el número que pone ya es la meta semanal.
+function esMetaDiaria(tipo: PlantillaArea["tipoMeta"]): boolean {
+  return tipo === "horas" || tipo === "minutos" || tipo === "paginas" || tipo === "conteo3";
+}
+
+function metaSemanalDesdeValor(c: PlantillaArea, valor: number): number {
+  return esMetaDiaria(c.tipoMeta) ? Math.round(valor * 7 * 100) / 100 : valor;
+}
+
+function valorInicial(c: PlantillaArea, existente: { metaDiaria: number | null; metaSemanalBase: number } | undefined): number {
+  if (esMetaDiaria(c.tipoMeta)) {
+    if (existente?.metaDiaria != null) return existente.metaDiaria;
+    return c.metaDiariaSugerida ?? Math.round((c.metaSemanalSugerida / 7) * 100) / 100;
+  }
+  const base = existente?.metaSemanalBase ?? c.metaSemanalSugerida;
+  return c.tipoMeta === "binaria" ? Math.round(base) : base;
+}
 
 interface GastoFijoDraft {
   key: string;
@@ -23,13 +43,12 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
   const [seleccionados, setSeleccionados] = useState<string[]>(idsActivosIniciales);
   const [pesos, setPesos] = useState<Record<string, number>>(() => distribuirPesos(idsActivosIniciales));
 
-  const semanas = diasDelMes(mes) / 7;
-  const [metasMensuales, setMetasMensuales] = useState<Record<string, number>>(() => {
+  const [metas, setMetas] = useState<Record<string, number>>(() => {
     const m: Record<string, number> = {};
     for (const id of idsActivosIniciales) {
-      const existente = state.areas.find((a) => a.id === id);
-      const base = existente ? existente.metaSemanalBase : CATALOGO_AREAS.find((c) => c.id === id)?.metaSemanalSugerida ?? 0;
-      m[id] = Math.round(base * semanas);
+      const c = CATALOGO_AREAS.find((x) => x.id === id);
+      if (!c) continue;
+      m[id] = valorInicial(c, state.areas.find((a) => a.id === id));
     }
     return m;
   });
@@ -61,10 +80,9 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
     const nuevos = seleccionados.includes(id) ? seleccionados.filter((x) => x !== id) : [...seleccionados, id];
     setSeleccionados(nuevos);
     setPesos(distribuirPesos(nuevos));
-    if (!(id in metasMensuales)) {
-      const existente = state.areas.find((a) => a.id === id);
-      const base = existente ? existente.metaSemanalBase : CATALOGO_AREAS.find((c) => c.id === id)?.metaSemanalSugerida ?? 0;
-      setMetasMensuales((m) => ({ ...m, [id]: Math.round(base * semanas) }));
+    if (!(id in metas)) {
+      const c = CATALOGO_AREAS.find((x) => x.id === id);
+      if (c) setMetas((m) => ({ ...m, [id]: valorInicial(c, state.areas.find((a) => a.id === id)) }));
     }
   };
 
@@ -76,7 +94,10 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
   const guardar = () => {
     aplicarPlanMensual({
       mes,
-      habitos: seleccionados.map((id) => ({ id, peso: (pesos[id] ?? 0) / 100, metaMensual: metasMensuales[id] ?? 0 })),
+      habitos: seleccionados.map((id) => {
+        const c = CATALOGO_AREAS.find((x) => x.id === id)!;
+        return { id, peso: (pesos[id] ?? 0) / 100, metaSemanal: metaSemanalDesdeValor(c, metas[id] ?? 0) };
+      }),
       dineroUtil,
       gastosFijos: gastosFijos.map((g) => ({ nombre: g.nombre, monto: parseFloat(g.monto) || 0 })),
       ahorro,
@@ -85,9 +106,9 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-      <div className="bg-base-900 rounded-2xl shadow-card w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-pop">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-base-800 sticky top-0 bg-base-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="bg-base-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)] w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-pop">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 sticky top-0 bg-base-900/95 backdrop-blur-xl">
           <div>
             <div className="text-base font-semibold">Planear {formatoMes(mes)}</div>
             <div className="text-xs text-base-500 mt-0.5">Paso {step} de 3</div>
@@ -112,7 +133,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                       key={c.id}
                       onClick={() => toggleHabito(c.id)}
                       className={`text-left rounded-xl border px-3 py-2.5 transition-all active:scale-[0.98] ${
-                        activo ? "border-sky-600 bg-sky-600/10" : "border-base-800 hover:border-base-700"
+                        activo ? "border-sky-500/50 bg-sky-500/10" : "border-white/10 hover:border-white/20"
                       }`}
                       style={activo ? { borderColor: `${c.color}88`, background: `${c.color}18` } : undefined}
                     >
@@ -159,18 +180,40 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
 
           {step === 2 && (
             <div className="space-y-4">
-              <div className="text-sm font-medium text-base-200">Ponle una meta mensual a cada hábito</div>
+              <div className="text-sm font-medium text-base-200">Ponle una meta a cada hábito</div>
+              <div className="text-xs text-base-500 -mt-2">
+                En los que se miden en horas, páginas o minutos, dinos tu meta por día y nosotros sacamos la cuenta de la semana.
+              </div>
               <div className="space-y-3">
                 {seleccionados.map((id) => {
                   const c = CATALOGO_AREAS.find((x) => x.id === id)!;
+                  const diaria = esMetaDiaria(c.tipoMeta);
+                  const valor = metas[id] ?? 0;
+                  const semanal = metaSemanalDesdeValor(c, valor);
                   return (
-                    <Field key={id} label={`${c.nombre} — ${c.metrica} (al mes, en ${c.unidad})`}>
-                      <Input
-                        type="number"
-                        value={metasMensuales[id] ?? 0}
-                        onChange={(e) => setMetasMensuales((m) => ({ ...m, [id]: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </Field>
+                    <div key={id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-base leading-none">{c.emoji}</span>
+                        <span className="text-sm font-medium">{c.nombre}</span>
+                        <span className="text-xs text-base-500">· {c.metrica}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Field label={diaria ? `Meta diaria (${c.unidad})` : `Meta semanal (${c.unidad})`}>
+                          <Input
+                            type="number"
+                            step={c.tipoMeta === "horas" ? 0.5 : 1}
+                            max={c.tipoMeta === "binaria" || c.tipoMeta === "veces" ? 7 : undefined}
+                            value={valor}
+                            onChange={(e) => setMetas((m) => ({ ...m, [id]: parseFloat(e.target.value) || 0 }))}
+                          />
+                        </Field>
+                        {diaria && (
+                          <div className="text-xs text-base-500 whitespace-nowrap pt-5">
+                            = <span className="text-base-200 font-medium">{semanal}</span> a la semana
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -230,7 +273,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                 <Input type="number" value={ahorro || ""} onChange={(e) => setAhorro(parseFloat(e.target.value) || 0)} />
               </Field>
 
-              <div className="rounded-lg bg-base-850 p-4">
+              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-base-300">Dinero libre (con esto se juega)</span>
                   <span className={`text-lg font-semibold ${dineroLibre < 0 ? "text-rose-400" : "text-emerald-400"}`}>
@@ -245,7 +288,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-base-800 sticky bottom-0 bg-base-900">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 sticky bottom-0 bg-base-900/95 backdrop-blur-xl">
           <Button variant="ghost" onClick={() => (step === 1 ? onClose() : setStep((s) => ((s - 1) as 1 | 2 | 3)))}>
             {step === 1 ? "Cancelar" : "Atrás"}
           </Button>
