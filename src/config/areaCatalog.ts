@@ -12,6 +12,7 @@ export interface PlantillaArea {
   metaSemanalSugerida: number;
   topeMetaSemanalSugerida: number;
   color: string;
+  emoji: string;
   vinculoFinanciero?: boolean;
 }
 
@@ -27,6 +28,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaSemanalSugerida: 28,
     topeMetaSemanalSugerida: 42,
     color: "#5b8def",
+    emoji: "📚",
   },
   {
     id: "imperio",
@@ -39,6 +41,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaSemanalSugerida: 10,
     topeMetaSemanalSugerida: 16,
     color: "#e0a63a",
+    emoji: "💼",
     vinculoFinanciero: true,
   },
   {
@@ -52,6 +55,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaSemanalSugerida: 5,
     topeMetaSemanalSugerida: 5,
     color: "#e0544f",
+    emoji: "💪",
   },
   {
     id: "vitalidad",
@@ -64,6 +68,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaSemanalSugerida: 21,
     topeMetaSemanalSugerida: 21,
     color: "#4cb782",
+    emoji: "🥗",
   },
   {
     id: "energia",
@@ -76,6 +81,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaSemanalSugerida: 52.5,
     topeMetaSemanalSugerida: 56,
     color: "#9b6fe0",
+    emoji: "😴",
   },
   {
     id: "sabiduria",
@@ -88,6 +94,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaSemanalSugerida: 105,
     topeMetaSemanalSugerida: 160,
     color: "#3ab5c6",
+    emoji: "📖",
   },
   {
     id: "serenidad",
@@ -100,6 +107,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaSemanalSugerida: 70,
     topeMetaSemanalSugerida: 140,
     color: "#63c7b2",
+    emoji: "🧘",
   },
   {
     id: "vinculos",
@@ -112,6 +120,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaSemanalSugerida: 4,
     topeMetaSemanalSugerida: 7,
     color: "#e06fa8",
+    emoji: "🤝",
   },
   {
     id: "creatividad",
@@ -124,6 +133,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaSemanalSugerida: 140,
     topeMetaSemanalSugerida: 280,
     color: "#c68fe0",
+    emoji: "🎨",
   },
   {
     id: "gratitud",
@@ -136,6 +146,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaSemanalSugerida: 5,
     topeMetaSemanalSugerida: 7,
     color: "#e0c23a",
+    emoji: "🙏",
   },
 ];
 

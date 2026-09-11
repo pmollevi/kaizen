@@ -142,7 +142,7 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
               <div key={a.id}>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="font-medium text-base-200">
-                    {a.nombre} · Nv. {a.nivel}
+                    {a.emoji ?? "✨"} {a.nombre} · Nv. {a.nivel}
                   </span>
                   <span className="text-base-500">
                     racha {a.semanasConsecutivas}/{config.economia.semanasParaNivelArea}

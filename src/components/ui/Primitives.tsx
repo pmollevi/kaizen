@@ -1,7 +1,7 @@
 import React from "react";
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-xl bg-base-900 shadow-card p-5 ${className}`}>{children}</div>;
+  return <div className={`rounded-2xl bg-base-900 shadow-card p-5 ${className}`}>{children}</div>;
 }
 
 export function SectionTitle({
@@ -70,7 +70,7 @@ export function Badge({
     red: "bg-rose-950 text-rose-400",
     blue: "bg-sky-950 text-sky-400",
   };
-  return <span className={`px-2 py-0.5 rounded-md text-xs font-medium ${tones[tone]}`}>{children}</span>;
+  return <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${tones[tone]}`}>{children}</span>;
 }
 
 export function Button({
@@ -89,7 +89,7 @@ export function Button({
   className?: string;
 }) {
   const variants: Record<string, string> = {
-    primary: "bg-sky-600 hover:bg-sky-500 text-white",
+    primary: "bg-gradient-to-r from-sky-500 to-fuchsia-500 hover:brightness-110 text-white",
     secondary: "bg-base-800 hover:bg-base-700 text-base-100",
     ghost: "bg-transparent hover:bg-base-800 text-base-300",
     danger: "bg-rose-900 hover:bg-rose-800 text-rose-100",
@@ -99,7 +99,7 @@ export function Button({
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+      className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${variants[variant]} ${className}`}
     >
       {children}
     </button>
@@ -118,7 +118,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...rest}
-      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
+      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
     />
   );
 }
@@ -131,7 +131,7 @@ export function Select({
   return (
     <select
       {...rest}
-      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm text-base-100 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
+      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm text-base-100 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
     >
       {children}
     </select>
@@ -143,7 +143,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return (
     <textarea
       {...rest}
-      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
+      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
     />
   );
 }
@@ -173,7 +173,7 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
       <div
-        className="bg-base-900 rounded-xl shadow-card max-w-lg w-full max-h-[85vh] overflow-y-auto p-6"
+        className="bg-base-900 rounded-2xl shadow-card max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 animate-pop"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">

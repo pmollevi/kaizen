@@ -86,7 +86,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-      <div className="bg-base-900 rounded-xl shadow-card w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-base-900 rounded-2xl shadow-card w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-pop">
         <div className="flex items-center justify-between px-6 py-4 border-b border-base-800 sticky top-0 bg-base-900">
           <div>
             <div className="text-base font-semibold">Planear {formatoMes(mes)}</div>
@@ -111,17 +111,19 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                     <button
                       key={c.id}
                       onClick={() => toggleHabito(c.id)}
-                      className={`text-left rounded-lg border px-3 py-2.5 transition-colors ${
+                      className={`text-left rounded-xl border px-3 py-2.5 transition-all active:scale-[0.98] ${
                         activo ? "border-sky-600 bg-sky-600/10" : "border-base-800 hover:border-base-700"
                       }`}
+                      style={activo ? { borderColor: `${c.color}88`, background: `${c.color}18` } : undefined}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium" style={{ color: activo ? c.color : undefined }}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg leading-none">{c.emoji}</span>
+                        <span className="text-sm font-medium flex-1" style={{ color: activo ? c.color : undefined }}>
                           {c.nombre}
                         </span>
                         {activo && <Check className="w-3.5 h-3.5 text-sky-400" />}
                       </div>
-                      <div className="text-xs text-base-500 mt-0.5">{c.dominio}</div>
+                      <div className="text-xs text-base-500 mt-0.5 pl-7">{c.dominio}</div>
                     </button>
                   );
                 })}

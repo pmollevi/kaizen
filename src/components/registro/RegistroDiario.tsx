@@ -4,10 +4,123 @@ import { Card, SectionTitle, Field, Input, Textarea, Button, Badge } from "@/com
 import { formatoLargo, hoyISO, sumarDias } from "@/lib/dates";
 import type { AreaId, Gasto } from "@/types";
 import { plantillaPorId } from "@/config/areaCatalog";
-import { Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Minus, Plus, Trash2 } from "lucide-react";
 
 function valoresVacios(areas: { id: AreaId }[]): Record<AreaId, number> {
   return Object.fromEntries(areas.map((a) => [a.id, 0]));
+}
+
+const PASO_POR_TIPO: Record<string, number> = {
+  horas: 0.5,
+  paginas: 5,
+  minutos: 5,
+  veces: 1,
+};
+
+const FRASES_EXITO = [
+  "¡Buen trabajo hoy! 🎉",
+  "Un día más, un paso más. ✨",
+  "Así se construye la racha. 🔥",
+  "Kaizen: mejora sostenida, no perfección. 🌱",
+];
+
+function HabitoCard({
+  area,
+  valor,
+  onCambiar,
+}: {
+  area: { id: AreaId; nombre: string; metrica: string; color: string; emoji: string };
+  valor: number;
+  onCambiar: (v: number) => void;
+}) {
+  const plantilla = plantillaPorId(area.id);
+  const tipo = plantilla?.tipoMeta ?? "horas";
+  const paso = PASO_POR_TIPO[tipo] ?? 1;
+  const contestado = tipo !== "binaria" && tipo !== "conteo3" && valor > 0;
+
+  return (
+    <div
+      className="rounded-2xl p-4 border transition-all duration-300"
+      style={{
+        borderColor: contestado ? `${area.color}66` : "rgba(255,255,255,0.06)",
+        background: contestado ? `${area.color}14` : "rgba(255,255,255,0.02)",
+      }}
+    >
+      <div className="flex items-center gap-2.5 mb-3">
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0"
+          style={{ background: `${area.color}26` }}
+        >
+          {area.emoji ?? "✨"}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-base-100 truncate">{area.nombre}</div>
+          <div className="text-xs text-base-500 truncate">{area.metrica}</div>
+        </div>
+        {contestado && <CheckCircle2 className="w-4 h-4 shrink-0 animate-pop" style={{ color: area.color }} />}
+      </div>
+
+      {tipo === "binaria" && (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => onCambiar(1)}
+            className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+              valor === 1 ? "text-white" : "bg-base-850 text-base-400"
+            }`}
+            style={valor === 1 ? { background: area.color } : undefined}
+          >
+            Sí
+          </button>
+          <button
+            onClick={() => onCambiar(0)}
+            className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+              valor === 0 ? "bg-base-700 text-base-100" : "bg-base-850 text-base-400"
+            }`}
+          >
+            No
+          </button>
+        </div>
+      )}
+
+      {tipo === "conteo3" && (
+        <div className="grid grid-cols-4 gap-2">
+          {[0, 1, 2, 3].map((n) => (
+            <button
+              key={n}
+              onClick={() => onCambiar(n)}
+              className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+                valor === n ? "text-white" : "bg-base-850 text-base-400"
+              }`}
+              style={valor === n ? { background: area.color } : undefined}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {(tipo === "horas" || tipo === "paginas" || tipo === "minutos" || tipo === "veces") && (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onCambiar(Math.max(0, Math.round((valor - paso) * 100) / 100))}
+            className="w-11 h-11 rounded-xl bg-base-850 text-base-300 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+          >
+            <Minus className="w-4 h-4" />
+          </button>
+          <div className="flex-1 text-center">
+            <span className="text-xl font-semibold tabular-nums">{valor || 0}</span>
+          </div>
+          <button
+            onClick={() => onCambiar(Math.round((valor + paso) * 100) / 100)}
+            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-white active:scale-90 transition-transform"
+            style={{ background: area.color }}
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function RegistroDiarioView() {
@@ -25,6 +138,7 @@ export function RegistroDiarioView() {
     registroExistente?.valores ?? valoresVacios(state.areas)
   );
   const [observacion, setObservacion] = useState(registroExistente?.observacion ?? "");
+  const [confirmacion, setConfirmacion] = useState<string | null>(null);
 
   const cambiarFecha = (nueva: string) => {
     setFecha(nueva);
@@ -35,6 +149,8 @@ export function RegistroDiarioView() {
 
   const guardar = () => {
     registrarDia(fecha, valores, observacion.slice(0, 200));
+    setConfirmacion(FRASES_EXITO[Math.floor(Math.random() * FRASES_EXITO.length)]);
+    setTimeout(() => setConfirmacion(null), 2600);
   };
 
   const gastosDelDia = state.finanzas.gastos.filter((g) => g.fecha === fecha);
@@ -58,7 +174,7 @@ export function RegistroDiarioView() {
   }, [hoy]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       <SectionTitle title="Registro diario" subtitle="Menos de 5 minutos. Sin números de progreso a la vista." />
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -70,9 +186,9 @@ export function RegistroDiarioView() {
               key={d}
               disabled={bloqueado}
               onClick={() => cambiarFecha(d)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap border transition-colors disabled:opacity-30 ${
+              className={`px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap border transition-all disabled:opacity-30 ${
                 d === fecha
-                  ? "border-sky-600 bg-sky-600/10 text-sky-400"
+                  ? "border-sky-500 bg-sky-500/15 text-sky-300 scale-105"
                   : "border-base-800 text-base-400 hover:text-base-100"
               }`}
             >
@@ -83,93 +199,42 @@ export function RegistroDiarioView() {
         })}
       </div>
 
-      <Card>
-        {state.areas.length === 0 ? (
+      {state.areas.length === 0 ? (
+        <Card>
           <div className="text-sm text-base-500">
-            Aún no tienes hábitos activos. Ve a Configuración → "Planear el mes" para elegirlos.
+            Aún no tienes hábitos activos. Ve al Panel → "Planear el mes" para elegirlos.
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {state.areas.map((area) => {
-              const plantilla = plantillaPorId(area.id);
-              const tipo = plantilla?.tipoMeta ?? "horas";
-              const label = `${area.nombre} — ${area.metrica}`;
-              if (tipo === "binaria") {
-                return (
-                  <Field key={area.id} label={label}>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={valores[area.id] === 1 ? "primary" : "secondary"}
-                        onClick={() => setValores((v) => ({ ...v, [area.id]: 1 }))}
-                      >
-                        Sí
-                      </Button>
-                      <Button
-                        variant={valores[area.id] === 0 ? "primary" : "secondary"}
-                        onClick={() => setValores((v) => ({ ...v, [area.id]: 0 }))}
-                      >
-                        No
-                      </Button>
-                    </div>
-                  </Field>
-                );
-              }
-              if (tipo === "conteo3") {
-                return (
-                  <Field key={area.id} label={label}>
-                    <div className="flex gap-2">
-                      {[0, 1, 2, 3].map((n) => (
-                        <button
-                          key={n}
-                          onClick={() => setValores((v) => ({ ...v, [area.id]: n }))}
-                          className={`w-10 h-10 rounded-lg text-sm font-medium border transition-colors ${
-                            valores[area.id] === n
-                              ? "border-sky-600 bg-sky-600/10 text-sky-400"
-                              : "border-base-800 text-base-400"
-                          }`}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </Field>
-                );
-              }
-              return (
-                <Field key={area.id} label={label}>
-                  <Input
-                    type="number"
-                    min={0}
-                    step={tipo === "horas" ? 0.25 : 1}
-                    inputMode="decimal"
-                    value={valores[area.id] || ""}
-                    onChange={(e) => setValores((v) => ({ ...v, [area.id]: parseFloat(e.target.value) || 0 }))}
-                    placeholder="0"
-                  />
-                </Field>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="mt-5">
-          <Field label="Observación breve" hint={`${observacion.length}/200`}>
-            <Textarea
-              maxLength={200}
-              rows={2}
-              value={observacion}
-              onChange={(e) => setObservacion(e.target.value)}
-              placeholder="¿Algo que valga la pena recordar de hoy?"
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {state.areas.map((area) => (
+            <HabitoCard
+              key={area.id}
+              area={area}
+              valor={valores[area.id] ?? 0}
+              onCambiar={(v) => setValores((prev) => ({ ...prev, [area.id]: v }))}
             />
-          </Field>
+          ))}
         </div>
+      )}
+
+      <Card>
+        <Field label="Observación breve" hint={`${observacion.length}/200`}>
+          <Textarea
+            maxLength={200}
+            rows={2}
+            value={observacion}
+            onChange={(e) => setObservacion(e.target.value)}
+            placeholder="¿Algo que valga la pena recordar de hoy?"
+          />
+        </Field>
 
         <div className="mt-6 border-t border-base-800 pt-5">
-          <div className="text-xs uppercase tracking-wide text-base-400 mb-3">Gastos del día</div>
+          <div className="text-xs uppercase tracking-wide text-base-400 mb-3">💸 Gastos del día</div>
           {gastosDelDia.length > 0 && (
             <ul className="space-y-1.5 mb-3">
               {gastosDelDia.map((g) => (
-                <li key={g.id} className="flex items-center justify-between text-sm bg-base-850 rounded-lg px-3 py-2">
+                <li key={g.id} className="flex items-center justify-between text-sm bg-base-850 rounded-xl px-3 py-2">
                   <span className="text-base-300">{g.palabraClave}</span>
                   <div className="flex items-center gap-3">
                     <span className="font-medium">${g.monto.toLocaleString()}</span>
@@ -192,7 +257,7 @@ export function RegistroDiarioView() {
                 onChange={(e) => setMontoGasto(e.target.value)}
               />
               <select
-                className="bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm"
+                className="bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm"
                 value={categoriaGasto}
                 onChange={(e) => setCategoriaGasto(e.target.value)}
               >
@@ -224,11 +289,19 @@ export function RegistroDiarioView() {
           ) : (
             <span className="text-xs text-base-500">Puedes registrar hasta {state.config.economia.diasRegistroRetroactivo} días atrás.</span>
           )}
-          <Button onClick={guardar} disabled={fecha < limiteAtras}>
+          <Button onClick={guardar} disabled={fecha < limiteAtras} className="shadow-glow shadow-sky-500/20">
             {registroExistente ? "Actualizar registro" : "Guardar registro"}
           </Button>
         </div>
       </Card>
+
+      {confirmacion && (
+        <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-40 animate-pop">
+          <div className="bg-gradient-to-r from-sky-500 to-fuchsia-500 text-white text-sm font-semibold px-5 py-3 rounded-full shadow-glow shadow-sky-500/40">
+            {confirmacion}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
