@@ -1,0 +1,293 @@
+// Modelo de datos completo de Kaizen. Ver docs/spec para el detalle de cada regla.
+
+export type AreaId =
+  | "intelecto"
+  | "imperio"
+  | "fuerza"
+  | "vitalidad"
+  | "energia"
+  | "sabiduria";
+
+export interface AreaConfig {
+  id: AreaId;
+  nombre: string;
+  dominio: string;
+  metrica: string;
+  unidad: string;
+  metaDiaria: number | null; // null = sin meta diaria (ej. Fuerza)
+  metaSemanalBase: number;
+  topeMetaSemanal: number; // tope máximo tras progresión por etapas
+  peso: number; // 0-1, deben sumar 1 entre todas las áreas de la temporada
+  color: string; // clave de color (tailwind: area.<id>)
+  nivel: number;
+  semanasConsecutivas: number; // contador hacia el siguiente nivel de área
+}
+
+export interface RegistroDiario {
+  id: string;
+  fecha: string; // YYYY-MM-DD
+  valores: Record<AreaId, number>;
+  observacion: string;
+  creadoEn: string; // ISO timestamp, para detectar registro tardío
+}
+
+export type ModoAsignacion = "fijo" | "porcentaje" | "resto";
+export type TipoCategoria = "gasto" | "ahorro" | "recompensas";
+
+export interface CategoriaPresupuesto {
+  id: string;
+  nombre: string;
+  tipo: TipoCategoria;
+  modo: ModoAsignacion;
+  valor: number; // monto (fijo) o porcentaje (porcentaje); ignorado en "resto"
+}
+
+export interface PresupuestoMensual {
+  mes: string; // YYYY-MM
+  dineroUtil: number;
+  categorias: CategoriaPresupuesto[];
+  modoAtipico: boolean;
+  notaAtipico?: string;
+}
+
+export type MetodoPago = "efectivo" | "debito" | "credito";
+
+export interface Gasto {
+  id: string;
+  fecha: string; // YYYY-MM-DD
+  monto: number;
+  categoriaId: string;
+  palabraClave: string;
+  metodo?: MetodoPago;
+  nota?: string;
+}
+
+export interface ResumenCategoriaMensual {
+  categoriaId: string;
+  nombre: string;
+  asignado: number;
+  gastado: number;
+  diferencia: number;
+  porcentajeUso: number;
+  sobregiro: boolean;
+}
+
+export interface ResumenMensual {
+  mes: string;
+  totalGastado: number;
+  totalAhorrado: number;
+  dineroUtil: number;
+  categorias: ResumenCategoriaMensual[];
+  topPalabrasClavePorMonto: { palabra: string; monto: number }[];
+  topPalabrasClavePorFrecuencia: { palabra: string; frecuencia: number }[];
+  gastoPromedioDiario: number;
+  diaMasCaro: { fecha: string; monto: number } | null;
+  comparativaMesesAnteriores: { mes: string; totalGastado: number }[];
+  promedioHistorico: number;
+  destinoSobrante: "ahorro" | "acumula" | "banco";
+  cumplimientoPromedioMes: number; // usado para desbloqueo de recompensas del mes siguiente
+  pctFondoLiberado: number;
+}
+
+export interface BancoRecompensas {
+  saldo: number;
+  tope: number;
+}
+
+export interface Finanzas {
+  presupuestos: PresupuestoMensual[];
+  gastos: Gasto[];
+  resumenesMensuales: ResumenMensual[];
+  bancoRecompensas: BancoRecompensas;
+}
+
+export interface CierreSemanal {
+  id: string;
+  semanaInicio: string; // lunes YYYY-MM-DD
+  semanaFin: string; // domingo YYYY-MM-DD
+  cumplimientoPorArea: Record<AreaId, number>;
+  cumplimientoGlobal: number;
+  ppBase: number;
+  bonosAplicados: { id: string; nombre: string; valorPP: number }[];
+  ppGanados: number;
+  creditosGanados: number;
+  protegida: boolean;
+  nivelesAreaSubidos: AreaId[];
+}
+
+export interface RecompensaCatalogo {
+  id: string;
+  nombre: string;
+  costoCreditos: number;
+  costoMXN: number;
+  categoria: string;
+  limitePorMes: number | null;
+  activa: boolean;
+}
+
+export interface CanjeRecompensa {
+  id: string;
+  recompensaId: string;
+  nombre: string;
+  fecha: string;
+  costoCreditos: number;
+  costoMXN: number;
+}
+
+export interface ReconocimientoCatalogo {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  rareza: "Común" | "Raro" | "Épico" | "Legendario";
+  categoria: "constancia" | "volumen" | "records" | "financiero" | "temporada";
+  secreto: boolean;
+}
+
+export interface ReconocimientoDesbloqueado {
+  id: string;
+  fecha: string;
+}
+
+export interface Desafio {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  tipo: "semanal" | "mensual" | "temporada";
+  dificultad: "baja" | "media" | "alta";
+  fechaLimite: string;
+  completado: boolean;
+  fechaCompletado?: string;
+  ppRecompensa: number;
+}
+
+export interface RetoFinal {
+  descripcion: string;
+  completado: boolean;
+  fechaCompletado?: string;
+}
+
+export interface Evento {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  inicio: string;
+  fin: string;
+  efecto: string; // texto descriptivo del efecto aplicado
+  areaAfectada?: AreaId;
+  modificadorPeso?: number;
+}
+
+export interface Temporada {
+  id: string;
+  nombre: string;
+  narrativa: string;
+  inicio: string;
+  fin: string;
+  retoFinal: RetoFinal;
+  desafios: Desafio[];
+  eventos: Evento[];
+  cerrada: boolean;
+}
+
+export interface TemporadaHistorial {
+  id: string;
+  nombre: string;
+  inicio: string;
+  fin: string;
+  cumplimientoPromedioPorArea: Record<AreaId, number>;
+  ppTotales: number;
+  gastadoVsPresupuestado: { gastado: number; presupuestado: number };
+  reconocimientosObtenidos: number;
+  retoFinalCompletado: boolean;
+}
+
+export interface RecordHistorico {
+  id: string;
+  areaId: AreaId | null;
+  descripcion: string;
+  valor: number;
+  fecha: string;
+}
+
+export interface Historial {
+  temporadas: TemporadaHistorial[];
+  records: RecordHistorico[];
+  reconocimientos: ReconocimientoDesbloqueado[];
+  nivelesMaximos: Record<AreaId, number>;
+}
+
+export interface Bono {
+  id: string;
+  nombre: string;
+  valorPP: number;
+}
+
+export interface ConfigImperio {
+  pesoNegocio: number; // 0-1
+  pesoFinanzas: number; // 0-1
+  metaSemanalHorasNegocio: number;
+}
+
+export interface ConfigEconomia {
+  ppBase: number;
+  curvaBase: number;
+  curvaExponente: number;
+  creditosPorPP: number; // divisor: creditos = round(PP/creditosPorPP)
+  umbralNivelArea: number; // 0.85
+  semanasParaNivelArea: number; // 4
+  incrementoPorEtapa: number; // 0.10
+  nivelesPorEtapa: number; // 5
+  proteccionesMaxAcumulables: number; // 3
+  umbralProteccionMensual: number; // 0.85
+  ventanaProteccionHoras: number; // 48
+  tablaDesbloqueo: { umbral: number; porcentaje: number }[];
+  bonoRetoFinalPct: number; // 0.10
+  topeBancoRecompensasMeses: number; // 3
+  diasRegistroRetroactivo: number; // 3
+  destinoSobranteDefault: "ahorro" | "acumula" | "banco";
+}
+
+export interface Textos {
+  nombreSistema: string;
+  atributos: string;
+  xp: string;
+  monedas: string;
+  escudos: string;
+  jefeTemporada: string;
+  misiones: string;
+  logros: string;
+  salonFama: string;
+  radar: string;
+  tienda: string;
+}
+
+export interface Config {
+  textos: Textos;
+  economia: ConfigEconomia;
+  imperio: ConfigImperio;
+  bonos: Bono[];
+  catalogoRecompensas: RecompensaCatalogo[];
+  catalogoReconocimientos: ReconocimientoCatalogo[];
+}
+
+export interface Usuario {
+  nombre: string;
+  nivelGlobal: number;
+  ppTotales: number;
+  creditos: number;
+  protecciones: number;
+  tituloActivo: string | null;
+}
+
+export interface KaizenState {
+  sistema: { nombre: string; version: number };
+  usuario: Usuario;
+  areas: AreaConfig[];
+  registrosDiarios: RegistroDiario[];
+  finanzas: Finanzas;
+  cierresSemanales: CierreSemanal[];
+  canjes: CanjeRecompensa[];
+  temporadaActual: Temporada;
+  historial: Historial;
+  config: Config;
+}
