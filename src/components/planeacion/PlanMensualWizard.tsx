@@ -284,7 +284,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                   </span>
                 </div>
                 <div className="text-xs text-base-500 mt-1">
-                  Dinero total − gastos fijos − ahorro. Es lo que alimenta el Banco de Recompensas del juego.
+                  Dinero total menos gastos fijos y ahorro. Se libera poco a poco, semana a semana, según tu cumplimiento.
                 </div>
               </div>
             </div>

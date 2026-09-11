@@ -10,18 +10,19 @@ import {
   calcularAsignaciones,
   cumplimientoGlobalSemanal,
   cumplimientoSemanalArea,
-  creditosSemana,
   gastadoEnCategoria,
+  montoLiberadoSemana,
   nivelDesdePP,
-  pctDesbloqueo,
-  ppSemana,
+  semanasEnMes,
 } from "@/lib/formulas";
-import { diasDelMes, inicioSemana, mesAnterior, mesDe, sumarDias } from "@/lib/dates";
+import { diasDelMes, inicioSemana, mesDe, sumarDias } from "@/lib/dates";
 
 export interface ResultadoCierreSemanal {
   cierre: CierreSemanal;
   areas: AreaConfig[];
   usuario: Usuario;
+  saldoBanco: number;
+  ahorroExtra: number;
 }
 
 export function calcularCierreSemanal(
@@ -54,7 +55,25 @@ export function calcularCierreSemanal(
   const bonosPPTotal = bonosAplicados.reduce((acc, b) => acc + b.valorPP, 0);
   const ppBase = Math.round(config.economia.ppBase * cumplimientoGlobal);
   const ppGanados = protegerSemana ? 0 : ppBase + bonosPPTotal;
-  const creditosGanados = protegerSemana ? 0 : creditosSemana(ppGanados, config);
+
+  // Dinero libre: la parte de este mes asignada a "dinero libre" se reparte entre sus
+  // semanas y se desbloquea en proporción al cumplimiento de ESTA semana. Lo que no se
+  // libera no se pierde: se acumula como ahorro en el cierre de mes.
+  const mesDeLaSemana = mesDe(fin);
+  const asignacionesMes = presupuestoDelMes ? calcularAsignaciones(presupuestoDelMes) : new Map<string, number>();
+  const categoriaLibre = presupuestoDelMes?.categorias.find((c) => c.tipo === "recompensas");
+  const montoLibreDelMes = categoriaLibre ? asignacionesMes.get(categoriaLibre.id) ?? 0 : 0;
+  const montoPorSemana = montoLibreDelMes / semanasEnMes(mesDeLaSemana);
+  const dineroLiberado = protegerSemana ? 0 : montoLiberadoSemana(montoPorSemana, cumplimientoGlobal);
+  const noLiberado = protegerSemana ? 0 : Math.max(0, montoPorSemana - dineroLiberado);
+
+  let saldoBanco = state.finanzas.bancoRecompensas.saldo + dineroLiberado;
+  let ahorroExtra = state.finanzas.ahorroExtra + noLiberado;
+  const tope = state.finanzas.bancoRecompensas.tope;
+  if (saldoBanco > tope) {
+    ahorroExtra += saldoBanco - tope;
+    saldoBanco = tope;
+  }
 
   const nivelesAreaSubidos: AreaId[] = [];
   const areas = state.areas.map((area) => {
@@ -74,7 +93,6 @@ export function calcularCierreSemanal(
   const usuario: Usuario = {
     ...state.usuario,
     ppTotales,
-    creditos: state.usuario.creditos + creditosGanados,
     nivelGlobal: nivelDesdePP(ppTotales, config).nivel,
     protecciones: state.usuario.protecciones - (protegerSemana ? 1 : 0),
   };
@@ -88,12 +106,12 @@ export function calcularCierreSemanal(
     ppBase,
     bonosAplicados,
     ppGanados,
-    creditosGanados,
+    dineroLiberado,
     protegida: protegerSemana,
     nivelesAreaSubidos,
   };
 
-  return { cierre, areas, usuario };
+  return { cierre, areas, usuario, saldoBanco, ahorroExtra };
 }
 
 /** Semanas ya terminadas (anteriores a la semana en curso) que todavía no tienen cierre registrado. */
@@ -146,10 +164,12 @@ export function calcularCierreMensual(state: KaizenState, mes: string): Resultad
 
   const catGasto = (presupuesto?.categorias ?? []).filter((c) => c.tipo === "gasto");
   const catAhorro = (presupuesto?.categorias ?? []).filter((c) => c.tipo === "ahorro");
-  const catRecompensas = presupuesto?.categorias.find((c) => c.tipo === "recompensas");
 
   const totalGastado = catGasto.reduce((acc, c) => acc + gastadoEnCategoria(state.finanzas.gastos, c.id, mes), 0);
-  let totalAhorrado = catAhorro.reduce((acc, c) => acc + (asignaciones.get(c.id) ?? 0), 0);
+  // El dinero libre no liberado semana a semana ya se fue acumulando en finanzas.ahorroExtra;
+  // aquí se vuelca a la cuenta de ahorro del mes y se limpia el acumulador.
+  let totalAhorrado =
+    catAhorro.reduce((acc, c) => acc + (asignaciones.get(c.id) ?? 0), 0) + state.finanzas.ahorroExtra;
 
   const dias = diasDelMes(mes);
   const gastoPromedioDiario = totalGastado / dias;
@@ -188,26 +208,9 @@ export function calcularCierreMensual(state: KaizenState, mes: string): Resultad
     semanasDelMes.length > 0
       ? semanasDelMes.reduce((acc, c) => acc + c.cumplimientoGlobal, 0) / semanasDelMes.length
       : 0;
-  const retoFinalSuperadoEsteMes =
-    state.temporadaActual.retoFinal.completado &&
-    !!state.temporadaActual.retoFinal.fechaCompletado &&
-    mesDe(state.temporadaActual.retoFinal.fechaCompletado) === mes;
-  const pctFondoLiberado = pctDesbloqueo(cumplimientoPromedioMes, config, retoFinalSuperadoEsteMes);
 
-  // Desbloqueo del fondo de recompensas de ESTE mes, según el desempeño del mes ANTERIOR.
-  const resumenMesAnterior = state.finanzas.resumenesMensuales.find((r) => r.mes === mesAnterior(mes));
-  const pctAplicable = resumenMesAnterior ? resumenMesAnterior.pctFondoLiberado : 1; // primer mes: beneficio de la duda
-  const asignadoRecompensas = catRecompensas ? asignaciones.get(catRecompensas.id) ?? 0 : 0;
-  const liberado = asignadoRecompensas * Math.min(1, pctAplicable);
-  const noLiberado = asignadoRecompensas - liberado;
-  totalAhorrado += noLiberado;
-
-  let saldoBanco = state.finanzas.bancoRecompensas.saldo + liberado;
+  let saldoBanco = state.finanzas.bancoRecompensas.saldo;
   const tope = state.finanzas.bancoRecompensas.tope;
-  if (saldoBanco > tope) {
-    totalAhorrado += saldoBanco - tope;
-    saldoBanco = tope;
-  }
 
   // Sobrante de las categorías de gasto, según el destino configurado.
   const sobranteGasto = categorias
@@ -243,7 +246,6 @@ export function calcularCierreMensual(state: KaizenState, mes: string): Resultad
     promedioHistorico,
     destinoSobrante: config.economia.destinoSobranteDefault,
     cumplimientoPromedioMes,
-    pctFondoLiberado,
   };
 
   return { resumen, saldoBanco, proteccionGanada, bumpDineroUtilMesSiguiente };

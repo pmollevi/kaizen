@@ -61,7 +61,7 @@ export function ResumenMensualTab() {
                       <Stat label="Dinero útil" value={`$${r.dineroUtil.toLocaleString()}`} />
                       <Stat label="Promedio diario" value={`$${r.gastoPromedioDiario.toFixed(0)}`} />
                       <Stat label="Día más caro" value={r.diaMasCaro ? `$${r.diaMasCaro.monto.toLocaleString()}` : "—"} hint={r.diaMasCaro?.fecha} />
-                      <Stat label="Fondo liberado" value={`${Math.round(r.pctFondoLiberado * 100)}%`} hint="para recompensas" />
+                      <Stat label="Total ahorrado" value={`$${r.totalAhorrado.toLocaleString()}`} />
                     </div>
 
                     <div>

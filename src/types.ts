@@ -82,8 +82,7 @@ export interface ResumenMensual {
   comparativaMesesAnteriores: { mes: string; totalGastado: number }[];
   promedioHistorico: number;
   destinoSobrante: "ahorro" | "acumula" | "banco";
-  cumplimientoPromedioMes: number; // usado para desbloqueo de recompensas del mes siguiente
-  pctFondoLiberado: number;
+  cumplimientoPromedioMes: number;
 }
 
 export interface BancoRecompensas {
@@ -96,6 +95,7 @@ export interface Finanzas {
   gastos: Gasto[];
   resumenesMensuales: ResumenMensual[];
   bancoRecompensas: BancoRecompensas;
+  ahorroExtra: number; // dinero libre semanal no liberado, pendiente de sumarse al ahorro en el cierre de mes
 }
 
 export interface CierreSemanal {
@@ -107,28 +107,9 @@ export interface CierreSemanal {
   ppBase: number;
   bonosAplicados: { id: string; nombre: string; valorPP: number }[];
   ppGanados: number;
-  creditosGanados: number;
+  dineroLiberado: number; // parte del "dinero libre" del mes que se desbloqueó esta semana
   protegida: boolean;
   nivelesAreaSubidos: AreaId[];
-}
-
-export interface RecompensaCatalogo {
-  id: string;
-  nombre: string;
-  costoCreditos: number;
-  costoMXN: number;
-  categoria: string;
-  limitePorMes: number | null;
-  activa: boolean;
-}
-
-export interface CanjeRecompensa {
-  id: string;
-  recompensaId: string;
-  nombre: string;
-  fecha: string;
-  costoCreditos: number;
-  costoMXN: number;
 }
 
 export interface ReconocimientoCatalogo {
@@ -229,7 +210,6 @@ export interface ConfigEconomia {
   ppBase: number;
   curvaBase: number;
   curvaExponente: number;
-  creditosPorPP: number; // divisor: creditos = round(PP/creditosPorPP)
   umbralNivelArea: number; // 0.85
   semanasParaNivelArea: number; // 4
   incrementoPorEtapa: number; // 0.10
@@ -237,8 +217,7 @@ export interface ConfigEconomia {
   proteccionesMaxAcumulables: number; // 3
   umbralProteccionMensual: number; // 0.85
   ventanaProteccionHoras: number; // 48
-  tablaDesbloqueo: { umbral: number; porcentaje: number }[];
-  bonoRetoFinalPct: number; // 0.10
+  diasPorProteccion: number; // días de racha diaria que se canjean por 1 protección
   topeBancoRecompensasMeses: number; // 3
   diasRegistroRetroactivo: number; // 3
   destinoSobranteDefault: "ahorro" | "acumula" | "banco";
@@ -248,14 +227,12 @@ export interface Textos {
   nombreSistema: string;
   atributos: string;
   xp: string;
-  monedas: string;
   escudos: string;
   jefeTemporada: string;
   misiones: string;
   logros: string;
   salonFama: string;
   radar: string;
-  tienda: string;
 }
 
 export interface Config {
@@ -263,7 +240,6 @@ export interface Config {
   economia: ConfigEconomia;
   imperio: ConfigImperio;
   bonos: Bono[];
-  catalogoRecompensas: RecompensaCatalogo[];
   catalogoReconocimientos: ReconocimientoCatalogo[];
 }
 
@@ -271,8 +247,8 @@ export interface Usuario {
   nombre: string;
   nivelGlobal: number;
   ppTotales: number;
-  creditos: number;
   protecciones: number;
+  diasRachaCanjeados: number; // ledger: días de racha ya cambiados por protecciones
   tituloActivo: string | null;
 }
 
@@ -283,7 +259,6 @@ export interface KaizenState {
   registrosDiarios: RegistroDiario[];
   finanzas: Finanzas;
   cierresSemanales: CierreSemanal[];
-  canjes: CanjeRecompensa[];
   temporadaActual: Temporada;
   historial: Historial;
   config: Config;

@@ -27,9 +27,24 @@ export function evaluarReconocimientos(state: KaizenState): string[] {
 
   marcar("ach_gastos_90", rachaDeRegistroGastos(state) >= 90);
   marcar("ach_temporada_1", state.historial.temporadas.length >= 1);
-  marcar("ach_secreto_1", rachaSeisAreasMismoDia(state) >= 7);
+  marcar("ach_secreto_1", rachaDiariaVigente(state) >= 7);
 
   return nuevos;
+}
+
+/** Días seguidos (contando hoy/ayer) con todos los hábitos activos cumplidos (valor > 0). */
+export function rachaDiariaVigente(state: KaizenState): number {
+  if (state.areas.length === 0) return 0;
+  const registros = [...state.registrosDiarios].sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
+  if (registros.length === 0) return 0;
+  if (diasEntre(registros[0].fecha, hoyISO()) > 1) return 0;
+  let racha = 0;
+  for (const r of registros) {
+    const completo = state.areas.every((a) => (r.valores[a.id] ?? 0) > 0);
+    if (completo) racha += 1;
+    else break;
+  }
+  return racha;
 }
 
 function rachaGlobalActual(state: KaizenState): number {
@@ -58,15 +73,4 @@ function rachaDeRegistroGastos(state: KaizenState): number {
   const ultimaFecha = fechas[fechas.length - 1];
   const vigente = diasEntre(ultimaFecha, hoyISO()) <= 1;
   return vigente ? mejor : 0;
-}
-
-function rachaSeisAreasMismoDia(state: KaizenState): number {
-  const registros = [...state.registrosDiarios].sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
-  let racha = 0;
-  for (const r of registros) {
-    const completo = Object.values(r.valores).every((v) => (v ?? 0) > 0);
-    if (completo) racha += 1;
-    else break;
-  }
-  return racha;
 }

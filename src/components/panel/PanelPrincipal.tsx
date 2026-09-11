@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { ShieldCheck, Coins, Flag, Wallet, Plus, CalendarRange } from "lucide-react";
+import { ShieldCheck, Flame, Flag, Wallet, Plus, CalendarRange } from "lucide-react";
+import { rachaDiariaVigente } from "@/lib/achievements";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, ProgressBar, Stat, Badge, Button, EmptyState } from "@/components/ui/Primitives";
 import { RadarChart } from "@/components/RadarChart";
@@ -107,10 +108,10 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
             <Stat label="Nivel global" value={nivel.nivel} hint={`faltan ${nivel.faltante} PP`} />
             <Stat label="PP totales" value={usuario.ppTotales.toLocaleString()} />
             <Stat
-              label="Créditos"
+              label="Racha diaria"
               value={
                 <span className="inline-flex items-center gap-1">
-                  <Coins className="w-4 h-4 text-amber-400" /> {usuario.creditos}
+                  <Flame className="w-4 h-4 text-amber-400" /> {rachaDiariaVigente(state)}
                 </span>
               }
             />
@@ -226,7 +227,7 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
         </Card>
 
         <Card>
-          <SectionTitle title="Banco de Recompensas" />
+          <SectionTitle title="Dinero libre" />
           <div className="flex items-center gap-2 text-2xl font-semibold mb-1">
             <Wallet className="w-5 h-5 text-emerald-400" />${finanzas.bancoRecompensas.saldo.toLocaleString()}
           </div>

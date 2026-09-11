@@ -7,7 +7,6 @@ import type {
   Evento,
   Gasto,
   KaizenState,
-  RecompensaCatalogo,
   ReconocimientoCatalogo,
 } from "@/types";
 import { areaDesdeCatalogo, estadoInicial, temporadaDefault } from "@/config/defaultConfig";
@@ -17,7 +16,7 @@ import { generarId } from "@/lib/id";
 import { diaDelMes, diasDelMes, finSemana, hoyISO, inicioSemana, mesDe, sumarDias } from "@/lib/dates";
 import { calcularCierreMensual, calcularCierreSemanal, mesesPendientesDeCierre, semanasPendientes } from "@/lib/cierre";
 import { calcularAsignaciones } from "@/lib/formulas";
-import { evaluarReconocimientos } from "@/lib/achievements";
+import { evaluarReconocimientos, rachaDiariaVigente } from "@/lib/achievements";
 
 const storageAdapter = {
   getItem: (_name: string) => {
@@ -54,14 +53,13 @@ interface Acciones {
   cerrarSemana: (inicio: string, bonosIds: string[], proteger: boolean) => void;
   procesarCierresMensualesPendientes: () => void;
 
-  canjearRecompensa: (recompensaId: string) => { ok: boolean; motivo?: string };
+  canjearRachaPorProteccion: () => { ok: boolean; motivo?: string };
 
   actualizarPesos: (pesos: Record<AreaId, number>) => void;
   actualizarAreaConfig: (areaId: AreaId, cambios: Partial<{ metaDiaria: number | null; metaSemanalBase: number; topeMetaSemanal: number }>) => void;
   actualizarConfigEconomia: (cambios: Partial<KaizenState["config"]["economia"]>) => void;
   actualizarConfigImperio: (cambios: Partial<KaizenState["config"]["imperio"]>) => void;
   actualizarTextos: (cambios: Partial<KaizenState["config"]["textos"]>) => void;
-  setCatalogoRecompensas: (catalogo: RecompensaCatalogo[]) => void;
   setCatalogoReconocimientos: (catalogo: ReconocimientoCatalogo[]) => void;
   setBonos: (bonos: KaizenState["config"]["bonos"]) => void;
 
@@ -157,13 +155,14 @@ export const useKaizenStore = create<KaizenStore>()(
         const s = get();
         if (proteger && s.usuario.protecciones <= 0) return;
         const fin = finSemana(inicio);
-        const { cierre, areas, usuario } = calcularCierreSemanal(s, inicio, fin, bonosIds, proteger);
+        const { cierre, areas, usuario, saldoBanco, ahorroExtra } = calcularCierreSemanal(s, inicio, fin, bonosIds, proteger);
         const nivelesMaximos = { ...s.historial.nivelesMaximos };
         for (const a of areas) nivelesMaximos[a.id] = Math.max(nivelesMaximos[a.id] ?? 1, a.nivel);
         set({
           cierresSemanales: [...s.cierresSemanales, cierre],
           areas,
           usuario,
+          finanzas: { ...s.finanzas, bancoRecompensas: { ...s.finanzas.bancoRecompensas, saldo: saldoBanco }, ahorroExtra },
           historial: { ...s.historial, nivelesMaximos },
         });
         get().procesarCierresMensualesPendientes();
@@ -196,6 +195,7 @@ export const useKaizenStore = create<KaizenStore>()(
               ...st.finanzas,
               resumenesMensuales: [...st.finanzas.resumenesMensuales, resumen],
               bancoRecompensas: { ...st.finanzas.bancoRecompensas, saldo: saldoBanco },
+              ahorroExtra: 0, // ya se volcó a totalAhorrado del resumen de este mes
               presupuestos:
                 bumpDineroUtilMesSiguiente > 0
                   ? st.finanzas.presupuestos.map((p) =>
@@ -217,27 +217,22 @@ export const useKaizenStore = create<KaizenStore>()(
         }
       },
 
-      canjearRecompensa: (recompensaId) => {
+      canjearRachaPorProteccion: () => {
         const s = get();
-        const recompensa = s.config.catalogoRecompensas.find((r) => r.id === recompensaId);
-        if (!recompensa || !recompensa.activa) return { ok: false, motivo: "Recompensa no disponible." };
-        if (s.usuario.creditos < recompensa.costoCreditos) return { ok: false, motivo: "Créditos insuficientes." };
-        if (s.finanzas.bancoRecompensas.saldo < recompensa.costoMXN) return { ok: false, motivo: "Saldo insuficiente en el Banco de Recompensas." };
-        if (recompensa.limitePorMes !== null) {
-          const esteMes = mesDe(hoyISO());
-          const canjesEsteMes = s.canjes.filter((c) => c.recompensaId === recompensaId && mesDe(c.fecha) === esteMes).length;
-          if (canjesEsteMes >= recompensa.limitePorMes) return { ok: false, motivo: "Límite de canjes del mes alcanzado." };
+        const racha = rachaDiariaVigente(s);
+        const disponible = Math.max(0, racha - s.usuario.diasRachaCanjeados);
+        if (disponible < s.config.economia.diasPorProteccion) {
+          return { ok: false, motivo: `Necesitas ${s.config.economia.diasPorProteccion} días de racha seguidos. Llevas ${disponible}.` };
+        }
+        if (s.usuario.protecciones >= s.config.economia.proteccionesMaxAcumulables) {
+          return { ok: false, motivo: "Ya tienes el máximo de protecciones acumuladas." };
         }
         set((st) => ({
-          usuario: { ...st.usuario, creditos: st.usuario.creditos - recompensa.costoCreditos },
-          finanzas: {
-            ...st.finanzas,
-            bancoRecompensas: { ...st.finanzas.bancoRecompensas, saldo: st.finanzas.bancoRecompensas.saldo - recompensa.costoMXN },
+          usuario: {
+            ...st.usuario,
+            diasRachaCanjeados: st.usuario.diasRachaCanjeados + st.config.economia.diasPorProteccion,
+            protecciones: Math.min(st.config.economia.proteccionesMaxAcumulables, st.usuario.protecciones + 1),
           },
-          canjes: [
-            ...st.canjes,
-            { id: generarId("cj"), recompensaId, nombre: recompensa.nombre, fecha: hoyISO(), costoCreditos: recompensa.costoCreditos, costoMXN: recompensa.costoMXN },
-          ],
         }));
         return { ok: true };
       },
@@ -257,7 +252,6 @@ export const useKaizenStore = create<KaizenStore>()(
       actualizarTextos: (cambios) =>
         set((s) => ({ config: { ...s.config, textos: { ...s.config.textos, ...cambios } } })),
 
-      setCatalogoRecompensas: (catalogo) => set((s) => ({ config: { ...s.config, catalogoRecompensas: catalogo } })),
       setCatalogoReconocimientos: (catalogo) => set((s) => ({ config: { ...s.config, catalogoReconocimientos: catalogo } })),
       setBonos: (bonos) => set((s) => ({ config: { ...s.config, bonos } })),
 
@@ -325,8 +319,8 @@ export const useKaizenStore = create<KaizenStore>()(
               ]
             : []),
           {
-            id: idPrevio("Recompensas (el juego)", "recompensas") ?? generarId("cat"),
-            nombre: "Recompensas (el juego)",
+            id: idPrevio("Dinero libre", "recompensas") ?? idPrevio("Recompensas (el juego)", "recompensas") ?? generarId("cat"),
+            nombre: "Dinero libre",
             tipo: "recompensas" as const,
             modo: "resto" as const,
             valor: 0,
@@ -456,6 +450,24 @@ export const useKaizenStore = create<KaizenStore>()(
     {
       name: "kaizen",
       storage: createJSONStorage(() => storageAdapter),
+      // Merge profundo: un perfil guardado antes de que existiera un campo nuevo
+      // (usuario, finanzas o config) no debe perderlo por un reemplazo superficial.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<KaizenState>;
+        return {
+          ...current,
+          ...p,
+          usuario: { ...current.usuario, ...(p.usuario ?? {}) },
+          finanzas: { ...current.finanzas, ...(p.finanzas ?? {}) },
+          config: {
+            ...current.config,
+            ...(p.config ?? {}),
+            economia: { ...current.config.economia, ...(p.config?.economia ?? {}) },
+            imperio: { ...current.config.imperio, ...(p.config?.imperio ?? {}) },
+            textos: { ...current.config.textos, ...(p.config?.textos ?? {}) },
+          },
+        };
+      },
     }
   )
 );

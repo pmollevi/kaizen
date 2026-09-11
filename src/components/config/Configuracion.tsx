@@ -1,8 +1,8 @@
 import React, { useRef, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, Field, Input, Select, Button, Badge, EmptyState } from "@/components/ui/Primitives";
+import { Card, SectionTitle, Field, Input, Select, Button, Badge } from "@/components/ui/Primitives";
 import { generarId } from "@/lib/id";
-import type { AreaId, Bono, RecompensaCatalogo, ReconocimientoCatalogo } from "@/types";
+import type { AreaId, Bono, ReconocimientoCatalogo } from "@/types";
 import { Download, Upload, Plus, Trash2 } from "lucide-react";
 
 function IdentidadYAreas() {
@@ -117,9 +117,6 @@ function Economia() {
               onChange={(ev) => actualizar({ curvaExponente: parseFloat(ev.target.value) || 0 })}
             />
           </Field>
-          <Field label="Créditos por cada N de PP">
-            <Input type="number" value={e.creditosPorPP} onChange={(ev) => actualizar({ creditosPorPP: parseFloat(ev.target.value) || 1 })} />
-          </Field>
         </div>
       </Card>
 
@@ -156,15 +153,15 @@ function Economia() {
           <Field label="Días de registro retroactivo">
             <Input type="number" value={e.diasRegistroRetroactivo} onChange={(ev) => actualizar({ diasRegistroRetroactivo: parseInt(ev.target.value) || 0 })} />
           </Field>
+          <Field label="Días de racha por protección">
+            <Input type="number" value={e.diasPorProteccion} onChange={(ev) => actualizar({ diasPorProteccion: parseInt(ev.target.value) || 1 })} />
+          </Field>
         </div>
       </Card>
 
       <Card>
-        <SectionTitle title="Finanzas y recompensas" />
+        <SectionTitle title="Finanzas y dinero libre" />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Field label="Bono reto final (%)">
-            <Input type="number" step={0.01} value={e.bonoRetoFinalPct} onChange={(ev) => actualizar({ bonoRetoFinalPct: parseFloat(ev.target.value) || 0 })} />
-          </Field>
           <Field label="Tope Banco (meses de fondo)">
             <Input type="number" value={e.topeBancoRecompensasMeses} onChange={(ev) => actualizar({ topeBancoRecompensasMeses: parseInt(ev.target.value) || 1 })} />
           </Field>
@@ -172,10 +169,10 @@ function Economia() {
             <Select value={e.destinoSobranteDefault} onChange={(ev) => actualizar({ destinoSobranteDefault: ev.target.value as any })}>
               <option value="ahorro">Ahorro</option>
               <option value="acumula">Acumula al mes siguiente</option>
-              <option value="banco">Banco de Recompensas</option>
+              <option value="banco">Dinero libre</option>
             </Select>
           </Field>
-          <Field label="Tope Banco de Recompensas ($)">
+          <Field label="Tope de dinero libre acumulado ($)">
             <Input
               type="number"
               value={state.finanzas.bancoRecompensas.tope}
@@ -207,40 +204,6 @@ function Economia() {
           </Field>
         </div>
       </Card>
-
-      <Card>
-        <SectionTitle title="Tabla de desbloqueo económico" subtitle="% del fondo de recompensas liberado según cumplimiento mensual." />
-        <div className="space-y-2">
-          {e.tablaDesbloqueo.map((fila, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <Input
-                type="number"
-                step={0.01}
-                className="w-24"
-                value={fila.umbral}
-                onChange={(ev) => {
-                  const nueva = [...e.tablaDesbloqueo];
-                  nueva[i] = { ...fila, umbral: parseFloat(ev.target.value) || 0 };
-                  actualizar({ tablaDesbloqueo: nueva });
-                }}
-              />
-              <span className="text-sm text-base-500">→</span>
-              <Input
-                type="number"
-                step={0.01}
-                className="w-24"
-                value={fila.porcentaje}
-                onChange={(ev) => {
-                  const nueva = [...e.tablaDesbloqueo];
-                  nueva[i] = { ...fila, porcentaje: parseFloat(ev.target.value) || 0 };
-                  actualizar({ tablaDesbloqueo: nueva });
-                }}
-              />
-              <span className="text-sm text-base-500">liberado</span>
-            </div>
-          ))}
-        </div>
-      </Card>
     </div>
   );
 }
@@ -269,68 +232,6 @@ function Bonos() {
             <span className="text-xs text-base-500">PP</span>
             <button onClick={() => setBonos(state.config.bonos.filter((x) => x.id !== b.id))} className="text-base-500 hover:text-rose-400">
               <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-function CatalogoRecompensas() {
-  const state = useKaizenStore();
-  const setCatalogo = useKaizenStore((s) => s.setCatalogoRecompensas);
-  const actualizar = (id: string, cambios: Partial<RecompensaCatalogo>) =>
-    setCatalogo(state.config.catalogoRecompensas.map((r) => (r.id === id ? { ...r, ...cambios } : r)));
-
-  return (
-    <Card>
-      <SectionTitle
-        title={state.config.textos.tienda}
-        action={
-          <Button
-            variant="ghost"
-            className="inline-flex items-center gap-1.5"
-            onClick={() =>
-              setCatalogo([
-                ...state.config.catalogoRecompensas,
-                { id: generarId("r"), nombre: "Nueva recompensa", costoCreditos: 20, costoMXN: 0, categoria: "general", limitePorMes: null, activa: true },
-              ])
-            }
-          >
-            <Plus className="w-4 h-4" /> Agregar
-          </Button>
-        }
-      />
-      {state.config.catalogoRecompensas.length === 0 && <EmptyState text="Catálogo vacío: revísalo antes de que empiece a resentirse la economía." />}
-      <div className="space-y-2">
-        {state.config.catalogoRecompensas.map((r) => (
-          <div key={r.id} className="grid grid-cols-12 gap-2 items-center bg-white/[0.04] rounded-lg px-3 py-2.5">
-            <Input className="col-span-3" value={r.nombre} onChange={(e) => actualizar(r.id, { nombre: e.target.value })} />
-            <Input className="col-span-2" placeholder="categoría" value={r.categoria} onChange={(e) => actualizar(r.id, { categoria: e.target.value })} />
-            <Input
-              className="col-span-2"
-              type="number"
-              placeholder="créditos"
-              value={r.costoCreditos}
-              onChange={(e) => actualizar(r.id, { costoCreditos: parseInt(e.target.value) || 0 })}
-            />
-            <Input
-              className="col-span-2"
-              type="number"
-              placeholder="MXN"
-              value={r.costoMXN}
-              onChange={(e) => actualizar(r.id, { costoMXN: parseFloat(e.target.value) || 0 })}
-            />
-            <Input
-              className="col-span-2"
-              type="number"
-              placeholder="límite/mes"
-              value={r.limitePorMes ?? ""}
-              onChange={(e) => actualizar(r.id, { limitePorMes: e.target.value ? parseInt(e.target.value) : null })}
-            />
-            <button onClick={() => actualizar(r.id, { activa: !r.activa })} className="col-span-1 justify-self-center">
-              <Badge tone={r.activa ? "green" : "neutral"}>{r.activa ? "activa" : "off"}</Badge>
             </button>
           </div>
         ))}
@@ -427,8 +328,8 @@ function DatosYMitigaciones() {
     ["Abuso de protecciones", `Ventana de ${state.config.economia.ventanaProteccionHoras}h tras el cierre y tope de ${state.config.economia.proteccionesMaxAcumulables} acumulables.`],
     ["Desalineación presupuesto/realidad", "Modo mes atípico por presupuesto, que etiqueta el mes sin alterar las fórmulas del resto del sistema."],
     ["Fatiga de temporada", "El cierre de temporada limita la duración a un máximo razonable (recomendado 12 semanas)."],
-    ["Catálogo vacío", "El catálogo de recompensas es editable aquí y la vista de Recompensas avisa cuando está vacío."],
-    ["Sobrecarga de métricas", "Las 6 áreas están fijas en el modelo de datos; agregar una séptima requiere tocar código, no solo configuración."],
+    ["Dinero libre desconectado del esfuerzo", "El dinero libre ya no se desbloquea de golpe una vez al mes: se reparte entre las semanas del mes y cada semana libera solo la parte proporcional a tu cumplimiento real de esa semana."],
+    ["Sobrecarga de métricas", "El catálogo de hábitos tiene 10 opciones fijas; agregar una nueva requiere tocar código. El asistente de planeación avisa cuando activas más de 7-8 a la vez."],
   ];
 
   return (
@@ -467,7 +368,7 @@ function DatosYMitigaciones() {
   );
 }
 
-const SECCIONES = ["Identidad y áreas", "Economía", "Bonos", "Catálogo de recompensas", "Reconocimientos", "Datos"] as const;
+const SECCIONES = ["Identidad y áreas", "Economía", "Bonos", "Reconocimientos", "Datos"] as const;
 
 export function ConfiguracionView() {
   const [seccion, setSeccion] = useState<(typeof SECCIONES)[number]>("Identidad y áreas");
@@ -490,7 +391,6 @@ export function ConfiguracionView() {
       {seccion === "Identidad y áreas" && <IdentidadYAreas />}
       {seccion === "Economía" && <Economia />}
       {seccion === "Bonos" && <Bonos />}
-      {seccion === "Catálogo de recompensas" && <CatalogoRecompensas />}
       {seccion === "Reconocimientos" && <CatalogoReconocimientos />}
       {seccion === "Datos" && <DatosYMitigaciones />}
     </div>

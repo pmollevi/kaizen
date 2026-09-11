@@ -117,7 +117,7 @@ export function PresupuestoTab() {
                 >
                   <option value="gasto">Gasto</option>
                   <option value="ahorro">Ahorro</option>
-                  <option value="recompensas">Recompensas</option>
+                  <option value="recompensas">Dinero libre</option>
                 </Select>
                 <Select
                   className="col-span-2"

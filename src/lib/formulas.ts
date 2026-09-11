@@ -130,7 +130,7 @@ export function cumplimientoGlobalSemanal(
 }
 
 // ---------------------------------------------------------------------------
-// 6.2 / 6.3 — PP semanales, créditos y nivel global
+// 6.2 / 6.3 — PP semanales y nivel global
 // ---------------------------------------------------------------------------
 
 export function ppSemana(
@@ -139,10 +139,6 @@ export function ppSemana(
   bonosPP: number
 ): number {
   return Math.round(config.economia.ppBase * cumplimientoGlobal) + bonosPP;
-}
-
-export function creditosSemana(pp: number, config: Config): number {
-  return Math.round(pp / config.economia.creditosPorPP);
 }
 
 export function ppParaNivel(nivel: number, config: Config): number {
@@ -220,20 +216,23 @@ export function semaforo(pctUso: number): "verde" | "amarillo" | "rojo" {
 }
 
 // ---------------------------------------------------------------------------
-// 9.1 — Desbloqueo económico
+// 9.1 — Dinero libre: se desbloquea semana a semana, en proporción a tu
+// cumplimiento de esa semana (el mismo % que ya define tus PP).
 // ---------------------------------------------------------------------------
 
-export function pctDesbloqueo(cumplimientoPromedioMes: number, config: Config, retoFinalSuperado: boolean): number {
-  const tabla = [...config.economia.tablaDesbloqueo].sort((a, b) => b.umbral - a.umbral);
-  let pct = 0;
-  for (const fila of tabla) {
-    if (cumplimientoPromedioMes >= fila.umbral) {
-      pct = fila.porcentaje;
-      break;
-    }
+/** Cuántas semanas (domingos) tiene un mes — así se reparte el dinero libre entre ellas. */
+export function semanasEnMes(mes: string): number {
+  const [y, m] = mes.split("-").map(Number);
+  const dias = diasDelMes(mes);
+  let domingos = 0;
+  for (let d = 1; d <= dias; d++) {
+    if (new Date(y, m - 1, d).getDay() === 0) domingos += 1;
   }
-  if (retoFinalSuperado) pct += config.economia.bonoRetoFinalPct;
-  return Math.min(1.1, pct);
+  return Math.max(1, domingos);
+}
+
+export function montoLiberadoSemana(montoPorSemana: number, cumplimientoGlobal: number): number {
+  return Math.round(montoPorSemana * Math.min(1, cumplimientoGlobal));
 }
 
 // ---------------------------------------------------------------------------

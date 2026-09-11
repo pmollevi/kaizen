@@ -48,8 +48,8 @@ export const USUARIO_DEFAULT: Usuario = {
   nombre: "",
   nivelGlobal: 1,
   ppTotales: 0,
-  creditos: 0,
   protecciones: 0,
+  diasRachaCanjeados: 0,
   tituloActivo: null,
 };
 
@@ -58,6 +58,7 @@ export const FINANZAS_DEFAULT: Finanzas = {
   gastos: [],
   resumenesMensuales: [],
   bancoRecompensas: { saldo: 0, tope: 9000 },
+  ahorroExtra: 0,
 };
 
 export function temporadaDefault(): Temporada {
@@ -94,20 +95,17 @@ export const CONFIG_DEFAULT: Config = {
     nombreSistema: "Kaizen",
     atributos: "Áreas de desarrollo",
     xp: "Puntos de Progreso",
-    monedas: "Créditos",
     escudos: "Protecciones",
     jefeTemporada: "Reto final de temporada",
     misiones: "Desafíos",
     logros: "Reconocimientos",
     salonFama: "Historial Permanente",
     radar: "Radar de desarrollo",
-    tienda: "Catálogo de recompensas",
   },
   economia: {
     ppBase: 1000,
     curvaBase: 800,
     curvaExponente: 1.2,
-    creditosPorPP: 20,
     umbralNivelArea: 0.85,
     semanasParaNivelArea: 4,
     incrementoPorEtapa: 0.1,
@@ -115,14 +113,7 @@ export const CONFIG_DEFAULT: Config = {
     proteccionesMaxAcumulables: 3,
     umbralProteccionMensual: 0.85,
     ventanaProteccionHoras: 48,
-    tablaDesbloqueo: [
-      { umbral: 0.9, porcentaje: 1.0 },
-      { umbral: 0.8, porcentaje: 0.8 },
-      { umbral: 0.7, porcentaje: 0.6 },
-      { umbral: 0.6, porcentaje: 0.4 },
-      { umbral: 0, porcentaje: 0 },
-    ],
-    bonoRetoFinalPct: 0.1,
+    diasPorProteccion: 7,
     topeBancoRecompensasMeses: 3,
     diasRegistroRetroactivo: 3,
     destinoSobranteDefault: "ahorro",
@@ -139,35 +130,6 @@ export const CONFIG_DEFAULT: Config = {
     { id: "b_record", nombre: "Récord personal en gimnasio", valorPP: 80 },
     { id: "b_proyecto", nombre: "Proyecto entregado", valorPP: 150 },
     { id: "b_desafio", nombre: "Desafío completado", valorPP: 100 },
-  ],
-  catalogoRecompensas: [
-    {
-      id: "r_serie",
-      nombre: "Noche de serie/película",
-      costoCreditos: 20,
-      costoMXN: 0,
-      categoria: "ocio",
-      limitePorMes: 4,
-      activa: true,
-    },
-    {
-      id: "r_comida",
-      nombre: "Comida fuera",
-      costoCreditos: 40,
-      costoMXN: 250,
-      categoria: "comida",
-      limitePorMes: 2,
-      activa: true,
-    },
-    {
-      id: "r_compra",
-      nombre: "Compra pequeña (ropa, gadget)",
-      costoCreditos: 80,
-      costoMXN: 600,
-      categoria: "compras",
-      limitePorMes: 1,
-      activa: true,
-    },
   ],
   catalogoReconocimientos: [
     {
@@ -221,7 +183,7 @@ export const CONFIG_DEFAULT: Config = {
     {
       id: "ach_secreto_1",
       nombre: "???",
-      descripcion: "Registra tus 6 áreas el mismo día, 7 días seguidos.",
+      descripcion: "Cumple todos tus hábitos activos el mismo día, 7 días seguidos.",
       rareza: "Épico",
       categoria: "constancia",
       secreto: true,
@@ -237,7 +199,6 @@ export function estadoInicial(nombreUsuario: string): KaizenState {
     registrosDiarios: [],
     finanzas: { ...FINANZAS_DEFAULT, bancoRecompensas: { ...FINANZAS_DEFAULT.bancoRecompensas } },
     cierresSemanales: [],
-    canjes: [],
     temporadaActual: temporadaDefault(),
     historial: {
       ...HISTORIAL_DEFAULT,

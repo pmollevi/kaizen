@@ -72,7 +72,7 @@ function ResultadoCierre({ id }: { id: string }) {
           <div className="grid grid-cols-3 gap-4 mb-4">
             <Stat label="Cumplimiento global" value={`${Math.round(cierre.cumplimientoGlobal * 100)}%`} />
             <Stat label="PP ganados" value={cierre.ppGanados} />
-            <Stat label="Créditos" value={cierre.creditosGanados} />
+            <Stat label="Dinero libre liberado" value={`$${cierre.dineroLiberado.toLocaleString()}`} />
           </div>
           {cierre.nivelesAreaSubidos.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -101,7 +101,7 @@ export function CierreSemanalView() {
 
   return (
     <div className="space-y-5">
-      <SectionTitle title="Cierre semanal" subtitle="Aquí se revelan los PP, créditos y niveles de la semana." />
+      <SectionTitle title="Cierre semanal" subtitle="Aquí se revelan los PP, el dinero libre y los niveles de la semana." />
 
       {pendientes.length === 0 && !ultimoCerrado && <EmptyState text="No hay semanas pendientes de cierre." />}
 
