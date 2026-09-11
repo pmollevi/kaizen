@@ -10,7 +10,8 @@ import type {
   RecompensaCatalogo,
   ReconocimientoCatalogo,
 } from "@/types";
-import { estadoInicial, temporadaDefault } from "@/config/defaultConfig";
+import { areaDesdeCatalogo, estadoInicial, temporadaDefault } from "@/config/defaultConfig";
+import { plantillaPorId } from "@/config/areaCatalog";
 import { claveDatos, getPerfilActivo } from "@/store/profiles";
 import { generarId } from "@/lib/id";
 import { diaDelMes, diasDelMes, finSemana, hoyISO, inicioSemana, mesDe, sumarDias } from "@/lib/dates";
@@ -63,6 +64,14 @@ interface Acciones {
   setCatalogoRecompensas: (catalogo: RecompensaCatalogo[]) => void;
   setCatalogoReconocimientos: (catalogo: ReconocimientoCatalogo[]) => void;
   setBonos: (bonos: KaizenState["config"]["bonos"]) => void;
+
+  aplicarPlanMensual: (input: {
+    mes: string;
+    habitos: { id: string; peso: number; metaMensual: number }[];
+    dineroUtil: number;
+    gastosFijos: { nombre: string; monto: number }[];
+    ahorro: number;
+  }) => void;
 
   crearDesafio: (desafio: Omit<Desafio, "id" | "completado">) => void;
   completarDesafio: (id: string) => void;
@@ -251,6 +260,64 @@ export const useKaizenStore = create<KaizenStore>()(
       setCatalogoRecompensas: (catalogo) => set((s) => ({ config: { ...s.config, catalogoRecompensas: catalogo } })),
       setCatalogoReconocimientos: (catalogo) => set((s) => ({ config: { ...s.config, catalogoReconocimientos: catalogo } })),
       setBonos: (bonos) => set((s) => ({ config: { ...s.config, bonos } })),
+
+      aplicarPlanMensual: ({ mes, habitos, dineroUtil, gastosFijos, ahorro }) => {
+        const s = get();
+        const semanas = diasDelMes(mes) / 7;
+
+        const areas = habitos.map(({ id, peso, metaMensual }) => {
+          const plantilla = plantillaPorId(id);
+          const existente = s.areas.find((a) => a.id === id);
+          const metaSemanalBase = Math.round((metaMensual / semanas) * 100) / 100;
+          if (!plantilla) {
+            // hábito ya activo que no está en el catálogo (no debería pasar, pero por seguridad)
+            return existente ? { ...existente, peso, metaSemanalBase } : areaDesdeCatalogo(id, peso);
+          }
+          const factor = plantilla.metaSemanalSugerida > 0 ? metaSemanalBase / plantilla.metaSemanalSugerida : 1;
+          const metaDiaria =
+            plantilla.metaDiariaSugerida === null ? null : Math.round(plantilla.metaDiariaSugerida * factor * 100) / 100;
+          const topeMetaSemanal = Math.max(
+            metaSemanalBase,
+            Math.round(plantilla.topeMetaSemanalSugerida * factor * 100) / 100
+          );
+          return {
+            id: plantilla.id,
+            nombre: plantilla.nombre,
+            dominio: plantilla.dominio,
+            metrica: plantilla.metrica,
+            unidad: plantilla.unidad,
+            metaDiaria,
+            metaSemanalBase,
+            topeMetaSemanal,
+            peso,
+            color: plantilla.color,
+            vinculoFinanciero: plantilla.vinculoFinanciero,
+            nivel: existente?.nivel ?? 1,
+            semanasConsecutivas: existente?.semanasConsecutivas ?? 0,
+          };
+        });
+
+        const categorias: CategoriaPresupuesto[] = [
+          ...gastosFijos
+            .filter((g) => g.nombre.trim() && g.monto > 0)
+            .map((g) => ({ id: generarId("cat"), nombre: g.nombre.trim(), tipo: "gasto" as const, modo: "fijo" as const, valor: g.monto })),
+          ...(ahorro > 0
+            ? [{ id: generarId("cat"), nombre: "Ahorro", tipo: "ahorro" as const, modo: "fijo" as const, valor: ahorro }]
+            : []),
+          { id: generarId("cat"), nombre: "Recompensas (el juego)", tipo: "recompensas" as const, modo: "resto" as const, valor: 0 },
+        ];
+
+        const yaExistePresupuesto = s.finanzas.presupuestos.some((p) => p.mes === mes);
+        const presupuestos = yaExistePresupuesto
+          ? s.finanzas.presupuestos.map((p) => (p.mes === mes ? { ...p, dineroUtil, categorias } : p))
+          : [...s.finanzas.presupuestos, { mes, dineroUtil, categorias, modoAtipico: false }];
+
+        set({
+          areas,
+          finanzas: { ...s.finanzas, presupuestos },
+          planesMensuales: s.planesMensuales.includes(mes) ? s.planesMensuales : [...s.planesMensuales, mes],
+        });
+      },
 
       crearDesafio: (desafio) =>
         set((s) => ({

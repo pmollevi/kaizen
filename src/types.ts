@@ -1,12 +1,8 @@
 // Modelo de datos completo de Kaizen. Ver docs/spec para el detalle de cada regla.
 
-export type AreaId =
-  | "intelecto"
-  | "imperio"
-  | "fuerza"
-  | "vitalidad"
-  | "energia"
-  | "sabiduria";
+// Antes era una unión cerrada de 6 valores; ahora cualquier hábito del catálogo
+// (o uno futuro) puede activarse, así que el id es un string libre.
+export type AreaId = string;
 
 export interface AreaConfig {
   id: AreaId;
@@ -17,10 +13,11 @@ export interface AreaConfig {
   metaDiaria: number | null; // null = sin meta diaria (ej. Fuerza)
   metaSemanalBase: number;
   topeMetaSemanal: number; // tope máximo tras progresión por etapas
-  peso: number; // 0-1, deben sumar 1 entre todas las áreas de la temporada
-  color: string; // clave de color (tailwind: area.<id>)
+  peso: number; // 0-1, deben sumar 1 entre todas las áreas activas
+  color: string; // color hex, ej. "#5b8def"
   nivel: number;
   semanasConsecutivas: number; // contador hacia el siguiente nivel de área
+  vinculoFinanciero?: boolean; // si true, su cumplimiento incluye la submétrica financiera (§8.5)
 }
 
 export interface RegistroDiario {
@@ -290,4 +287,5 @@ export interface KaizenState {
   temporadaActual: Temporada;
   historial: Historial;
   config: Config;
+  planesMensuales: string[]; // meses (YYYY-MM) para los que ya se completó el asistente de planeación
 }

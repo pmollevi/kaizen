@@ -26,17 +26,22 @@ export function SectionTitle({
 
 export function ProgressBar({
   value,
-  colorClass = "bg-area-intelecto",
+  colorClass,
+  color,
   height = "h-2",
 }: {
   value: number; // 0-1
-  colorClass?: string;
+  colorClass?: string; // clase tailwind (ej. "bg-sky-500")
+  color?: string; // color hex, para colores dinámicos por hábito
   height?: string;
 }) {
   const pct = Math.max(0, Math.min(1, value)) * 100;
   return (
     <div className={`w-full ${height} rounded-full bg-base-800 overflow-hidden`}>
-      <div className={`h-full ${colorClass} transition-all duration-500`} style={{ width: `${pct}%` }} />
+      <div
+        className={`h-full ${colorClass ?? ""} transition-all duration-500`}
+        style={{ width: `${pct}%`, backgroundColor: color }}
+      />
     </div>
   );
 }
@@ -101,12 +106,19 @@ export function Button({
   );
 }
 
+// Evita que el "w-full" base pelee por especificidad con un ancho custom (w-28, flex-1, etc.)
+// pasado por className: si el caller ya define un ancho, no forzamos w-full.
+const TIENE_ANCHO_PROPIO = /(^|\s)(w-|flex-1|flex-auto|flex-none|grow|shrink)/;
+function anchoBase(className: string): string {
+  return TIENE_ANCHO_PROPIO.test(className) ? "" : "w-full";
+}
+
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const { className = "", ...rest } = props;
   return (
     <input
       {...rest}
-      className={`w-full bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
+      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
     />
   );
 }
@@ -119,7 +131,7 @@ export function Select({
   return (
     <select
       {...rest}
-      className={`w-full bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm text-base-100 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
+      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm text-base-100 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
     >
       {children}
     </select>
@@ -131,7 +143,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return (
     <textarea
       {...rest}
-      className={`w-full bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
+      className={`${anchoBase(className)} bg-base-850 border border-base-700 rounded-lg px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:ring-2 focus:ring-sky-600 ${className}`}
     />
   );
 }

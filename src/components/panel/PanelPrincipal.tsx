@@ -1,8 +1,9 @@
-import React from "react";
-import { ShieldCheck, Coins, Flag, Wallet, Plus } from "lucide-react";
+import React, { useState } from "react";
+import { ShieldCheck, Coins, Flag, Wallet, Plus, CalendarRange } from "lucide-react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, ProgressBar, Stat, Badge, Button, EmptyState } from "@/components/ui/Primitives";
 import { RadarChart } from "@/components/RadarChart";
+import { PlanMensualWizard } from "@/components/planeacion/PlanMensualWizard";
 import {
   cumplimientoGlobalSemanal,
   cumplimientoSemanalArea,
@@ -12,31 +13,16 @@ import {
   semaforo,
   calcularAsignaciones,
 } from "@/lib/formulas";
-import { diasDelMes, diaDelMes, diasEntre, finSemana, hoyISO, inicioSemana, mesDe, formatoLargo } from "@/lib/dates";
+import { diasDelMes, diaDelMes, diasEntre, finSemana, hoyISO, inicioSemana, mesDe, formatoLargo, formatoMes } from "@/lib/dates";
 import { semanasPendientes } from "@/lib/cierre";
-
-const colorHex: Record<string, string> = {
-  intelecto: "#5b8def",
-  imperio: "#e0a63a",
-  fuerza: "#e0544f",
-  vitalidad: "#4cb782",
-  energia: "#9b6fe0",
-  sabiduria: "#3ab5c6",
-};
-const barColor: Record<string, string> = {
-  intelecto: "bg-area-intelecto",
-  imperio: "bg-area-imperio",
-  fuerza: "bg-area-fuerza",
-  vitalidad: "bg-area-vitalidad",
-  energia: "bg-area-energia",
-  sabiduria: "bg-area-sabiduria",
-};
 
 export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
   const state = useKaizenStore();
   const { usuario, areas, config, temporadaActual, finanzas } = state;
   const hoy = hoyISO();
   const nivel = nivelDesdePP(usuario.ppTotales, config);
+  const [wizardAbierto, setWizardAbierto] = useState(false);
+  const mesPlaneado = state.planesMensuales.includes(mesDe(hoy));
 
   const inicio = inicioSemana(hoy);
   const fin = finSemana(hoy);
@@ -73,8 +59,24 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
           <h1 className="text-xl font-semibold tracking-tight">Hola, {usuario.nombre || "de nuevo"}</h1>
           <p className="text-sm text-base-400 mt-0.5">{formatoLargo(hoy)}</p>
         </div>
-        <Button onClick={() => irA("registro")}>Registrar el día</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => setWizardAbierto(true)} className="inline-flex items-center gap-1.5">
+            <CalendarRange className="w-4 h-4" /> Planear {mesPlaneado ? "de nuevo" : "el mes"}
+          </Button>
+          <Button onClick={() => irA("registro")}>Registrar el día</Button>
+        </div>
       </div>
+
+      {!mesPlaneado && (
+        <Card className="border border-sky-900 bg-sky-950/30">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-sky-300">
+              Aún no planeas {formatoMes(mesDe(hoy))}: elige tus hábitos, sus metas y tu presupuesto del mes.
+            </div>
+            <Button onClick={() => setWizardAbierto(true)}>Planear ahora</Button>
+          </div>
+        </Card>
+      )}
 
       {pendientes.length > 0 && (
         <Card className="border border-amber-900 bg-amber-950/40">
@@ -146,7 +148,7 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
                     racha {a.semanasConsecutivas}/{config.economia.semanasParaNivelArea}
                   </span>
                 </div>
-                <ProgressBar value={cumplimientoPorArea[a.id] ?? 0} colorClass={barColor[a.id]} />
+                <ProgressBar value={cumplimientoPorArea[a.id] ?? 0} color={a.color} />
               </div>
             ))}
           </div>
@@ -158,7 +160,7 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
             puntos={areas.map((a) => ({
               label: a.nombre,
               value: Math.min(1, (a.nivel - 1) / 19),
-              color: colorHex[a.id],
+              color: a.color,
             }))}
           />
         </Card>
@@ -253,6 +255,8 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
           </ul>
         )}
       </Card>
+
+      {wizardAbierto && <PlanMensualWizard onClose={() => setWizardAbierto(false)} />}
     </div>
   );
 }

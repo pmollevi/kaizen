@@ -3,25 +3,12 @@ import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, Textarea, Button, Badge } from "@/components/ui/Primitives";
 import { formatoLargo, hoyISO, sumarDias } from "@/lib/dates";
 import type { AreaId, Gasto } from "@/types";
+import { plantillaPorId } from "@/config/areaCatalog";
 import { Plus, Trash2 } from "lucide-react";
 
-const AREA_ORDEN: { id: AreaId; label: string; tipo: "horas" | "binaria" | "conteo" | "paginas" }[] = [
-  { id: "intelecto", label: "Horas de estudio", tipo: "horas" },
-  { id: "imperio", label: "Horas de negocio", tipo: "horas" },
-  { id: "fuerza", label: "Entrenamiento", tipo: "binaria" },
-  { id: "vitalidad", label: "Comidas correctas (0-3)", tipo: "conteo" },
-  { id: "energia", label: "Horas de sueño", tipo: "horas" },
-  { id: "sabiduria", label: "Páginas leídas", tipo: "paginas" },
-];
-
-const VALORES_VACIOS: Record<AreaId, number> = {
-  intelecto: 0,
-  imperio: 0,
-  fuerza: 0,
-  vitalidad: 0,
-  energia: 0,
-  sabiduria: 0,
-};
+function valoresVacios(areas: { id: AreaId }[]): Record<AreaId, number> {
+  return Object.fromEntries(areas.map((a) => [a.id, 0]));
+}
 
 export function RegistroDiarioView() {
   const state = useKaizenStore();
@@ -34,13 +21,15 @@ export function RegistroDiarioView() {
   const [fecha, setFecha] = useState(hoy);
 
   const registroExistente = state.registrosDiarios.find((r) => r.fecha === fecha);
-  const [valores, setValores] = useState<Record<AreaId, number>>(registroExistente?.valores ?? VALORES_VACIOS);
+  const [valores, setValores] = useState<Record<AreaId, number>>(
+    registroExistente?.valores ?? valoresVacios(state.areas)
+  );
   const [observacion, setObservacion] = useState(registroExistente?.observacion ?? "");
 
   const cambiarFecha = (nueva: string) => {
     setFecha(nueva);
     const r = state.registrosDiarios.find((x) => x.fecha === nueva);
-    setValores(r?.valores ?? VALORES_VACIOS);
+    setValores(r?.valores ?? valoresVacios(state.areas));
     setObservacion(r?.observacion ?? "");
   };
 
@@ -95,63 +84,73 @@ export function RegistroDiarioView() {
       </div>
 
       <Card>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {AREA_ORDEN.map((a) => {
-            const area = state.areas.find((x) => x.id === a.id)!;
-            if (a.tipo === "binaria") {
-              return (
-                <Field key={a.id} label={`${area.nombre} — ${a.label}`}>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={valores[a.id] === 1 ? "primary" : "secondary"}
-                      onClick={() => setValores((v) => ({ ...v, [a.id]: 1 }))}
-                    >
-                      Sí
-                    </Button>
-                    <Button
-                      variant={valores[a.id] === 0 ? "primary" : "secondary"}
-                      onClick={() => setValores((v) => ({ ...v, [a.id]: 0 }))}
-                    >
-                      No
-                    </Button>
-                  </div>
-                </Field>
-              );
-            }
-            if (a.tipo === "conteo") {
-              return (
-                <Field key={a.id} label={`${area.nombre} — ${a.label}`}>
-                  <div className="flex gap-2">
-                    {[0, 1, 2, 3].map((n) => (
-                      <button
-                        key={n}
-                        onClick={() => setValores((v) => ({ ...v, [a.id]: n }))}
-                        className={`w-10 h-10 rounded-lg text-sm font-medium border transition-colors ${
-                          valores[a.id] === n ? "border-sky-600 bg-sky-600/10 text-sky-400" : "border-base-800 text-base-400"
-                        }`}
+        {state.areas.length === 0 ? (
+          <div className="text-sm text-base-500">
+            Aún no tienes hábitos activos. Ve a Configuración → "Planear el mes" para elegirlos.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {state.areas.map((area) => {
+              const plantilla = plantillaPorId(area.id);
+              const tipo = plantilla?.tipoMeta ?? "horas";
+              const label = `${area.nombre} — ${area.metrica}`;
+              if (tipo === "binaria") {
+                return (
+                  <Field key={area.id} label={label}>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={valores[area.id] === 1 ? "primary" : "secondary"}
+                        onClick={() => setValores((v) => ({ ...v, [area.id]: 1 }))}
                       >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
+                        Sí
+                      </Button>
+                      <Button
+                        variant={valores[area.id] === 0 ? "primary" : "secondary"}
+                        onClick={() => setValores((v) => ({ ...v, [area.id]: 0 }))}
+                      >
+                        No
+                      </Button>
+                    </div>
+                  </Field>
+                );
+              }
+              if (tipo === "conteo3") {
+                return (
+                  <Field key={area.id} label={label}>
+                    <div className="flex gap-2">
+                      {[0, 1, 2, 3].map((n) => (
+                        <button
+                          key={n}
+                          onClick={() => setValores((v) => ({ ...v, [area.id]: n }))}
+                          className={`w-10 h-10 rounded-lg text-sm font-medium border transition-colors ${
+                            valores[area.id] === n
+                              ? "border-sky-600 bg-sky-600/10 text-sky-400"
+                              : "border-base-800 text-base-400"
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+                );
+              }
+              return (
+                <Field key={area.id} label={label}>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={tipo === "horas" ? 0.25 : 1}
+                    inputMode="decimal"
+                    value={valores[area.id] || ""}
+                    onChange={(e) => setValores((v) => ({ ...v, [area.id]: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0"
+                  />
                 </Field>
               );
-            }
-            return (
-              <Field key={a.id} label={`${area.nombre} — ${a.label}`}>
-                <Input
-                  type="number"
-                  min={0}
-                  step={a.tipo === "paginas" ? 1 : 0.25}
-                  inputMode="decimal"
-                  value={valores[a.id] || ""}
-                  onChange={(e) => setValores((v) => ({ ...v, [a.id]: parseFloat(e.target.value) || 0 }))}
-                  placeholder="0"
-                />
-              </Field>
-            );
-          })}
-        </div>
+            })}
+          </div>
+        )}
 
         <div className="mt-5">
           <Field label="Observación breve" hint={`${observacion.length}/200`}>

@@ -8,93 +8,41 @@ import type {
   Usuario,
 } from "@/types";
 import { hoyISO, sumarDias } from "@/lib/dates";
+import { CATALOGO_AREAS, plantillaPorId } from "@/config/areaCatalog";
 
-export const AREAS_DEFAULT: AreaConfig[] = [
-  {
-    id: "intelecto",
-    nombre: "Intelecto",
-    dominio: "Academia / Medicina",
-    metrica: "Horas de estudio",
-    unidad: "h",
-    metaDiaria: 4,
-    metaSemanalBase: 28,
-    topeMetaSemanal: 42,
-    peso: 0.35,
-    color: "intelecto",
+export function areaDesdeCatalogo(id: string, peso: number): AreaConfig {
+  const p = plantillaPorId(id);
+  if (!p) throw new Error(`Hábito de catálogo desconocido: ${id}`);
+  return {
+    id: p.id,
+    nombre: p.nombre,
+    dominio: p.dominio,
+    metrica: p.metrica,
+    unidad: p.unidad,
+    metaDiaria: p.metaDiariaSugerida,
+    metaSemanalBase: p.metaSemanalSugerida,
+    topeMetaSemanal: p.topeMetaSemanalSugerida,
+    peso,
+    color: p.color,
     nivel: 1,
     semanasConsecutivas: 0,
-  },
-  {
-    id: "imperio",
-    nombre: "Imperio",
-    dominio: "Negocios y finanzas",
-    metrica: "Horas de negocio + cumplimiento financiero",
-    unidad: "h",
-    metaDiaria: 1.5,
-    metaSemanalBase: 10,
-    topeMetaSemanal: 16,
-    peso: 0.15,
-    color: "imperio",
-    nivel: 1,
-    semanasConsecutivas: 0,
-  },
-  {
-    id: "fuerza",
-    nombre: "Fuerza",
-    dominio: "Gimnasio",
-    metrica: "Días entrenados",
-    unidad: "días",
-    metaDiaria: null,
-    metaSemanalBase: 5,
-    topeMetaSemanal: 5,
-    peso: 0.1,
-    color: "fuerza",
-    nivel: 1,
-    semanasConsecutivas: 0,
-  },
-  {
-    id: "vitalidad",
-    nombre: "Vitalidad",
-    dominio: "Nutrición",
-    metrica: "Comidas correctas",
-    unidad: "comidas",
-    metaDiaria: 3,
-    metaSemanalBase: 21,
-    topeMetaSemanal: 21,
-    peso: 0.2,
-    color: "vitalidad",
-    nivel: 1,
-    semanasConsecutivas: 0,
-  },
-  {
-    id: "energia",
-    nombre: "Energía",
-    dominio: "Sueño",
-    metrica: "Horas dormidas",
-    unidad: "h",
-    metaDiaria: 7.5,
-    metaSemanalBase: 52.5,
-    topeMetaSemanal: 56,
-    peso: 0.15,
-    color: "energia",
-    nivel: 1,
-    semanasConsecutivas: 0,
-  },
-  {
-    id: "sabiduria",
-    nombre: "Sabiduría",
-    dominio: "Aprendizaje",
-    metrica: "Páginas leídas",
-    unidad: "pág",
-    metaDiaria: 15,
-    metaSemanalBase: 105,
-    topeMetaSemanal: 160,
-    peso: 0.05,
-    color: "sabiduria",
-    nivel: 1,
-    semanasConsecutivas: 0,
-  },
-];
+    vinculoFinanciero: p.vinculoFinanciero,
+  };
+}
+
+// Selección inicial: los 6 hábitos clásicos, con los pesos originales.
+const PESOS_DEFAULT: Record<string, number> = {
+  intelecto: 0.35,
+  imperio: 0.15,
+  fuerza: 0.1,
+  vitalidad: 0.2,
+  energia: 0.15,
+  sabiduria: 0.05,
+};
+
+export const AREAS_DEFAULT: AreaConfig[] = CATALOGO_AREAS.filter((p) => p.id in PESOS_DEFAULT).map((p) =>
+  areaDesdeCatalogo(p.id, PESOS_DEFAULT[p.id])
+);
 
 export const USUARIO_DEFAULT: Usuario = {
   nombre: "",
@@ -296,5 +244,6 @@ export function estadoInicial(nombreUsuario: string): KaizenState {
       nivelesMaximos: { ...HISTORIAL_DEFAULT.nivelesMaximos },
     },
     config: JSON.parse(JSON.stringify(CONFIG_DEFAULT)),
+    planesMensuales: [],
   };
 }

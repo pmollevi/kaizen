@@ -25,7 +25,7 @@ export function multiplicadorEtapa(area: AreaConfig, config: Config, metaBase: n
 }
 
 export function metaSemanalBase(area: AreaConfig, config: Config): number {
-  return area.id === "imperio" ? config.imperio.metaSemanalHorasNegocio : area.metaSemanalBase;
+  return area.vinculoFinanciero ? config.imperio.metaSemanalHorasNegocio : area.metaSemanalBase;
 }
 
 export function metaSemanalEfectiva(area: AreaConfig, config: Config): number {
@@ -110,8 +110,8 @@ export function cumplimientoSemanalArea(
   presupuestoDelMes: PresupuestoMensual | undefined
 ): number {
   const registrosSemana = registrosDeSemana(registros, inicio, fin);
-  if (area.id === "imperio") {
-    const horasNegocio = sumaAreaEnSemana(registrosSemana, "imperio");
+  if (area.vinculoFinanciero) {
+    const horasNegocio = sumaAreaEnSemana(registrosSemana, area.id);
     const metaNegocio = metaSemanalEfectiva(area, config);
     const cumplNegocio = metaNegocio > 0 ? Math.min(1, horasNegocio / metaNegocio) : 0;
     const cumplFinanzas = cumplimientoFinancieroSemanal(registros, gastos, presupuestoDelMes, inicio, fin);
