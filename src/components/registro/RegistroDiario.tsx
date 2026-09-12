@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, Field, Input, Textarea, Button, Badge } from "@/components/ui/Primitives";
-import { formatoLargo, hoyISO, sumarDias } from "@/lib/dates";
+import { Card, SectionTitle, Field, Input, Textarea, Button, Badge, ProgressBar, Stat } from "@/components/ui/Primitives";
+import { finSemana, formatoLargo, hoyISO, inicioSemana, sumarDias } from "@/lib/dates";
 import type { AreaId, Gasto } from "@/types";
 import { plantillaPorId } from "@/config/areaCatalog";
 import { iconoDeHabito } from "@/config/habitIcons";
-import { CheckCircle2, Minus, Plus, Trash2 } from "lucide-react";
+import { cumplimientoSemanalArea, nivelDesdePP } from "@/lib/formulas";
+import { rachaDiariaVigente } from "@/lib/achievements";
+import { CheckCircle2, Flame, Minus, Plus, ShieldCheck, Trash2 } from "lucide-react";
 
 function valoresVacios(areas: { id: AreaId }[]): Record<AreaId, number> {
   return Object.fromEntries(areas.map((a) => [a.id, 0]));
@@ -175,9 +177,71 @@ export function RegistroDiarioView() {
     return dias;
   }, [hoy]);
 
+  const nivel = nivelDesdePP(state.usuario.ppTotales, state.config);
+  const inicio = inicioSemana(hoy);
+  const fin = finSemana(hoy);
+  const presupuestoMesActual = state.finanzas.presupuestos.find((p) => p.mes === hoy.slice(0, 7));
+
   return (
     <div className="space-y-6 relative">
-      <SectionTitle title="Registro diario" subtitle="Menos de 5 minutos. Sin números de progreso a la vista." />
+      <SectionTitle title="Hábitos" subtitle="Menos de 5 minutos. Sin números de progreso a la vista." />
+
+      <Card>
+        <SectionTitle title="Progreso" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+          <Stat label="Nivel global" value={nivel.nivel} hint={`faltan ${nivel.faltante} PP`} />
+          <Stat label="PP totales" value={state.usuario.ppTotales.toLocaleString()} />
+          <Stat
+            label="Racha diaria"
+            value={
+              <span className="inline-flex items-center gap-1">
+                <Flame className="w-4 h-4 text-amber-400" /> {rachaDiariaVigente(state)}
+              </span>
+            }
+          />
+          <Stat
+            label="Protecciones"
+            value={
+              <span className="inline-flex items-center gap-1">
+                <ShieldCheck className="w-4 h-4 text-sky-400" /> {state.usuario.protecciones}
+              </span>
+            }
+          />
+        </div>
+        <ProgressBar value={nivel.progresoPct} colorClass="bg-sky-500" height="h-2.5" />
+        <div className="flex items-center justify-between text-xs text-base-500 mt-1.5 mb-5">
+          <span>Nivel {nivel.nivel}</span>
+          <span>Nivel {nivel.nivel + 1}</span>
+        </div>
+        <div className="space-y-3">
+          {state.areas.map((a) => {
+            const Icono = iconoDeHabito(a.id);
+            const cumplimiento = cumplimientoSemanalArea(
+              a,
+              state.config,
+              state.registrosDiarios,
+              inicio,
+              fin,
+              state.finanzas.gastos,
+              presupuestoMesActual
+            );
+            return (
+              <div key={a.id}>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-medium text-base-200 inline-flex items-center gap-1.5">
+                    <Icono className="w-3.5 h-3.5" style={{ color: a.color }} />
+                    {a.nombre} · Nv. {a.nivel}
+                  </span>
+                  <span className="text-base-500">
+                    racha {a.semanasConsecutivas}/{state.config.economia.semanasParaNivelArea}
+                  </span>
+                </div>
+                <ProgressBar value={cumplimiento} color={a.color} />
+              </div>
+            );
+          })}
+        </div>
+      </Card>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {ultimos7.map((d) => {

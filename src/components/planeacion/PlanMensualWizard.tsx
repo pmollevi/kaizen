@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { CATALOGO_AREAS, type PlantillaArea } from "@/config/areaCatalog";
 import { iconoDeHabito } from "@/config/habitIcons";
-import { Button, Field, Input, Badge } from "@/components/ui/Primitives";
+import { Button, Field, Input, Badge, StepperPorcentaje, Textarea } from "@/components/ui/Primitives";
+import { SelectorHorizontal } from "@/components/ui/SelectorHorizontal";
 import { formatoMes, hoyISO, mesDe } from "@/lib/dates";
 import { generarId } from "@/lib/id";
 import { X, Plus, Trash2, Check } from "lucide-react";
@@ -33,12 +34,28 @@ interface GastoFijoDraft {
   monto: string;
 }
 
+// Rango y paso del selector horizontal para cada tipo de meta.
+function rangoParaTipo(c: PlantillaArea, diaria: boolean): { min: number; max: number; step: number } {
+  if (c.tipoMeta === "conteo3") return { min: 0, max: 3, step: 1 };
+  if (c.tipoMeta === "binaria") return { min: 0, max: 7, step: 1 };
+  if (diaria) {
+    const step = c.tipoMeta === "horas" ? 0.5 : 5;
+    const maxDiario = Math.max(step, (c.topeMetaSemanalSugerida / 7) * 1.5);
+    return { min: 0, max: Math.ceil(maxDiario / step) * step, step };
+  }
+  return { min: 0, max: Math.max(7, c.topeMetaSemanalSugerida), step: 1 };
+}
+
 export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
   const state = useKaizenStore();
   const aplicarPlanMensual = useKaizenStore((s) => s.aplicarPlanMensual);
+  const setMetaMensual = useKaizenStore((s) => s.setMetaMensual);
 
   const [mes] = useState(mesDe(hoyISO()));
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [metaGrande, setMetaGrande] = useState(
+    state.metasMensuales.find((m) => m.mes === mesDe(hoyISO()))?.descripcion ?? ""
+  );
 
   const idsActivosIniciales = state.areas.length > 0 ? state.areas.map((a) => a.id) : ["intelecto", "imperio", "fuerza", "vitalidad", "energia", "sabiduria"];
   const [seleccionados, setSeleccionados] = useState<string[]>(idsActivosIniciales);
@@ -103,6 +120,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
       gastosFijos: gastosFijos.map((g) => ({ nombre: g.nombre, monto: parseFloat(g.monto) || 0 })),
       ahorro,
     });
+    if (metaGrande.trim()) setMetaMensual(mes, metaGrande.trim());
     onClose();
   };
 
@@ -162,15 +180,12 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                     {seleccionados.map((id) => {
                       const c = CATALOGO_AREAS.find((x) => x.id === id)!;
                       return (
-                        <div key={id} className="flex items-center gap-3">
-                          <span className="text-sm text-base-300 w-28 truncate">{c.nombre}</span>
-                          <Input
-                            type="number"
-                            className="w-20"
+                        <div key={id} className="flex items-center justify-between gap-3">
+                          <span className="text-sm text-base-300 truncate">{c.nombre}</span>
+                          <StepperPorcentaje
                             value={pesos[id] ?? 0}
-                            onChange={(e) => setPesos((p) => ({ ...p, [id]: parseInt(e.target.value) || 0 }))}
+                            onChange={(v) => setPesos((p) => ({ ...p, [id]: v }))}
                           />
-                          <span className="text-xs text-base-500">%</span>
                         </div>
                       );
                     })}
@@ -193,29 +208,30 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                   const valor = metas[id] ?? 0;
                   const semanal = metaSemanalDesdeValor(c, valor);
                   const Icono = iconoDeHabito(c.id);
+                  const rango = rangoParaTipo(c, diaria);
                   return (
                     <div key={id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-3">
                         <Icono className="w-4 h-4" style={{ color: c.color }} />
                         <span className="text-sm font-medium">{c.nombre}</span>
-                        <span className="text-xs text-base-500">· {c.metrica}</span>
+                        <span className="text-xs text-base-500">
+                          · {diaria ? "meta diaria" : "meta semanal"} ({c.unidad})
+                        </span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Field label={diaria ? `Meta diaria (${c.unidad})` : `Meta semanal (${c.unidad})`}>
-                          <Input
-                            type="number"
-                            step={c.tipoMeta === "horas" ? 0.5 : 1}
-                            max={c.tipoMeta === "binaria" || c.tipoMeta === "veces" ? 7 : undefined}
-                            value={valor}
-                            onChange={(e) => setMetas((m) => ({ ...m, [id]: parseFloat(e.target.value) || 0 }))}
-                          />
-                        </Field>
-                        {diaria && (
-                          <div className="text-xs text-base-500 whitespace-nowrap pt-5">
-                            = <span className="text-base-200 font-medium">{semanal}</span> a la semana
-                          </div>
-                        )}
-                      </div>
+                      <SelectorHorizontal
+                        value={valor}
+                        onChange={(v) => setMetas((m) => ({ ...m, [id]: v }))}
+                        min={rango.min}
+                        max={rango.max}
+                        step={rango.step}
+                        unidad={c.unidad}
+                        color={c.color}
+                      />
+                      {diaria && (
+                        <div className="text-xs text-base-500 text-center mt-1">
+                          = <span className="text-base-200 font-medium">{semanal}</span> a la semana
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -225,7 +241,17 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
 
           {step === 3 && (
             <div className="space-y-4">
-              <div className="text-sm font-medium text-base-200">Ahora la parte económica</div>
+              <div className="text-sm font-medium text-base-200">Tu meta grande de {formatoMes(mes)}</div>
+              <Field label="¿Qué quieres haber logrado al terminar el mes?" hint="Al cerrar el mes te preguntamos si la cumpliste o no.">
+                <Textarea
+                  rows={2}
+                  value={metaGrande}
+                  onChange={(e) => setMetaGrande(e.target.value)}
+                  placeholder="Ej. Cerrar el mes sin sobregiro y entrenar 4 veces por semana"
+                />
+              </Field>
+
+              <div className="text-sm font-medium text-base-200 pt-2 border-t border-white/10">Ahora la parte económica</div>
               <Field label="¿Cuánto dinero tienes disponible este mes? (MXN)">
                 <Input type="number" value={dineroUtil || ""} onChange={(e) => setDineroUtil(parseFloat(e.target.value) || 0)} />
               </Field>
@@ -278,7 +304,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
 
               <div className="rounded-xl bg-white/[0.04] border border-white/10 p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-base-300">Dinero libre (con esto se juega)</span>
+                  <span className="text-sm text-base-300">Dinero para lujos (con esto se juega)</span>
                   <span className={`text-lg font-semibold ${dineroLibre < 0 ? "text-rose-400" : "text-emerald-400"}`}>
                     ${dineroLibre.toLocaleString()}
                   </span>

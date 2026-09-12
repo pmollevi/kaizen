@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-12T07:02:36Z",
+  "title": "Design System: Kaizen",
+  "extensions": {
+    "colorMeta": {
+      "sky-signal": { "role": "primary", "displayName": "Signal Sky", "canonical": "#0ea5e9", "tonalRamp": ["#082f49", "#0c4a6e", "#075985", "#0369a1", "#0284c7", "#0ea5e9", "#38bdf8", "#7dd3fc"] },
+      "void-950": { "role": "neutral", "displayName": "Void 950", "canonical": "#0a0b0d", "tonalRamp": ["#0a0b0d", "#121317", "#171920", "#1d1f28", "#2a2d38", "#3a3e4d", "#565b6e", "#7a8094"] },
+      "void-100": { "role": "neutral", "displayName": "Void 100", "canonical": "#e8e9ee", "tonalRamp": ["#565b6e", "#7a8094", "#a3a8b8", "#c8ccd6", "#e8e9ee", "#f0f1f4", "#f7f8fa", "#ffffff"] },
+      "area-intelecto": { "role": "data", "displayName": "Intelecto Blue", "canonical": "#5b8def", "tonalRamp": ["#0f1f3d", "#1e3a6e", "#2d549e", "#3d6ecc", "#5b8def", "#82a7f2", "#aac2f6", "#d3ddfa"] },
+      "area-imperio": { "role": "data", "displayName": "Imperio Amber", "canonical": "#e0a63a", "tonalRamp": ["#3d2c0c", "#6b4e15", "#98701e", "#c58e28", "#e0a63a", "#e8bb64", "#efd08e", "#f7e5c1"] },
+      "area-fuerza": { "role": "data", "displayName": "Fuerza Red", "canonical": "#e0544f", "tonalRamp": ["#3d1210", "#6b201d", "#982f2a", "#c53f38", "#e0544f", "#e87d78", "#efa6a3", "#f7d2d0"] },
+      "area-vitalidad": { "role": "data", "displayName": "Vitalidad Green", "canonical": "#4cb782", "tonalRamp": ["#0e2f1e", "#195438", "#237952", "#2e9e6c", "#4cb782", "#75c9a1", "#9edac0", "#c8ecdf"] },
+      "area-energia": { "role": "data", "displayName": "Energía Violet", "canonical": "#9b6fe0", "tonalRamp": ["#241639", "#3f2664", "#5a368f", "#7550ba", "#9b6fe0", "#b592e8", "#cfb6f0", "#e9daf8" ] },
+      "area-sabiduria": { "role": "data", "displayName": "Sabiduría Cyan", "canonical": "#3ab5c6", "tonalRamp": ["#0d2f34", "#16535d", "#1f7786", "#289bae", "#3ab5c6", "#68c7d4", "#96d9e2", "#c3ecf1"] },
+      "area-serenidad": { "role": "data", "displayName": "Serenidad Teal", "canonical": "#63c7b2", "tonalRamp": ["#153833", "#25635a", "#358e80", "#4cb1a0", "#63c7b2", "#89d5c5", "#afe3d8", "#d6f1ea"] },
+      "area-vinculos": { "role": "data", "displayName": "Vínculos Pink", "canonical": "#e06fa8", "tonalRamp": ["#3d1728", "#6b2747", "#983765", "#c54c84", "#e06fa8", "#e88fbe", "#efb0d3", "#f7d7e9"] },
+      "area-creatividad": { "role": "data", "displayName": "Creatividad Lilac", "canonical": "#c68fe0", "tonalRamp": ["#33193d", "#582c6b", "#7d3f98", "#a262c5", "#c68fe0", "#d4abe8", "#e2c7f0", "#f0e3f8"] },
+      "area-gratitud": { "role": "data", "displayName": "Gratitud Gold", "canonical": "#e0c23a", "tonalRamp": ["#3d3410", "#6b5b1c", "#988228", "#c5a834", "#e0c23a", "#e8d064", "#efde8e", "#f7ecc1"] },
+      "signal-success": { "role": "status", "displayName": "Success Emerald", "canonical": "#10b981", "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#10b981", "#34d399", "#6ee7b7", "#a7f3d0"] },
+      "signal-warning": { "role": "status", "displayName": "Warning Amber", "canonical": "#f59e0b", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#f59e0b", "#fbbf24", "#fcd34d", "#fde68a"] },
+      "signal-danger": { "role": "status", "displayName": "Danger Rose", "canonical": "#f43f5e", "tonalRamp": ["#4c0519", "#881337", "#9f1239", "#be123c", "#f43f5e", "#fb7185", "#fda4af", "#fecdd3"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Screen titles and the dominant number on a panel (level, PP total, wallet balance)." },
+      "title": { "displayName": "Title", "purpose": "Card section titles and modal titles." },
+      "body": { "displayName": "Body", "purpose": "Running copy, list rows, form values." },
+      "label": { "displayName": "Label", "purpose": "Uppercase micro-labels above stats and fields." }
+    },
+    "shadows": [
+      { "name": "card-float", "value": "inset 0 1px 0 0 rgba(255,255,255,0.05), 0 20px 40px -28px rgba(0,0,0,0.7)", "purpose": "Default resting elevation for every Card." },
+      { "name": "action-glow", "value": "inset 0 1px 0 0 rgba(255,255,255,0.3), 0 8px 20px -8px rgba(59,130,246,0.6)", "purpose": "Primary buttons, brand mark, and the floating quick-add button." },
+      { "name": "overlay-lift", "value": "0 30px 60px -20px rgba(0,0,0,0.8)", "purpose": "Modals and sheets, paired with a blurred black scrim behind them." }
+    ],
+    "motion": [
+      { "name": "pop", "value": "cubic-bezier(0.34,1.56,0.64,1) 0.35s, scale 0.8→1.08→1", "purpose": "Modal/sheet entrance and other one-shot celebratory reveals." },
+      { "name": "fade-up", "value": "ease-out 0.25s, translateY(6px)→0 + opacity 0→1", "purpose": "Default content entrance (login card, lists appearing)." },
+      { "name": "wiggle", "value": "ease-in-out 0.4s, rotate -4deg↔4deg", "purpose": "Playful emphasis on an earned or newly-unlocked element." },
+      { "name": "confetti-fall", "value": "ease-in 0.9s forwards, translateY(-10px→120px) + rotate 360deg + opacity 1→0", "purpose": "Reserved for real, earned celebration moments (level-up, achievement unlock, closed week)." }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Default call-to-action button; sky fill with an inset highlight and sky-tinted ambient glow.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Registrar el día</button>",
+      "css": ".ds-btn { padding: 8px 14px; border-radius: 12px; font-size: 0.875rem; font-weight: 500; font-family: Inter, ui-sans-serif, system-ui, sans-serif; border: none; cursor: pointer; transition: transform 0.15s, background 0.15s; } .ds-btn:active { transform: scale(0.97); } .ds-btn-primary { background: #0ea5e9; color: #ffffff; box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.3), 0 8px 20px -8px rgba(14,165,233,0.6); } .ds-btn-primary:hover { background: #38bdf8; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Lower-priority action placed beside a primary button; translucent fill, hairline border, no glow.",
+      "html": "<button class=\"ds-btn ds-btn-secondary\">Planear de nuevo</button>",
+      "css": ".ds-btn { padding: 8px 14px; border-radius: 12px; font-size: 0.875rem; font-weight: 500; font-family: Inter, ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: transform 0.15s, background 0.15s; } .ds-btn:active { transform: scale(0.97); } .ds-btn-secondary { background: rgba(255,255,255,0.06); color: #e8e9ee; border: 1px solid rgba(255,255,255,0.1); }.ds-btn-secondary:hover { background: rgba(255,255,255,0.1); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The universal glass panel: every dashboard block, form section, and list container is one of these.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Progreso</div><div class=\"ds-card-body\">Nivel global · 1,240 PP</div></div>",
+      "css": ".ds-card { background: rgba(255,255,255,0.035); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.05), 0 20px 40px -28px rgba(0,0,0,0.7); color: #e8e9ee; font-family: Inter, ui-sans-serif, system-ui, sans-serif; } .ds-card-title { font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; } .ds-card-body { font-size: 0.875rem; color: #a3a8b8; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Text input with glass fill and a sky focus ring; always paired with an uppercase micro-label above it.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Monto (MXN)</span><input class=\"ds-input\" placeholder=\"0\" /></label>",
+      "css": ".ds-field { display: block; font-family: Inter, ui-sans-serif, system-ui, sans-serif; } .ds-field-label { display: block; font-size: 0.75rem; font-weight: 500; color: #7a8094; margin-bottom: 6px; } .ds-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px 12px; font-size: 0.875rem; color: #e8e9ee; outline: none; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s; } .ds-input::placeholder { color: #565b6e; } .ds-input:focus { border-color: #38bdf8; background: rgba(255,255,255,0.06); box-shadow: 0 0 0 2px rgba(56,189,248,0.5); }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Pill-shaped status/tag label; tone maps to a status or the primary accent.",
+      "html": "<span class=\"ds-badge ds-badge-blue\">semanal</span>",
+      "css": ".ds-badge { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; border: 1px solid; font-family: Inter, ui-sans-serif, system-ui, sans-serif; } .ds-badge-blue { background: rgba(14,165,233,0.1); color: #38bdf8; border-color: rgba(14,165,233,0.2); } .ds-badge-green { background: rgba(16,185,129,0.1); color: #34d399; border-color: rgba(16,185,129,0.2); } .ds-badge-red { background: rgba(244,63,94,0.1); color: #fb7185; border-color: rgba(244,63,94,0.2); }"
+    },
+    {
+      "name": "Progress Bar",
+      "kind": "custom",
+      "refersTo": "progress-bar",
+      "description": "The system's default way of visualizing any 0-1 completion value: habit compliance, level progress, budget usage.",
+      "html": "<div class=\"ds-progress\"><div class=\"ds-progress-fill\" style=\"width: 62%; background: #0ea5e9;\"></div></div>",
+      "css": ".ds-progress { width: 100%; height: 6px; border-radius: 9999px; background: rgba(255,255,255,0.06); overflow: hidden; } .ds-progress-fill { height: 100%; border-radius: 9999px; transition: width 0.5s; }"
+    },
+    {
+      "name": "Floating Quick-Add",
+      "kind": "custom",
+      "refersTo": "fab",
+      "description": "56px circular action button, fixed bottom-right, for the single highest-frequency action (adding an expense).",
+      "html": "<button class=\"ds-fab\" aria-label=\"Agregar gasto rápido\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"white\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg></button>",
+      "css": ".ds-fab { width: 56px; height: 56px; border-radius: 9999px; background: #0ea5e9; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.3), 0 12px 28px -8px rgba(14,165,233,0.7); transition: background 0.15s, transform 0.15s; } .ds-fab:hover { background: #38bdf8; } .ds-fab:active { transform: scale(0.95); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Centro de Mando Nocturno",
+    "overview": "Kaizen reads like a personal mission control that only exists after dark: an almost-black surface lit from within by a handful of instrument panels made of frosted glass. Every card is a gauge — level, streak, budget, season — floating a fraction above the void on a soft inset highlight and a diffuse ambient shadow, never a hard edge. The system stays quiet by default: one accent voice (sky blue), a restrained neutral scale, and per-habit colors that behave as data-encoding, not decoration. It earns the right to break that calm only at the moment something real is won — a level-up, a closed week, a streak milestone — where a short, physical burst (pop, confetti, a wiggle) interrupts the stillness and then gets out of the way.\n\nThis is not gamified-app candy and it is not a spreadsheet. The RPG framing (levels, seasons, achievements) and the financial framing (budgets, categories, real money unlocked weekly) are rendered in the exact same visual language on purpose — the same glass card, the same restrained sky accent, the same progress bar — because the product's whole premise is that they are one economy, not two features bolted together. Flatness or a low-effort look is the one thing this system must never slide into: depth, glow, and motion are the proof of craft, not embellishment to be trimmed for simplicity.",
+    "keyCharacteristics": [
+      "Near-black base with frosted, translucent glass cards floating on soft ambient shadows — never flat, never hard-edged.",
+      "A single accent voice (sky blue) for action and identity; habit-area colors are data, not brand decoration.",
+      "Calm and precise by default; short, physical celebration bursts (pop / confetti / wiggle) mark real, earned moments only.",
+      "Progress is always visualized as a bar, ring, or radar — a number alone is never the only signal.",
+      "Rounded, soft geometry throughout (12–16px radii); no sharp corners, no hairline-only borders without a shadow behind them."
+    ],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "Sky blue is the sole color allowed to mean \"act here\" or \"this is active\" anywhere in the app; if a new affordance needs an accent, it borrows this one rather than introducing a second brand hue.", "section": "colors" },
+      { "name": "The Data-Not-Decoration Rule", "body": "A habit's color may only appear on the elements that represent that specific habit's data (its icon, progress bar, radar point) — it must never bleed into chrome, buttons, or another habit's row.", "section": "colors" },
+      { "name": "The No-Serif Rule", "body": "The system has exactly one type family. A second face — even for a hero number — reads as an inconsistency, not sophistication.", "section": "typography" },
+      { "name": "The Never-Flat Rule", "body": "No interactive or content-bearing surface renders without both a translucent fill (or backdrop-blur) and a shadow; a plain solid rectangle reads as a bug, not a minimalist choice.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do pair every elevated surface with both an inset highlight and a soft, diffuse ambient shadow (Card Float / Action Glow / Overlay Lift) — depth is load-bearing, not decorative.",
+      "Do keep Signal Sky as the only color that means \"act\" or \"active\"; let habit Data Colors stay confined to that habit's own data points.",
+      "Do represent any 0-1 progress value as a bar, ring, or radar, never a bare number alone.",
+      "Do reserve celebratory motion (pop, confetti-fall, wiggle) for moments the user actually earned — a level-up, a closed week, an unlocked achievement.",
+      "Do use rounded-full for anything meant to feel tappable-and-alive (FAB, badges, avatars) and rounded-xl/rounded-2xl for everything else; never a sharp corner."
+    ],
+    "donts": [
+      "Don't render any content-bearing surface flat — no translucency, no blur, no shadow reads as unfinished, not minimal, and is the one failure mode this system must never fall into.",
+      "Don't introduce a second brand accent color alongside Signal Sky; a new affordance borrows sky rather than inventing a hue.",
+      "Don't use a habit's Data Color outside that habit's own row, icon, or chart point — it must never become a page-wide theme color or a generic status color.",
+      "Don't reach for saturated, loot-box-style color blasts, gold badge icons, or competing celebratory chrome — the system earns delight through restraint and timing, not through decoration density.",
+      "Don't render the financial views as a dense literal spreadsheet (heavy table borders, monospaced grids by default); budgets and expenses use the same glass cards and progress bars as every other panel."
+    ]
+  }
+}

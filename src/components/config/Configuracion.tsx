@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, Field, Input, Select, Button, Badge } from "@/components/ui/Primitives";
+import { Card, SectionTitle, Field, Input, Select, Button, Badge, StepperPorcentaje } from "@/components/ui/Primitives";
 import { generarId } from "@/lib/id";
 import type { AreaId, Bono, ReconocimientoCatalogo } from "@/types";
 import { Download, Upload, Plus, Trash2 } from "lucide-react";
@@ -42,13 +42,9 @@ function IdentidadYAreas() {
         <div className="space-y-4">
           {state.areas.map((a) => (
             <div key={a.id} className="grid grid-cols-12 gap-2 items-center">
-              <div className="col-span-2 text-sm font-medium">{a.nombre}</div>
-              <div className="col-span-2">
-                <Input
-                  type="number"
-                  value={pesos[a.id]}
-                  onChange={(e) => setPesos((p) => ({ ...p, [a.id]: parseInt(e.target.value) || 0 }))}
-                />
+              <div className="col-span-2 text-sm font-medium truncate">{a.nombre}</div>
+              <div className="col-span-3">
+                <StepperPorcentaje value={pesos[a.id]} onChange={(v) => setPesos((p) => ({ ...p, [a.id]: v }))} />
               </div>
               <div className="col-span-3">
                 <Input
@@ -59,7 +55,7 @@ function IdentidadYAreas() {
                   onChange={(e) => actualizarAreaConfig(a.id, { metaDiaria: parseFloat(e.target.value) || 0 })}
                 />
               </div>
-              <div className="col-span-3">
+              <div className="col-span-2">
                 <Input
                   type="number"
                   value={a.metaSemanalBase}
@@ -160,7 +156,7 @@ function Economia() {
       </Card>
 
       <Card>
-        <SectionTitle title="Finanzas y dinero libre" />
+        <SectionTitle title="Finanzas y dinero para lujos" />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Field label="Tope Banco (meses de fondo)">
             <Input type="number" value={e.topeBancoRecompensasMeses} onChange={(ev) => actualizar({ topeBancoRecompensasMeses: parseInt(ev.target.value) || 1 })} />
@@ -169,10 +165,10 @@ function Economia() {
             <Select value={e.destinoSobranteDefault} onChange={(ev) => actualizar({ destinoSobranteDefault: ev.target.value as any })}>
               <option value="ahorro">Ahorro</option>
               <option value="acumula">Acumula al mes siguiente</option>
-              <option value="banco">Dinero libre</option>
+              <option value="banco">Dinero para lujos</option>
             </Select>
           </Field>
-          <Field label="Tope de dinero libre acumulado ($)">
+          <Field label="Tope de dinero para lujos acumulado ($)">
             <Input
               type="number"
               value={state.finanzas.bancoRecompensas.tope}
@@ -328,7 +324,7 @@ function DatosYMitigaciones() {
     ["Abuso de protecciones", `Ventana de ${state.config.economia.ventanaProteccionHoras}h tras el cierre y tope de ${state.config.economia.proteccionesMaxAcumulables} acumulables.`],
     ["Desalineación presupuesto/realidad", "Modo mes atípico por presupuesto, que etiqueta el mes sin alterar las fórmulas del resto del sistema."],
     ["Fatiga de temporada", "El cierre de temporada limita la duración a un máximo razonable (recomendado 12 semanas)."],
-    ["Dinero libre desconectado del esfuerzo", "El dinero libre ya no se desbloquea de golpe una vez al mes: se reparte entre las semanas del mes y cada semana libera solo la parte proporcional a tu cumplimiento real de esa semana."],
+    ["Dinero para lujos desconectado del esfuerzo", "El dinero para lujos ya no se desbloquea de golpe una vez al mes: se reparte entre las semanas del mes y cada semana libera solo la parte proporcional a tu cumplimiento real de esa semana."],
     ["Sobrecarga de métricas", "El catálogo de hábitos tiene 10 opciones fijas; agregar una nueva requiere tocar código. El asistente de planeación avisa cuando activas más de 7-8 a la vez."],
   ];
 

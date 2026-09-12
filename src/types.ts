@@ -179,6 +179,12 @@ export interface TemporadaHistorial {
   retoFinalCompletado: boolean;
 }
 
+export interface MetaMensual {
+  mes: string; // YYYY-MM
+  descripcion: string;
+  cumplida: boolean | null; // null hasta que el usuario la marque al terminar el mes
+}
+
 export interface RecordHistorico {
   id: string;
   areaId: AreaId | null;
@@ -263,4 +269,5 @@ export interface KaizenState {
   historial: Historial;
   config: Config;
   planesMensuales: string[]; // meses (YYYY-MM) para los que ya se completó el asistente de planeación
+  metasMensuales: MetaMensual[];
 }

@@ -30,14 +30,14 @@ export function RecompensasView() {
   return (
     <div className="space-y-5">
       <SectionTitle
-        title="Dinero libre y racha"
-        subtitle="Tu dinero libre se libera semana a semana según tu cumplimiento. Tu racha diaria se cambia por protecciones."
+        title="Dinero para lujos y racha"
+        subtitle="Tu dinero para lujos se libera semana a semana según tu cumplimiento. Tu racha diaria se cambia por protecciones."
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <Card>
           <Stat
-            label="Dinero libre disponible"
+            label="Dinero para lujos disponible"
             value={
               <span className="inline-flex items-center gap-1.5">
                 <Wallet className="w-5 h-5 text-emerald-400" />${state.finanzas.bancoRecompensas.saldo.toLocaleString()}
@@ -86,7 +86,7 @@ export function RecompensasView() {
       <Card>
         <SectionTitle title="Desbloqueos recientes" />
         {cierresConDinero.length === 0 ? (
-          <EmptyState text="Todavía no hay semanas cerradas con dinero libre." />
+          <EmptyState text="Todavía no hay semanas cerradas con dinero para lujos." />
         ) : (
           <ul className="divide-y divide-white/10">
             {cierresConDinero.map((c) => (

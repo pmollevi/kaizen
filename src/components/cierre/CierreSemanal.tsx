@@ -72,7 +72,7 @@ function ResultadoCierre({ id }: { id: string }) {
           <div className="grid grid-cols-3 gap-4 mb-4">
             <Stat label="Cumplimiento global" value={`${Math.round(cierre.cumplimientoGlobal * 100)}%`} />
             <Stat label="PP ganados" value={cierre.ppGanados} />
-            <Stat label="Dinero libre liberado" value={`$${cierre.dineroLiberado.toLocaleString()}`} />
+            <Stat label="Dinero para lujos liberado" value={`$${cierre.dineroLiberado.toLocaleString()}`} />
           </div>
           {cierre.nivelesAreaSubidos.length > 0 && (
             <div className="flex flex-wrap gap-1.5">

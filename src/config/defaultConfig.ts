@@ -4,6 +4,7 @@ import type {
   Finanzas,
   Historial,
   KaizenState,
+  MetaMensual,
   Temporada,
   Usuario,
 } from "@/types";
@@ -75,6 +76,8 @@ export function temporadaDefault(): Temporada {
     cerrada: false,
   };
 }
+
+export const METAS_MENSUALES_DEFAULT: MetaMensual[] = [];
 
 export const HISTORIAL_DEFAULT: Historial = {
   temporadas: [],
@@ -206,5 +209,6 @@ export function estadoInicial(nombreUsuario: string): KaizenState {
     },
     config: JSON.parse(JSON.stringify(CONFIG_DEFAULT)),
     planesMensuales: [],
+    metasMensuales: [...METAS_MENSUALES_DEFAULT],
   };
 }

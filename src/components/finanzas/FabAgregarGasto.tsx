@@ -1,8 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Button, Field, Input, Select } from "@/components/ui/Primitives";
 import { hoyISO, mesDe } from "@/lib/dates";
 import { Plus, X } from "lucide-react";
+
+// El teclado móvil reduce el visualViewport sin encoger el layout viewport (100vh):
+// seguimos su altura real para que la hoja nunca quede tapada por el teclado.
+function useAlturaVisible() {
+  const [alto, setAlto] = useState(() => window.visualViewport?.height ?? window.innerHeight);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const actualizar = () => setAlto(vv.height);
+    vv.addEventListener("resize", actualizar);
+    return () => vv.removeEventListener("resize", actualizar);
+  }, []);
+  return alto;
+}
 
 export function FabAgregarGasto() {
   const state = useKaizenStore();
@@ -12,6 +26,12 @@ export function FabAgregarGasto() {
   const [categoriaId, setCategoriaId] = useState("");
   const [palabraClave, setPalabraClave] = useState("");
   const [guardado, setGuardado] = useState(false);
+  const alturaVisible = useAlturaVisible();
+  const hojaRef = useRef<HTMLDivElement>(null);
+
+  const llevarAlaVista = (e: React.FocusEvent<HTMLElement>) => {
+    setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 150);
+  };
 
   const hoy = hoyISO();
   const presupuestoMes = state.finanzas.presupuestos.find((p) => p.mes === mesDe(hoy));
@@ -43,9 +63,15 @@ export function FabAgregarGasto() {
       </button>
 
       {abierto && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={cerrar}>
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          style={{ height: alturaVisible }}
+          onClick={cerrar}
+        >
           <div
-            className="w-full sm:max-w-sm bg-base-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)] p-5 animate-pop"
+            ref={hojaRef}
+            className="w-full sm:max-w-sm bg-base-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)] p-5 animate-pop overflow-y-auto"
+            style={{ maxHeight: "100%" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -70,11 +96,12 @@ export function FabAgregarGasto() {
                     autoFocus
                     value={monto}
                     onChange={(e) => setMonto(e.target.value)}
+                    onFocus={llevarAlaVista}
                     placeholder="0"
                   />
                 </Field>
                 <Field label="Categoría">
-                  <Select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}>
+                  <Select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} onFocus={llevarAlaVista}>
                     <option value="">Elige...</option>
                     {presupuestoMes.categorias.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -88,6 +115,7 @@ export function FabAgregarGasto() {
                     value={palabraClave}
                     onChange={(e) => setPalabraClave(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && guardar()}
+                    onFocus={llevarAlaVista}
                     placeholder="café, uber..."
                   />
                 </Field>

@@ -71,6 +71,9 @@ interface Acciones {
     ahorro: number;
   }) => void;
 
+  setMetaMensual: (mes: string, descripcion: string) => void;
+  marcarMetaMensual: (mes: string, cumplida: boolean) => void;
+
   crearDesafio: (desafio: Omit<Desafio, "id" | "completado">) => void;
   completarDesafio: (id: string) => void;
   eliminarDesafio: (id: string) => void;
@@ -319,8 +322,12 @@ export const useKaizenStore = create<KaizenStore>()(
               ]
             : []),
           {
-            id: idPrevio("Dinero libre", "recompensas") ?? idPrevio("Recompensas (el juego)", "recompensas") ?? generarId("cat"),
-            nombre: "Dinero libre",
+            id:
+              idPrevio("Dinero para lujos", "recompensas") ??
+              idPrevio("Dinero libre", "recompensas") ??
+              idPrevio("Recompensas (el juego)", "recompensas") ??
+              generarId("cat"),
+            nombre: "Dinero para lujos",
             tipo: "recompensas" as const,
             modo: "resto" as const,
             valor: 0,
@@ -338,6 +345,20 @@ export const useKaizenStore = create<KaizenStore>()(
           planesMensuales: s.planesMensuales.includes(mes) ? s.planesMensuales : [...s.planesMensuales, mes],
         });
       },
+
+      setMetaMensual: (mes, descripcion) =>
+        set((s) => {
+          const existe = s.metasMensuales.some((m) => m.mes === mes);
+          const metasMensuales = existe
+            ? s.metasMensuales.map((m) => (m.mes === mes ? { ...m, descripcion } : m))
+            : [...s.metasMensuales, { mes, descripcion, cumplida: null }];
+          return { metasMensuales };
+        }),
+
+      marcarMetaMensual: (mes, cumplida) =>
+        set((s) => ({
+          metasMensuales: s.metasMensuales.map((m) => (m.mes === mes ? { ...m, cumplida } : m)),
+        })),
 
       crearDesafio: (desafio) =>
         set((s) => ({

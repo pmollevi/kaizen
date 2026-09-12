@@ -1,4 +1,5 @@
 import React from "react";
+import { Minus, Plus } from "lucide-react";
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -199,4 +200,42 @@ export function Modal({
 
 export function EmptyState({ text }: { text: string }) {
   return <div className="text-sm text-base-500 text-center py-6">{text}</div>;
+}
+
+export function StepperPorcentaje({
+  value,
+  onChange,
+  min = 0,
+  max = 100,
+  paso = 5,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+  paso?: number;
+}) {
+  return (
+    <div className="inline-flex items-center gap-2">
+      <button
+        type="button"
+        aria-label="Disminuir"
+        disabled={value <= min}
+        onClick={() => onChange(Math.max(min, value - paso))}
+        className="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-base-300 flex items-center justify-center shrink-0 active:scale-90 transition-transform disabled:opacity-30 disabled:active:scale-100"
+      >
+        <Minus className="w-3.5 h-3.5" />
+      </button>
+      <span className="w-11 text-center text-sm font-semibold tabular-nums text-base-100">{value}%</span>
+      <button
+        type="button"
+        aria-label="Aumentar"
+        disabled={value >= max}
+        onClick={() => onChange(Math.min(max, value + paso))}
+        className="w-7 h-7 rounded-lg bg-sky-500 hover:bg-sky-400 text-white flex items-center justify-center shrink-0 active:scale-90 transition-transform disabled:opacity-30 disabled:active:scale-100"
+      >
+        <Plus className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
 }

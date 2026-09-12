@@ -26,6 +26,7 @@ import { Button, Card, Field, Input, Badge } from "@/components/ui/Primitives";
 import { FabAgregarGasto } from "@/components/finanzas/FabAgregarGasto";
 import { ArrowLeft, Lock, User } from "lucide-react";
 import { PanelPrincipal } from "@/components/panel/PanelPrincipal";
+import { BienvenidaFlow } from "@/components/onboarding/Bienvenida";
 import { RegistroDiarioView } from "@/components/registro/RegistroDiario";
 import { FinanzasView } from "@/components/finanzas/Finanzas";
 import { CierreSemanalView } from "@/components/cierre/CierreSemanal";
@@ -39,7 +40,7 @@ type TabId = "panel" | "registro" | "finanzas" | "cierre" | "temporada" | "recom
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "panel", label: "Panel", icon: LayoutDashboard },
-  { id: "registro", label: "Registro", icon: ListChecks },
+  { id: "registro", label: "Hábitos", icon: ListChecks },
   { id: "finanzas", label: "Finanzas", icon: Wallet },
   { id: "cierre", label: "Cierre semanal", icon: CalendarClock },
   { id: "temporada", label: "Temporada", icon: Gauge },
@@ -49,8 +50,9 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "config", label: "Config.", icon: Settings },
 ];
 
-// Las 4 pestañas más usadas viven en la barra inferior de celular; el resto va en "Más".
-const TABS_MOVIL_PRINCIPAL: TabId[] = ["panel", "registro", "finanzas", "recompensas"];
+// Las 4 secciones principales viven siempre visibles (barra inferior en celular,
+// sidebar en escritorio); el resto se accede desde el menú ☰ de arriba a la derecha.
+const TABS_PRINCIPALES: TabId[] = ["panel", "registro", "finanzas", "recompensas"];
 
 function Logo() {
   return (
@@ -60,7 +62,15 @@ function Logo() {
   );
 }
 
-function PantallaLogin({ perfiles, onEntrar, onIrACrear }: { perfiles: Perfil[]; onEntrar: () => void; onIrACrear: () => void }) {
+function PantallaLogin({
+  perfiles,
+  onEntrar,
+  onIrACrear,
+}: {
+  perfiles: Perfil[];
+  onEntrar: (esNuevo: boolean) => void;
+  onIrACrear: () => void;
+}) {
   const reiniciar = useKaizenStore((s) => s.reiniciarConNombre);
   const [seleccionado, setSeleccionado] = useState<Perfil | null>(null);
   const [password, setPassword] = useState("");
@@ -79,7 +89,7 @@ function PantallaLogin({ perfiles, onEntrar, onIrACrear }: { perfiles: Perfil[];
     setPerfilActivo(p.id);
     reiniciar(p.nombre);
     useKaizenStore.persist.rehydrate();
-    onEntrar();
+    onEntrar(false);
   };
 
   const elegir = (p: Perfil) => {
@@ -158,7 +168,15 @@ function PantallaLogin({ perfiles, onEntrar, onIrACrear }: { perfiles: Perfil[];
   );
 }
 
-function PantallaCrearCuenta({ hayPerfiles, onEntrar, onIrALogin }: { hayPerfiles: boolean; onEntrar: () => void; onIrALogin: () => void }) {
+function PantallaCrearCuenta({
+  hayPerfiles,
+  onEntrar,
+  onIrALogin,
+}: {
+  hayPerfiles: boolean;
+  onEntrar: (esNuevo: boolean) => void;
+  onIrALogin: () => void;
+}) {
   const reiniciar = useKaizenStore((s) => s.reiniciarConNombre);
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -177,7 +195,7 @@ function PantallaCrearCuenta({ hayPerfiles, onEntrar, onIrALogin }: { hayPerfile
     setCargando(false);
     setPerfilActivo(perfil.id);
     reiniciar(nombre.trim());
-    onEntrar();
+    onEntrar(true);
   };
 
   return (
@@ -226,7 +244,7 @@ function PantallaCrearCuenta({ hayPerfiles, onEntrar, onIrALogin }: { hayPerfile
   );
 }
 
-function ProfileGate({ onEntrar }: { onEntrar: () => void }) {
+function ProfileGate({ onEntrar }: { onEntrar: (esNuevo: boolean) => void }) {
   const perfiles = useMemo(() => listarPerfiles(), []);
   const [modo, setModo] = useState<"login" | "signup">(perfiles.length > 0 ? "login" : "signup");
 
@@ -246,7 +264,9 @@ function ProfileGate({ onEntrar }: { onEntrar: () => void }) {
   );
 }
 
-function MenuMovil({
+// Menú de opciones: hoja inferior en celular, panel anclado arriba a la derecha
+// en escritorio. Ambos abren desde el mismo botón ☰.
+function MenuOpciones({
   tabActual,
   onElegir,
   onCerrar,
@@ -257,16 +277,19 @@ function MenuMovil({
   onCerrar: () => void;
   onCambiarPerfil: () => void;
 }) {
-  const otras = TABS.filter((t) => !TABS_MOVIL_PRINCIPAL.includes(t.id));
+  const otras = TABS.filter((t) => !TABS_PRINCIPALES.includes(t.id));
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:hidden" onClick={onCerrar}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center md:items-start md:justify-end md:pt-16 md:pr-6"
+      onClick={onCerrar}
+    >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative w-full bg-base-900/95 backdrop-blur-xl border-t border-white/10 rounded-t-2xl p-4 pb-8 animate-fade-up max-h-[75vh] overflow-y-auto"
+        className="relative w-full md:w-72 bg-base-900/95 backdrop-blur-xl border border-white/10 rounded-t-2xl md:rounded-2xl p-4 pb-8 md:pb-4 animate-fade-up max-h-[75vh] overflow-y-auto shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1 rounded-full bg-white/15 mx-auto mb-4" />
-        <div className="grid grid-cols-3 gap-2">
+        <div className="w-10 h-1 rounded-full bg-white/15 mx-auto mb-4 md:hidden" />
+        <div className="space-y-1.5">
           {otras.map((t) => {
             const Icon = t.icon;
             const activo = tabActual === t.id;
@@ -274,11 +297,13 @@ function MenuMovil({
               <button
                 key={t.id}
                 onClick={() => onElegir(t.id)}
-                className={`flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-xs font-medium transition-colors border ${
-                  activo ? "bg-sky-500/10 text-sky-400 border-sky-500/20" : "bg-white/[0.03] text-base-300 border-white/[0.06]"
+                className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors border ${
+                  activo
+                    ? "bg-sky-500/10 text-sky-400 border-sky-500/20"
+                    : "bg-white/[0.03] text-base-300 border-white/[0.06] hover:bg-white/[0.06]"
                 }`}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4" />
                 {t.label}
               </button>
             );
@@ -286,7 +311,7 @@ function MenuMovil({
         </div>
         <button
           onClick={onCambiarPerfil}
-          className="w-full text-center text-sm text-base-400 mt-5 pt-4 border-t border-white/10"
+          className="w-full text-center text-sm text-base-400 mt-4 pt-4 border-t border-white/10"
         >
           Cambiar de perfil
         </button>
@@ -297,6 +322,7 @@ function MenuMovil({
 
 export default function App() {
   const [perfilId, setPerfilId] = useState<string | null>(getPerfilActivo());
+  const [bienvenidaPendiente, setBienvenidaPendiente] = useState(false);
   const [tab, setTab] = useState<TabId>("panel");
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const usuario = useKaizenStore((s) => s.usuario);
@@ -311,7 +337,18 @@ export default function App() {
   const perfilActual = useMemo(() => listarPerfiles().find((p) => p.id === perfilId), [perfilId]);
 
   if (!perfilId) {
-    return <ProfileGate onEntrar={() => setPerfilId(getPerfilActivo())} />;
+    return (
+      <ProfileGate
+        onEntrar={(esNuevo) => {
+          setPerfilId(getPerfilActivo());
+          if (esNuevo) setBienvenidaPendiente(true);
+        }}
+      />
+    );
+  }
+
+  if (bienvenidaPendiente) {
+    return <BienvenidaFlow onFinalizar={() => setBienvenidaPendiente(false)} />;
   }
 
   const cambiarDePerfil = () => {
@@ -330,7 +367,7 @@ export default function App() {
           <span className="font-semibold tracking-tight">{nombreSistema}</span>
         </div>
         <nav className="flex-1 px-2 space-y-0.5">
-          {TABS.map((t) => {
+          {TABS.filter((t) => TABS_PRINCIPALES.includes(t.id)).map((t) => {
             const Icon = t.icon;
             const activo = tab === t.id;
             return (
@@ -367,10 +404,19 @@ export default function App() {
           </div>
           <span className="font-semibold text-sm">{nombreSistema}</span>
         </div>
-        <button onClick={() => setMenuMovilAbierto(true)} className="text-base-300 p-1.5">
+        <button onClick={() => setMenuMovilAbierto(true)} className="text-base-300 p-1.5" aria-label="Más opciones">
           <Menu className="w-5 h-5" />
         </button>
       </header>
+
+      {/* Menú ☰ de escritorio: accede a cierre semanal, temporada, reconocimientos, historial y config. */}
+      <button
+        onClick={() => setMenuMovilAbierto(true)}
+        aria-label="Más opciones"
+        className="hidden md:flex fixed top-5 right-6 z-30 w-10 h-10 rounded-full bg-base-900/80 backdrop-blur-xl border border-white/10 items-center justify-center text-base-300 hover:text-base-100 hover:bg-white/[0.06] transition-colors shadow-card"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
 
       <main className="flex-1 min-w-0 px-4 md:px-6 py-6 pt-20 pb-24 md:pt-6 md:pb-6 max-w-6xl mx-auto w-full">
         {tab === "panel" && <PanelPrincipal irA={(t) => setTab(t as TabId)} />}
@@ -384,9 +430,9 @@ export default function App() {
         {tab === "config" && <ConfiguracionView />}
       </main>
 
-      {/* Barra inferior de celular */}
+      {/* Barra inferior de celular: mismas 4 secciones principales que el sidebar de escritorio. */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch bg-base-900/80 backdrop-blur-xl border-t border-white/[0.08] pb-[env(safe-area-inset-bottom)]">
-        {TABS_MOVIL_PRINCIPAL.map((id) => {
+        {TABS_PRINCIPALES.map((id) => {
           const t = TABS.find((x) => x.id === id)!;
           const Icon = t.icon;
           const activo = tab === id;
@@ -403,17 +449,10 @@ export default function App() {
             </button>
           );
         })}
-        <button
-          onClick={() => setMenuMovilAbierto(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-medium text-base-500"
-        >
-          <Menu className="w-5 h-5" />
-          Más
-        </button>
       </nav>
 
       {menuMovilAbierto && (
-        <MenuMovil
+        <MenuOpciones
           tabActual={tab}
           onElegir={(t) => {
             setTab(t);
