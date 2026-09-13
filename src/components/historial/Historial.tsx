@@ -1,6 +1,7 @@
 import React from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Badge, EmptyState, Stat } from "@/components/ui/Primitives";
+import { ResumenMesWrapped } from "@/components/historial/ResumenMesWrapped";
 import { formatoLargo } from "@/lib/dates";
 
 export function HistorialView() {
@@ -13,6 +14,8 @@ export function HistorialView() {
   return (
     <div className="space-y-5">
       <SectionTitle title={state.config.textos.salonFama} subtitle="Nada se borra jamás." />
+
+      <ResumenMesWrapped />
 
       <Card>
         <SectionTitle title="Temporadas completadas" />
@@ -31,11 +34,10 @@ export function HistorialView() {
                 <div className="text-xs text-base-500 mb-3">
                   {formatoLargo(t.inicio)} – {formatoLargo(t.fin)}
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <Stat label="PP totales" value={t.ppTotales.toLocaleString()} />
                   <Stat label="Reconocimientos" value={t.reconocimientosObtenidos} />
-                  <Stat label="Gastado" value={`$${t.gastadoVsPresupuestado.gastado.toLocaleString()}`} />
-                  <Stat label="Presupuestado" value={`$${t.gastadoVsPresupuestado.presupuestado.toLocaleString()}`} />
+                  <Stat label="Gastado en la temporada" value={`$${t.gastoTotalTemporada.toLocaleString()}`} />
                 </div>
               </div>
             ))}

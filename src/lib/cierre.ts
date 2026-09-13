@@ -4,16 +4,18 @@ import type {
   CierreSemanal,
   KaizenState,
   ResumenMensual,
+  ResumenTarjeta,
+  Tarjeta,
   Usuario,
 } from "@/types";
 import {
-  calcularAsignaciones,
+  cicloTarjeta,
   cumplimientoGlobalSemanal,
   cumplimientoSemanalArea,
-  gastadoEnCategoria,
-  montoLiberadoSemana,
+  diaMasCaro,
+  distribucionCategorias,
+  gastoPromedioDiario,
   nivelDesdePP,
-  semanasEnMes,
 } from "@/lib/formulas";
 import { diasDelMes, inicioSemana, mesDe, sumarDias } from "@/lib/dates";
 
@@ -21,8 +23,6 @@ export interface ResultadoCierreSemanal {
   cierre: CierreSemanal;
   areas: AreaConfig[];
   usuario: Usuario;
-  saldoBanco: number;
-  ahorroExtra: number;
 }
 
 export function calcularCierreSemanal(
@@ -33,19 +33,10 @@ export function calcularCierreSemanal(
   protegerSemana: boolean
 ): ResultadoCierreSemanal {
   const { config } = state;
-  const presupuestoDelMes = state.finanzas.presupuestos.find((p) => p.mes === mesDe(fin));
 
   const cumplimientoPorArea = {} as Record<AreaId, number>;
   for (const area of state.areas) {
-    cumplimientoPorArea[area.id] = cumplimientoSemanalArea(
-      area,
-      config,
-      state.registrosDiarios,
-      inicio,
-      fin,
-      state.finanzas.gastos,
-      presupuestoDelMes
-    );
+    cumplimientoPorArea[area.id] = cumplimientoSemanalArea(area, config, state.registrosDiarios, inicio, fin);
   }
   const cumplimientoGlobal = cumplimientoGlobalSemanal(cumplimientoPorArea, state.areas);
 
@@ -55,25 +46,6 @@ export function calcularCierreSemanal(
   const bonosPPTotal = bonosAplicados.reduce((acc, b) => acc + b.valorPP, 0);
   const ppBase = Math.round(config.economia.ppBase * cumplimientoGlobal);
   const ppGanados = protegerSemana ? 0 : ppBase + bonosPPTotal;
-
-  // Dinero libre: la parte de este mes asignada a "dinero libre" se reparte entre sus
-  // semanas y se desbloquea en proporción al cumplimiento de ESTA semana. Lo que no se
-  // libera no se pierde: se acumula como ahorro en el cierre de mes.
-  const mesDeLaSemana = mesDe(fin);
-  const asignacionesMes = presupuestoDelMes ? calcularAsignaciones(presupuestoDelMes) : new Map<string, number>();
-  const categoriaLibre = presupuestoDelMes?.categorias.find((c) => c.tipo === "recompensas");
-  const montoLibreDelMes = categoriaLibre ? asignacionesMes.get(categoriaLibre.id) ?? 0 : 0;
-  const montoPorSemana = montoLibreDelMes / semanasEnMes(mesDeLaSemana);
-  const dineroLiberado = protegerSemana ? 0 : montoLiberadoSemana(montoPorSemana, cumplimientoGlobal);
-  const noLiberado = protegerSemana ? 0 : Math.max(0, montoPorSemana - dineroLiberado);
-
-  let saldoBanco = state.finanzas.bancoRecompensas.saldo + dineroLiberado;
-  let ahorroExtra = state.finanzas.ahorroExtra + noLiberado;
-  const tope = state.finanzas.bancoRecompensas.tope;
-  if (saldoBanco > tope) {
-    ahorroExtra += saldoBanco - tope;
-    saldoBanco = tope;
-  }
 
   const nivelesAreaSubidos: AreaId[] = [];
   const areas = state.areas.map((area) => {
@@ -106,12 +78,11 @@ export function calcularCierreSemanal(
     ppBase,
     bonosAplicados,
     ppGanados,
-    dineroLiberado,
     protegida: protegerSemana,
     nivelesAreaSubidos,
   };
 
-  return { cierre, areas, usuario, saldoBanco, ahorroExtra };
+  return { cierre, areas, usuario };
 }
 
 /** Semanas ya terminadas (anteriores a la semana en curso) que todavía no tienen cierre registrado. */
@@ -135,68 +106,23 @@ export function semanasPendientes(state: KaizenState, inicioSemanaActual: string
 
 export interface ResultadoCierreMensual {
   resumen: ResumenMensual;
-  saldoBanco: number;
   proteccionGanada: boolean;
-  bumpDineroUtilMesSiguiente: number;
 }
 
 export function calcularCierreMensual(state: KaizenState, mes: string): ResultadoCierreMensual {
-  const { config } = state;
-  const presupuesto = state.finanzas.presupuestos.find((p) => p.mes === mes);
-  const gastosDelMes = state.finanzas.gastos.filter((g) => mesDe(g.fecha) === mes);
-  const asignaciones = presupuesto ? calcularAsignaciones(presupuesto) : new Map<string, number>();
+  const { config, finanzas } = state;
+  const desde = `${mes}-01`;
+  const hasta = `${mes}-${String(diasDelMes(mes)).padStart(2, "0")}`;
+  const gastosDelMes = finanzas.gastos.filter((g) => mesDe(g.fecha) === mes);
 
-  const categorias = (presupuesto?.categorias ?? []).map((cat) => {
-    const asignado = asignaciones.get(cat.id) ?? 0;
-    const gastado = gastadoEnCategoria(state.finanzas.gastos, cat.id, mes);
-    const diferencia = asignado - gastado;
-    const porcentajeUso = asignado > 0 ? gastado / asignado : 0;
-    return {
-      categoriaId: cat.id,
-      nombre: cat.nombre,
-      asignado,
-      gastado,
-      diferencia,
-      porcentajeUso,
-      sobregiro: cat.tipo === "gasto" && gastado > asignado,
-    };
-  });
+  const totalGastado = gastosDelMes.reduce((acc, g) => acc + g.monto, 0);
+  const totalEfectivo = gastosDelMes.filter((g) => g.metodo === "efectivo").reduce((acc, g) => acc + g.monto, 0);
+  const totalTarjeta = gastosDelMes.filter((g) => g.metodo === "tarjeta").reduce((acc, g) => acc + g.monto, 0);
 
-  const catGasto = (presupuesto?.categorias ?? []).filter((c) => c.tipo === "gasto");
-  const catAhorro = (presupuesto?.categorias ?? []).filter((c) => c.tipo === "ahorro");
+  const categorias = distribucionCategorias(finanzas.gastos, finanzas.categorias, desde, hasta);
+  const topCategorias = categorias.slice(0, 3);
 
-  const totalGastado = catGasto.reduce((acc, c) => acc + gastadoEnCategoria(state.finanzas.gastos, c.id, mes), 0);
-  // El dinero libre no liberado semana a semana ya se fue acumulando en finanzas.ahorroExtra;
-  // aquí se vuelca a la cuenta de ahorro del mes y se limpia el acumulador.
-  let totalAhorrado =
-    catAhorro.reduce((acc, c) => acc + (asignaciones.get(c.id) ?? 0), 0) + state.finanzas.ahorroExtra;
-
-  const dias = diasDelMes(mes);
-  const gastoPromedioDiario = totalGastado / dias;
-
-  const porFecha = new Map<string, number>();
-  for (const g of gastosDelMes) porFecha.set(g.fecha, (porFecha.get(g.fecha) ?? 0) + g.monto);
-  let diaMasCaro: { fecha: string; monto: number } | null = null;
-  for (const [fecha, monto] of porFecha) {
-    if (!diaMasCaro || monto > diaMasCaro.monto) diaMasCaro = { fecha, monto };
-  }
-
-  const porPalabra = new Map<string, { monto: number; frecuencia: number }>();
-  for (const g of gastosDelMes) {
-    const clave = g.palabraClave.trim().toLowerCase() || "(sin palabra clave)";
-    const actual = porPalabra.get(clave) ?? { monto: 0, frecuencia: 0 };
-    porPalabra.set(clave, { monto: actual.monto + g.monto, frecuencia: actual.frecuencia + 1 });
-  }
-  const topPalabrasClavePorMonto = [...porPalabra.entries()]
-    .sort((a, b) => b[1].monto - a[1].monto)
-    .slice(0, 10)
-    .map(([palabra, v]) => ({ palabra, monto: v.monto }));
-  const topPalabrasClavePorFrecuencia = [...porPalabra.entries()]
-    .sort((a, b) => b[1].frecuencia - a[1].frecuencia)
-    .slice(0, 10)
-    .map(([palabra, v]) => ({ palabra, frecuencia: v.frecuencia }));
-
-  const resumenesPrevios = state.finanzas.resumenesMensuales.filter((r) => r.mes < mes);
+  const resumenesPrevios = finanzas.resumenesMensuales.filter((r) => r.mes < mes);
   const comparativaMesesAnteriores = resumenesPrevios.slice(-3).map((r) => ({ mes: r.mes, totalGastado: r.totalGastado }));
   const promedioHistorico =
     resumenesPrevios.length > 0
@@ -204,29 +130,6 @@ export function calcularCierreMensual(state: KaizenState, mes: string): Resultad
       : 0;
 
   const semanasDelMes = state.cierresSemanales.filter((c) => mesDe(c.semanaFin) === mes);
-  const cumplimientoPromedioMes =
-    semanasDelMes.length > 0
-      ? semanasDelMes.reduce((acc, c) => acc + c.cumplimientoGlobal, 0) / semanasDelMes.length
-      : 0;
-
-  let saldoBanco = state.finanzas.bancoRecompensas.saldo;
-  const tope = state.finanzas.bancoRecompensas.tope;
-
-  // Sobrante de las categorías de gasto, según el destino configurado.
-  const sobranteGasto = categorias
-    .filter((c) => presupuesto?.categorias.find((cc) => cc.id === c.categoriaId)?.tipo === "gasto")
-    .reduce((acc, c) => acc + Math.max(0, c.diferencia), 0);
-  let bumpDineroUtilMesSiguiente = 0;
-  if (sobranteGasto > 0) {
-    if (config.economia.destinoSobranteDefault === "ahorro") {
-      totalAhorrado += sobranteGasto;
-    } else if (config.economia.destinoSobranteDefault === "banco") {
-      saldoBanco = Math.min(tope, saldoBanco + sobranteGasto);
-    } else {
-      bumpDineroUtilMesSiguiente = sobranteGasto;
-    }
-  }
-
   const proteccionGanada =
     semanasDelMes.length > 0 &&
     semanasDelMes.reduce((acc, c) => acc + c.cumplimientoGlobal, 0) / semanasDelMes.length >=
@@ -235,30 +138,23 @@ export function calcularCierreMensual(state: KaizenState, mes: string): Resultad
   const resumen: ResumenMensual = {
     mes,
     totalGastado,
-    totalAhorrado,
-    dineroUtil: presupuesto?.dineroUtil ?? 0,
+    totalEfectivo,
+    totalTarjeta,
     categorias,
-    topPalabrasClavePorMonto,
-    topPalabrasClavePorFrecuencia,
-    gastoPromedioDiario,
-    diaMasCaro,
+    topCategorias,
+    gastoPromedioDiario: gastoPromedioDiario(finanzas.gastos, desde, hasta),
+    diaMasCaro: diaMasCaro(finanzas.gastos, desde, hasta),
     comparativaMesesAnteriores,
     promedioHistorico,
-    destinoSobrante: config.economia.destinoSobranteDefault,
-    cumplimientoPromedioMes,
   };
 
-  return { resumen, saldoBanco, proteccionGanada, bumpDineroUtilMesSiguiente };
+  return { resumen, proteccionGanada };
 }
 
 /** Lista de meses (YYYY-MM) ya terminados que aún no tienen resumen generado. */
 export function mesesPendientesDeCierre(state: KaizenState, mesActual: string): string[] {
   const yaCerrados = new Set(state.finanzas.resumenesMensuales.map((r) => r.mes));
-  const fechas = [
-    ...state.finanzas.presupuestos.map((p) => p.mes + "-01"),
-    ...state.registrosDiarios.map((r) => r.fecha),
-    ...state.finanzas.gastos.map((g) => g.fecha),
-  ];
+  const fechas = [...state.registrosDiarios.map((r) => r.fecha), ...state.finanzas.gastos.map((g) => g.fecha)];
   if (fechas.length === 0) return [];
   const primerMes = fechas.sort()[0].slice(0, 7);
   const pendientes: string[] = [];
@@ -270,4 +166,49 @@ export function mesesPendientesDeCierre(state: KaizenState, mesActual: string): 
     cursor = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
   return pendientes;
+}
+
+export function calcularResumenTarjeta(
+  tarjeta: Tarjeta,
+  gastos: KaizenState["finanzas"]["gastos"],
+  categorias: KaizenState["finanzas"]["categorias"],
+  periodoInicio: string,
+  periodoFin: string
+): ResumenTarjeta {
+  const gastosDelCiclo = gastos.filter(
+    (g) => g.tarjetaId === tarjeta.id && g.fecha >= periodoInicio && g.fecha <= periodoFin
+  );
+  return {
+    id: `rt_${tarjeta.id}_${periodoFin}`,
+    tarjetaId: tarjeta.id,
+    periodoInicio,
+    periodoFin,
+    totalGastado: gastosDelCiclo.reduce((acc, g) => acc + g.monto, 0),
+    numeroGastos: gastosDelCiclo.length,
+    categorias: distribucionCategorias(gastosDelCiclo, categorias, periodoInicio, periodoFin),
+  };
+}
+
+/** Genera los resúmenes de corte de cualquier ciclo ya cerrado (fin < hoy) que aún no exista. */
+export function resumenesTarjetaPendientes(state: KaizenState, hoy: string): ResumenTarjeta[] {
+  const { finanzas } = state;
+  const existentes = new Set(finanzas.resumenesTarjeta.map((r) => r.id));
+  const nuevos: ResumenTarjeta[] = [];
+
+  for (const tarjeta of finanzas.tarjetas) {
+    const gastosTarjeta = finanzas.gastos.filter((g) => g.tarjetaId === tarjeta.id);
+    if (gastosTarjeta.length === 0) continue;
+    const primeraFecha = [...gastosTarjeta].sort((a, b) => (a.fecha < b.fecha ? -1 : 1))[0].fecha;
+
+    let cursorFin = cicloTarjeta(tarjeta, primeraFecha).fin;
+    let guard = 0;
+    while (cursorFin < hoy && guard < 60) {
+      const { inicio, fin } = cicloTarjeta(tarjeta, cursorFin);
+      const resumen = calcularResumenTarjeta(tarjeta, finanzas.gastos, finanzas.categorias, inicio, fin);
+      if (!existentes.has(resumen.id) && resumen.numeroGastos > 0) nuevos.push(resumen);
+      cursorFin = sumarDias(fin, 1);
+      guard += 1;
+    }
+  }
+  return nuevos;
 }

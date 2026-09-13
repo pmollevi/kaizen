@@ -1,72 +1,91 @@
 import React from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, ProgressBar, Stat, Badge, EmptyState } from "@/components/ui/Primitives";
-import { calcularAsignaciones, gastadoEnCategoria, proyeccionCierre, ritmoDiarioPermitido, semaforo } from "@/lib/formulas";
-import { diaDelMes, diasDelMes, hoyISO, mesDe } from "@/lib/dates";
+import { Card, SectionTitle, Stat, ProgressBar, EmptyState } from "@/components/ui/Primitives";
+import { distribucionCategorias } from "@/lib/formulas";
+import { diasDelMes, formatoLargo, hoyISO, mesDe } from "@/lib/dates";
 
 export function PanelFinancieroTab() {
   const state = useKaizenStore();
+  const { finanzas } = state;
   const hoy = hoyISO();
   const mesActual = mesDe(hoy);
-  const presupuesto = state.finanzas.presupuestos.find((p) => p.mes === mesActual);
+  const desde = `${mesActual}-01`;
+  const hasta = `${mesActual}-${String(diasDelMes(mesActual)).padStart(2, "0")}`;
 
-  if (!presupuesto) return <EmptyState text="Define el presupuesto del mes para ver el panel financiero." />;
+  const gastosDelMes = finanzas.gastos.filter((g) => g.fecha >= desde && g.fecha <= hasta);
+  const totalMes = gastosDelMes.reduce((acc, g) => acc + g.monto, 0);
+  const totalEfectivo = gastosDelMes.filter((g) => g.metodo === "efectivo").reduce((acc, g) => acc + g.monto, 0);
+  const totalTarjeta = gastosDelMes.filter((g) => g.metodo === "tarjeta").reduce((acc, g) => acc + g.monto, 0);
+  const categorias = distribucionCategorias(finanzas.gastos, finanzas.categorias, desde, hasta);
+  const gastosRecientes = [...finanzas.gastos].sort((a, b) => (a.fecha < b.fecha ? 1 : -1)).slice(0, 8);
+  const ingreso = finanzas.ingresosMensuales.find((i) => i.mes === mesActual)?.monto ?? 0;
+  const pctIngreso = ingreso > 0 ? totalMes / ingreso : null;
 
-  const asignaciones = calcularAsignaciones(presupuesto);
-  const totalAsignado = [...asignaciones.values()].reduce((a, b) => a + b, 0);
-  const gastoCategorias = presupuesto.categorias.filter((c) => c.tipo === "gasto");
-  const totalGastado = gastoCategorias.reduce((acc, c) => acc + gastadoEnCategoria(state.finanzas.gastos, c.id, mesActual), 0);
-  const diasRestantes = Math.max(1, diasDelMes(mesActual) - diaDelMes(hoy) + 1);
-  const ritmo = ritmoDiarioPermitido(totalAsignado, totalGastado, diasRestantes);
-  const gastoPromedioDiario = totalGastado / Math.max(1, diaDelMes(hoy));
-  const proyeccion = proyeccionCierre(gastoPromedioDiario, mesActual);
+  if (gastosDelMes.length === 0) {
+    return (
+      <Card>
+        <SectionTitle title="Este mes" />
+        <EmptyState text="Registra tu primer gasto y aquí verás en qué se te va el dinero — usa el botón + de abajo." />
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-5">
       <Card>
-        <SectionTitle title="Panel financiero del mes" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-          <Stat label="Dinero útil" value={`$${presupuesto.dineroUtil.toLocaleString()}`} />
-          <Stat label="Gastado" value={`$${totalGastado.toLocaleString()}`} />
-          <Stat label="Ritmo diario permitido" value={`$${Math.max(0, ritmo).toFixed(0)}`} />
-          <Stat
-            label="Proyección de cierre"
-            value={`$${proyeccion.toFixed(0)}`}
-            hint={proyeccion > totalAsignado ? "por encima del asignado" : "dentro del presupuesto"}
-          />
+        <div className="text-xs uppercase tracking-wider text-base-500 font-medium mb-1">Total gastado</div>
+        <div className="text-4xl font-semibold tracking-tight text-base-100">${totalMes.toLocaleString()}</div>
+        <div className="grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-base-700">
+          <Stat label="Efectivo" value={`$${totalEfectivo.toLocaleString()}`} />
+          <Stat label="Tarjeta" value={`$${totalTarjeta.toLocaleString()}`} />
         </div>
-        <ProgressBar value={presupuesto.dineroUtil > 0 ? totalGastado / presupuesto.dineroUtil : 0} colorClass="bg-sky-500" height="h-2.5" />
+        {pctIngreso !== null && (
+          <div className="mt-5 pt-5 border-t border-base-700">
+            <div className="flex items-center justify-between text-sm mb-1.5">
+              <span className="text-base-400">Llevas gastado del ingreso del mes</span>
+              <span className="font-medium text-base-200">{Math.round(pctIngreso * 100)}%</span>
+            </div>
+            <ProgressBar value={pctIngreso} colorClass={pctIngreso > 1 ? "bg-rose-500" : "bg-finanzas-500"} height="h-1.5" />
+          </div>
+        )}
       </Card>
 
       <Card>
-        <SectionTitle title="Por categoría" />
-        <div className="space-y-4">
-          {presupuesto.categorias.map((c) => {
-            const asignado = asignaciones.get(c.id) ?? 0;
-            const gastado = gastadoEnCategoria(state.finanzas.gastos, c.id, mesActual);
-            const pct = asignado > 0 ? gastado / asignado : 0;
-            const s = semaforo(pct);
-            return (
-              <div key={c.id}>
+        <SectionTitle title="Gastos recientes" />
+        <ul className="divide-y divide-base-700">
+          {gastosRecientes.map((g) => (
+            <li key={g.id} className="flex items-center justify-between py-2.5 text-sm">
+              <div className="min-w-0">
+                <div className="font-medium text-base-200 truncate">{g.palabraClave}</div>
+                <div className="text-xs text-base-500">{formatoLargo(g.fecha)}</div>
+              </div>
+              <span className="font-medium text-base-100 shrink-0">${g.monto.toLocaleString()}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
+      <Card>
+        <SectionTitle title="Por categoría" subtitle={mesActual} />
+        {categorias.length === 0 ? (
+          <EmptyState text="Sin categorías con gasto este mes." />
+        ) : (
+          <div className="space-y-3">
+            {categorias.map((c) => (
+              <div key={c.categoriaId}>
                 <div className="flex items-center justify-between text-sm mb-1.5">
                   <span className="font-medium text-base-200">{c.nombre}</span>
-                  <div className="flex items-center gap-2">
-                    {pct >= 1 && <Badge tone="red">100%+</Badge>}
-                    {pct >= 0.9 && pct < 1 && <Badge tone="yellow">90%+</Badge>}
-                    {pct >= 0.7 && pct < 0.9 && <Badge tone="blue">70%+</Badge>}
-                    <span className="text-base-400">
-                      ${gastado.toLocaleString()} / ${asignado.toLocaleString()}
-                    </span>
-                  </div>
+                  <span className="text-base-400">
+                    ${c.monto.toLocaleString()} · {Math.round(c.porcentaje * 100)}%
+                  </span>
                 </div>
-                <ProgressBar
-                  value={pct}
-                  colorClass={s === "rojo" ? "bg-rose-500" : s === "amarillo" ? "bg-amber-500" : "bg-emerald-500"}
-                />
+                <div className="w-full h-1 rounded-full bg-base-800 overflow-hidden">
+                  <div className="h-full bg-finanzas-500 rounded-full" style={{ width: `${c.porcentaje * 100}%` }} />
+                </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   );

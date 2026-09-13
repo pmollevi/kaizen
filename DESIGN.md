@@ -1,37 +1,46 @@
 ---
 name: Kaizen
-description: A dark, glass-paneled personal command deck where habits, streaks, and real money share one game economy.
+description: Un cuaderno de disciplina silencioso y premium — fondo oscuro constante, cada sección con su propio color de identidad, y momentos de acción con una micro-animación breve.
 colors:
-  sky-signal: "#0ea5e9"
-  sky-signal-hover: "#38bdf8"
-  void-950: "#0a0b0d"
-  void-900: "#121317"
-  void-850: "#171920"
-  void-800: "#1d1f28"
-  void-700: "#2a2d38"
-  void-600: "#3a3e4d"
-  void-500: "#565b6e"
-  void-400: "#7a8094"
-  void-300: "#a3a8b8"
-  void-200: "#c8ccd6"
-  void-100: "#e8e9ee"
-  area-intelecto: "#5b8def"
-  area-imperio: "#e0a63a"
-  area-fuerza: "#e0544f"
-  area-vitalidad: "#4cb782"
-  area-energia: "#9b6fe0"
-  area-sabiduria: "#3ab5c6"
-  area-serenidad: "#63c7b2"
-  area-vinculos: "#e06fa8"
-  area-creatividad: "#c68fe0"
-  area-gratitud: "#e0c23a"
+  bg: "#0D0E0E"
+  surface: "#151716"
+  surface-2: "#1C1E1D"
+  border: "#292C2A"
+  text-primary: "#F2F1EC"
+  text-secondary: "#858982"
+  kaizen-200: "#D8DAC7"
+  kaizen-300: "#B7BC9C"
+  kaizen-400: "#9BA37C"
+  kaizen-500: "#7B835C"
+  kaizen-600: "#636B47"
+  gold-400: "#D4BC7C"
+  gold-500: "#C5A85B"
+  gold-600: "#A98B44"
+  habitos-300: "#E0BFA4"
+  habitos-400: "#CE9B72"
+  habitos-500: "#BD7A52"
+  habitos-600: "#96603F"
+  finanzas-300: "#A9C9C3"
+  finanzas-400: "#78A69D"
+  finanzas-500: "#4B8078"
+  finanzas-600: "#3A6660"
+  area-intelecto: "#6B7A8F"
+  area-imperio: "#A97C50"
+  area-fuerza: "#B5624A"
+  area-vitalidad: "#5E8C5A"
+  area-energia: "#7E6C9E"
+  area-sabiduria: "#4F7C7A"
+  area-serenidad: "#8FA084"
+  area-vinculos: "#A9667A"
+  area-creatividad: "#A79BC0"
+  area-gratitud: "#C9AA5C"
   signal-success: "#10b981"
   signal-warning: "#f59e0b"
   signal-danger: "#f43f5e"
 typography:
   headline:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif"
-    fontSize: "1.25rem"
+    fontSize: "1.5rem"
     fontWeight: 600
     lineHeight: 1.2
     letterSpacing: "-0.01em"
@@ -65,25 +74,25 @@ spacing:
   xl: "24px"
 components:
   button-primary:
-    backgroundColor: "{colors.sky-signal}"
-    textColor: "#ffffff"
+    backgroundColor: "{colors.kaizen-500}"
+    textColor: "{colors.text-primary}"
     rounded: "{rounded.md}"
     padding: "8px 14px"
   button-primary-hover:
-    backgroundColor: "{colors.sky-signal-hover}"
+    backgroundColor: "{colors.kaizen-600}"
   button-secondary:
-    backgroundColor: "rgba(255,255,255,0.06)"
-    textColor: "{colors.void-100}"
+    backgroundColor: "{colors.surface-2}"
+    textColor: "{colors.text-primary}"
     rounded: "{rounded.md}"
     padding: "8px 14px"
   card:
-    backgroundColor: "rgba(255,255,255,0.035)"
-    textColor: "{colors.void-100}"
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-primary}"
     rounded: "{rounded.lg}"
     padding: "20px"
   input:
-    backgroundColor: "rgba(255,255,255,0.04)"
-    textColor: "{colors.void-100}"
+    backgroundColor: "{colors.surface-2}"
+    textColor: "{colors.text-primary}"
     rounded: "{rounded.md}"
     padding: "8px 12px"
 ---
@@ -92,128 +101,150 @@ components:
 
 ## Overview
 
-**Creative North Star: "El Centro de Mando Nocturno" (The Night Command Deck)**
+**Creative North Star: "El Cuaderno Silencioso" (The Quiet Ledger)**
 
-Kaizen reads like a personal mission control that only exists after dark: an almost-black surface lit from within by a handful of instrument panels made of frosted glass. Every card is a gauge — level, streak, budget, season — floating a fraction above the void on a soft inset highlight and a diffuse ambient shadow, never a hard edge. The system stays quiet by default: one accent voice (sky blue), a restrained neutral scale, and per-habit colors that behave as data-encoding, not decoration. It earns the right to break that calm only at the moment something real is won — a level-up, a closed week, a streak milestone — where a short, physical burst (pop, confetti, a wiggle) interrupts the stillness and then gets out of the way.
+Kaizen se lee como el cuaderno personal de alguien que se toma en serio su propia mejora: papel casi negro y cálido, una sola tinta de acento (verde oliva apagado), y superficies planas con un borde fino en vez de vidrio, glow o gradientes. Nada compite por atención — la jerarquía la construyen el tamaño y el peso tipográfico, no el color. El sistema existe para que un número grande (un total gastado, un nivel, una racha) sea siempre lo primero que se lee, y todo lo demás quede detrás, discreto.
 
-This is not gamified-app candy and it is not a spreadsheet. The RPG framing (levels, seasons, achievements) and the financial framing (budgets, categories, real money unlocked weekly) are rendered in the exact same visual language on purpose — the same glass card, the same restrained sky accent, the same progress bar — because the product's whole premise is that they are one economy, not two features bolted together. Flatness or a low-effort look is the one thing this system must never slide into: depth, glow, and motion are the proof of craft, not embellishment to be trimmed for simplicity.
+Esto no es una app de gimnasio, ni un banco, ni un videojuego: es un sistema de crecimiento personal. La antigua identidad — panel de vidrio nocturno, azul eléctrico, sombras con glow, dinero como mecánica de recompensa — se abandona por completo. El verde Kaizen sigue siendo el único acento de **acción** (todo botón primario, todo focus ring); el dorado se reserva para lo que de verdad se ganó (un logro, un hito). La gamificación (rachas, niveles, logros) sigue existiendo pero se comporta con la misma sobriedad que el resto del sistema — nunca vuelve a sentirse como un loot box.
+
+Un refinamiento sobre esa base: las 4 secciones principales de navegación (Panel, Hábitos, Finanzas, Recompensas) tienen su propio color de identidad — no un rediseño, un punto medio. El fondo, la tipografía y el verde Kaizen de los botones no cambian; lo que cambia es que cada sección "se siente" reconocible por su color en el nav, su título de página y un par de elementos propios (ver "Identidad de sección"). Y los momentos de acción real — guardar el registro del día, salvar una racha con una protección, alcanzar un hito — llevan una micro-animación breve y con intención, nunca decorativa (ver "Motion").
 
 **Key Characteristics:**
-- Near-black base with frosted, translucent glass cards floating on soft ambient shadows — never flat, never hard-edged.
-- A single accent voice (sky blue) for action and identity; habit-area colors are data, not brand decoration.
-- Calm and precise by default; short, physical celebration bursts (pop / confetti / wiggle) mark real, earned moments only.
-- Progress is always visualized as a bar, ring, or radar — a number alone is never the only signal.
-- Rounded, soft geometry throughout (12–16px radii); no sharp corners, no hairline-only borders without a shadow behind them.
+- Fondo casi negro y cálido, superficies planas (`surface`/`surface-2`) con borde fino de 1px — nunca vidrio, nunca glow.
+- Verde Kaizen como único acento de **acción** (botones primarios, focus ring); dorado para lo ya ganado; cada sección principal suma su propio color de identidad en su nav, título y elementos propios (ver "Identidad de sección").
+- Colores de categoría desaturados que solo aparecen como acentos pequeños (un punto, un ícono, un borde de 2px) — jamás como bloque de color grande.
+- Mucho espacio negativo; una jerarquía de tres niveles siempre visible: título → dato principal grande → texto secundario discreto.
+- Barras de progreso delgadas (1px de alto) en vez de gruesas; ninguna sombra decorativa sin función.
+- Los momentos de acción real tienen una micro-animación breve (pop, barra que se llena) — nunca en cada clic, solo donde el usuario acaba de lograr algo.
 
 ## Colors
 
-The palette is restrained and precise: a near-monochrome dark neutral scale carries almost the entire surface, one sky-blue accent carries every call to action and active state, and a wider set of hues exists solely to encode which life habit a piece of data belongs to.
+Paleta cálida casi monocroma para el 95% de la superficie, una sola tinta de acento para acción, y un dorado reservado exclusivamente para reconocimiento. Los colores de categoría existen solo para diferenciar datos, nunca para decorar chrome.
 
-### Primary
-- **Signal Sky** (`#0ea5e9`, hover `#38bdf8`): the only accent used for primary actions, active navigation states, focus rings, links, and the brand mark. **The One Signal Rule.** Sky blue is the sole color allowed to mean "act here" or "this is active" anywhere in the app; if a new affordance needs an accent, it borrows this one rather than introducing a second brand hue.
+### Base
+- **Fondo** (`#0D0E0E`): el lienzo. Plano — a lo sumo un vinetado radial casi imperceptible (`rgba(123,131,92,0.05)`), nunca un gradiente de color saturado.
+- **Superficie** (`#151716`): toda `Card`, sidebar, header y bottom-nav.
+- **Superficie secundaria** (`#1C1E1D`): chips, filas dentro de una card, inputs.
+- **Borde** (`#292C2A`): el único tipo de borde en todo el sistema — 1px, sólido, nunca translúcido ni brillante.
+- **Texto principal** (`#F2F1EC`): títulos y datos principales.
+- **Texto secundario** (`#858982`): subtítulos, hints, metadatos.
 
-### Neutral
-- **Void 950** (`#0a0b0d`): page background, always paired with the three soft radial gradients (see Layout) rather than used flat.
-- **Void 900 / 850** (`#121317` / `#171920`): elevated surfaces — sidebars, mobile headers/footers, modal panels.
-- **Void 800 / 700** (`#1d1f28` / `#2a2d38`): structural lines — the radar chart's grid rings and spokes render in Void 700.
-- **Void 600 / 500** (`#3a3e4d` / `#565b6e`): tertiary text, disabled states, uppercase micro-labels.
-- **Void 400 / 300** (`#7a8094` / `#a3a8b8`): secondary body text, hints, subtitles.
-- **Void 200 / 100** (`#c8ccd6` / `#e8e9ee`): primary text and headings on dark surfaces.
+### Acento (marca)
+- **Verde Kaizen** (`#7B835C`, hover `#636B47`): **The One Signal Rule.** El único color que significa "actúa aquí" — todo botón primario, todo focus ring, el checkbox de hábito seleccionado en el wizard. Ningún otro color reemplaza a este para una acción.
+- **Dorado** (`#C5A85B`): reservado para lo que ya se ganó — un logro desbloqueado, un hito de racha, y por eso también la identidad de la sección Recompensas.
 
-### Data Colors (Habit Areas)
-- **Intelecto Blue** (`#5b8def`), **Imperio Amber** (`#e0a63a`), **Fuerza Red** (`#e0544f`), **Vitalidad Green** (`#4cb782`), **Energía Violet** (`#9b6fe0`), **Sabiduría Cyan** (`#3ab5c6`), **Serenidad Teal** (`#63c7b2`), **Vínculos Pink** (`#e06fa8`), **Creatividad Lilac** (`#c68fe0`), **Gratitud Gold** (`#e0c23a`): one fixed color per habit template in the catalog (`areaCatalog.ts`), applied via inline `color`/`backgroundColor`, never a Tailwind utility class. **The Data-Not-Decoration Rule.** A habit's color may only appear on the elements that represent that specific habit's data (its icon, progress bar, radar point) — it must never bleed into chrome, buttons, or another habit's row.
+### Identidad de sección
+Cada una de las 4 secciones principales de navegación tiene un acento propio, reutilizado en su ítem de nav (activo), el título de su página (`SectionTitle accent=`) y un puñado de elementos que son inequívocamente "de esa sección" (la barra de gasto-vs-ingreso, el FAB de gasto, el pill de día seleccionado en Hábitos):
+- **Panel** → Verde Kaizen `#7B835C` (es la base, no necesita un color nuevo).
+- **Hábitos** → Terracota `#BD7A52` (`habitos-500`).
+- **Finanzas** → Verde-azulado `#4B8078` (`finanzas-500`) — deliberadamente no es azul: sigue siendo una familia verde/teal, nunca el azul eléctrico retirado.
+- **Recompensas** → Dorado `#C5A85B` (`gold-500`) — coincide con el acento de logros porque la sección **es** rachas, protecciones y logros.
 
-### Status Colors
-- **Success Emerald** (`#10b981`): budget category under its limit, achievement unlocked, positive confirmations.
-- **Warning Amber** (`#f59e0b`): budget category approaching its limit, pending action banners.
-- **Danger Rose** (`#f43f5e`): over-budget category, destructive actions, validation errors.
+**The Section Identity Rule.** Un color de sección vive en el nav, el título de página y un pequeño número de elementos propios de esa sección — nunca reemplaza al verde Kaizen en un botón primario o un focus ring, y nunca se usa fuera de su sección (el color de Hábitos no aparece en Finanzas). No es una paleta libre: son 4 acentos fijos, documentados aquí, no uno por feature.
+
+### Datos (categorías de hábito)
+Intelecto `#6B7A8F` · Imperio `#A97C50` · Fuerza `#B5624A` · Vitalidad `#5E8C5A` · Energía `#7E6C9E` · Sabiduría `#4F7C7A` · Serenidad `#8FA084` · Vínculos `#A9667A` · Creatividad `#A79BC0` · Gratitud `#C9AA5C`. **The Data-Not-Decoration Rule.** Un color de categoría solo puede aparecer en el ícono, punto de radar o barra de esa categoría específica — nunca en chrome, botones, ni como fondo de sección. En el wizard de planeación se usa el color puro del catálogo (reconocible desde el día 1); en pantallas de uso diario (radar, hábitos, panel) se atenúa según el nivel del hábito — ver "Color por nivel".
+
+**Color por nivel.** Fuera del wizard, el acento de una categoría se mezcla con un gris apagado (`#585C54`) en proporción al nivel del hábito (`colorPorNivel` en `src/lib/color.ts`): nivel 1 se ve casi monocromo, nivel 20 llega exactamente al hex documentado arriba. Es una progresión literal — la constancia "ilumina" el color, nunca al revés.
+
+### Estado
+- **Éxito** (`emerald-500`), **Advertencia** (`amber-500`), **Peligro** (`rose-500`): confirmaciones, validaciones, acciones destructivas. Sin relación con el acento de marca ni con los colores de categoría.
 
 ## Typography
 
-**Body & UI Font:** Inter (with `ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`)
+**Fuente única:** Inter (con `ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`). Un solo grotesco para todo el sistema — la jerarquía se construye con tamaño, peso y tracking, no con una segunda tipografía.
 
-**Character:** A single, highly legible grotesque carries every role in the system — there is no display serif or accent face. Hierarchy is built entirely through weight, size, and letter-spacing (tight/negative tracking on headings, wide uppercase tracking on labels), which keeps the dashboard reading as precise instrumentation rather than editorial content.
+### Jerarquía
+- **Headline** (600, 1.5rem, -0.01em): saludo del panel ("Hola, {nombre}"), el número protagonista de cada pantalla.
+- **Title** (600, 1rem, -0.01em): títulos de sección dentro de una `Card`.
+- **Body** (400, 0.875rem): texto corrido, filas de lista, valores de formulario.
+- **Label** (500, 0.6875rem, uppercase, +0.04em): etiquetas de stat, encabezados de tabla, micro-contexto.
 
-### Hierarchy
-- **Headline** (600, 1.125–1.25rem, tight/-0.01em tracking): screen titles ("Hola, {nombre}"), primary card totals (level, PP, wallet balance).
-- **Title** (600, 0.9375–1rem, -0.01em tracking): section titles inside a `Card` (`SectionTitle`), modal titles.
-- **Body** (400, 0.8125–0.875rem): all running copy, list rows, form values.
-- **Label** (500, 0.6875–0.75rem, uppercase, +0.04em tracking): stat labels, table headers, micro-context tags ("racha 2/4", "tope $9,000").
-
-### Named Rules
-**The No-Serif Rule.** The system has exactly one type family. A second face — even for a hero number — reads as an inconsistency, not sophistication.
+**The Number-First Rule.** Todo dato que importa (total gastado, nivel, PP, racha) se renderiza como el elemento tipográfico más grande de su tarjeta — el texto que lo explica va siempre debajo, más pequeño y en `text-secondary`. La racha diaria (Panel y Hábitos) es la excepción con más peso: usa `Stat size="lg"` (`text-4xl`, por encima del resto de stats de su misma fila) porque es el número que más motiva sostener.
 
 ## Layout
 
-The shell is a fixed two-mode frame: a 224px (`w-56`) fixed sidebar with a top-aligned brand mark and bottom-anchored profile block on desktop (`md:` and up), collapsing to a fixed top bar plus a fixed bottom tab bar (with a "Más" overflow sheet) below that breakpoint. Content lives in a single centered column capped at `max-w-6xl`, laid out as a responsive grid — `grid-cols-1` on mobile widening to 2–3 columns (`lg:grid-cols-3`, cards spanning `lg:col-span-2` for the dominant panel) on larger screens. Vertical rhythm between major blocks is a consistent `space-y-6` / `gap-6`; inside a card, sub-groups step down through `mb-5`, `mb-4`, `space-y-3`.
-
-The page background is never a flat fill: three large, soft `radial-gradient` washes (sky/indigo at low opacity, `background-attachment: fixed`) sit behind every screen, giving the void depth without adding visual noise. A floating action button (56px circle, fixed bottom-right, offset above the mobile tab bar) is always reachable for the single highest-frequency action (quick expense entry), independent of which tab is open.
+El shell se mantiene: sidebar fija de 224px en escritorio, barra superior + barra inferior en móvil, columna central `max-w-6xl`. Lo que cambia es el fondo: ya no hay gradientes radiales de color detrás de cada pantalla — el fondo es prácticamente plano, con a lo sumo un vinetado verde casi imperceptible arriba. El ritmo vertical (`space-y-6`/`gap-6` entre bloques, `mb-4` bajo cada `SectionTitle`) se conserva igual.
 
 ## Elevation & Depth
 
-Kaizen is a glass system, not a flat or tonal one: depth comes from a layered combination of translucency, blur, and soft ambient shadow rather than solid elevated panels or a single drop-shadow. Every raised surface (cards, modals, the FAB, primary buttons) carries a paired treatment — a 1px inset highlight (`inset 0 1px 0 0 rgba(255,255,255,0.05–0.3)`) simulating light catching a glass edge, plus a large, soft, downward ambient shadow (`0 20-30px 40-60px -20/-28px rgba(0,0,0,0.7-0.8)`) that reads as the surface floating, not sitting. Flatness is explicitly rejected: a card, button, or modal with no shadow and no translucency is treated as unfinished, not as restraint.
+Kaizen dejó de ser un sistema de vidrio. La profundidad ahora viene de un borde fino de 1px (`border-base-700`) y una sombra de contacto muy sutil (`shadow-card`: `0 1px 2px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.2)`) — nunca de blur, translucidez ni glow de color.
 
 ### Shadow Vocabulary
-- **Card Float** (`shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_40px_-28px_rgba(0,0,0,0.7)]`): the default resting state for every `Card`.
-- **Action Glow** (`shadow-[inset_0_1px_0_0_rgba(255,255,255,0.3),0_8px_20-30px_-8px_rgba(59,130,246,0.6-0.7)]`): primary buttons, the logo mark, and the FAB — an inset highlight plus a sky-tinted glow that ties the accent color to elevation itself.
-- **Overlay Lift** (`shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)]`): modals and sheets, always paired with a `backdrop-blur-xl` scrim (`bg-black/70 backdrop-blur-sm`) behind them.
+- **Card** (`shadow-card`): la sombra por defecto de toda superficie elevada — casi imperceptible, solo separa la tarjeta del fondo.
+- **Soft** (`shadow-soft`: `0 8px 24px -16px rgba(0,0,0,0.5)`): modales, hojas y el botón flotante — el único lugar con una sombra algo más presente, y aun así sin tinte de color.
 
 ### Named Rules
-**The Never-Flat Rule.** No interactive or content-bearing surface renders without both a translucent fill (or backdrop-blur) and a shadow; a plain solid rectangle reads as a bug, not a minimalist choice.
+**The No-Glow Rule.** Ninguna superficie lleva una sombra de color (`shadow-color/40` tipo glow) ni un `backdrop-blur`. Si algo necesita destacar, lo hace con un borde de acento de 1-2px, nunca con resplandor.
 
 ## Shapes
 
-Geometry is uniformly soft: `12px` (`rounded-xl`) is the default radius for buttons, inputs, and small chips; `16px` (`rounded-2xl`) marks primary containers — cards, modals, the mobile sheet's top corners; fully circular (`rounded-full`) is reserved for pills/badges, avatars, the FAB, and progress-bar tracks. Borders are always a hairline of translucent white (`border-white/10` typically), never a solid opaque color — a border alone never carries a surface; it always rides on top of the glass fill and shadow described above. There are no sharp corners anywhere in the system.
+`12px` (`rounded-xl`) es el radio por defecto de botones, inputs y chips; `16px` (`rounded-2xl`) marca cards y modales. `rounded-full` se reserva para pills, avatares y el FAB. Los bordes son siempre sólidos de 1px en `border-base-700` — nunca translúcidos, nunca brillantes.
+
+## Motion
+
+**The Instant-Feedback Rule.** El sistema se siente vivo en el uso diario, no solo en momentos especiales — pero la forma de lograrlo sin sentirse lento es que la animación de una acción que se repite mucho (marcar un hábito, cambiar de sección, ver subir un número) sea siempre corta (100-220ms): es feedback instantáneo, no una espera. Solo los momentos realmente puntuales (un hito de racha, una protección salvando la racha, el tour de bienvenida) se permiten un poco más de presencia.
+
+### Todos los días (corta, en cada interacción)
+- **Rebote al marcar** (`animate-tap`, 180ms): tocar Sí/No, sumar una comida o ajustar un contador da un pop breve a la tarjeta del hábito, encima del cambio de color que ya ocurre.
+- **Números que cuentan** (`useCountUp`, ~300ms ease-out cúbico): racha, PP totales y los contadores de hábito suben hacia su nuevo valor en vez de saltar directo — nunca en datos que cambian por scroll continuo (el selector del wizard ya es continuo de por sí).
+- **Cambio de sección** (`animate-fade-up`, 250ms): pasar de Panel a Hábitos/Finanzas/Recompensas hace un fundido + leve desplazamiento en vez de un corte seco.
+- **Racha con vida** (`animate-flicker`, 1.8s infinito, muy sutil): el ícono de flama de la racha activa parpadea apenas — solo cuando la racha es mayor a 0.
+- **El radar se dibuja** (`animate-radar-in`, 450ms, una sola vez al montar): aparece con una entrada suave en vez de estar ya completo — no se repite en cada actualización de datos, o se sentiría agitado.
+
+### Momentos puntuales (más presencia, mucho más raros)
+- **Entrada** (`animate-pop`, 220ms exponential ease-out): cards, modales, y cualquier tarjeta que reemplaza a otra (el carrusel de metas del wizard) — siempre desde un estado ya visible, nunca un salto seco.
+- **Toast de acción** (`animate-toast-fill`): al guardar el registro diario, una barra delgada del color de la sección corriente (`habitos-500`) se llena a lo largo de la vida del toast.
+- **Celebración de hito:** al alcanzar un hito de racha (7/30/90/365 días) o al usar una protección, el mensaje usa el acento dorado + `animate-pop` — el único momento en que el sistema se permite sonar como un logro, nunca como un videojuego.
+- **Coachmarks:** un tour breve (4-6 pasos) que aparece una sola vez, la primera vez que un perfil nuevo llega al panel tras terminar el asistente de planeación. Usa un recorte tipo spotlight (`box-shadow` sobre el elemento señalado) y nunca vuelve a mostrarse — la bandera vive en `localStorage`, no en el estado persistido de la app.
 
 ## Components
 
 ### Buttons
-- **Shape:** `rounded-xl` (12px), `px-3.5 py-2`, `text-sm font-medium`, `active:scale-[0.97]` on press.
-- **Primary:** Signal Sky fill, white text, inset highlight + sky Action Glow shadow (see Elevation).
-- **Secondary:** `bg-white/[0.06]` with a `border-white/10` hairline, no glow — used for the lower-priority action beside a primary one.
-- **Ghost:** transparent, `hover:bg-white/[0.06]`, muted text — used for tertiary/dismissive actions ("Elegir otro perfil").
-- **Danger:** rose-tinted translucent fill (`bg-rose-500/15`) with a matching hairline border, reserved for destructive confirmation.
+- **Primary:** relleno verde Kaizen, texto claro, sin sombra de color — solo la sombra de contacto estándar.
+- **Secondary:** `bg-base-850` con borde `border-base-700`.
+- **Ghost:** transparente, hover a `bg-base-850`.
+- **Danger:** relleno rosa translúcido, para confirmaciones destructivas.
 
-### Cards / Containers
-- **Corner Style:** `rounded-2xl` (16px).
-- **Background:** `bg-white/[0.035]` with `backdrop-blur-xl`.
-- **Shadow Strategy:** Card Float (see Elevation).
-- **Border:** `border-white/[0.08]` hairline.
-- **Internal Padding:** `p-5` (20px). A `SectionTitle` (title + optional subtitle + trailing action) leads most cards with `mb-4` below it.
+### Cards
+- Fondo `bg-base-900` sólido, borde `border-base-700`, `shadow-card`, `rounded-2xl`, `p-5`.
 
-### Inputs / Fields
-- **Style:** `bg-white/[0.04]`, `border-white/10`, `rounded-xl`, `px-3 py-2`, `text-sm`.
-- **Focus:** border shifts to sky (`focus:border-sky-400`), fill brightens slightly (`focus:bg-white/[0.06]`), plus a soft sky focus ring (`focus:ring-2 focus:ring-sky-400/50`) — no default browser outline.
-- **Label pattern:** every field is wrapped by a `Field` component: an uppercase-adjacent micro-label (`text-xs font-medium text-base-400`) above the control, optional hint text below.
+### Inputs
+- `bg-base-850`, `border-base-700`, foco en verde Kaizen (`focus:border-kaizen-400`, `focus:ring-kaizen-400/40`) — nunca azul.
 
-### Badges
-- **Style:** `rounded-full` pill, `px-2.5 py-0.5`, `text-xs font-medium`, translucent tinted background with a matching translucent border (10–20% opacity fill/border of the tone color) — neutral, green, yellow, red, and blue tones map directly to the Status Colors plus Signal Sky.
-
-### Progress Bars
-- **Style:** `h-1.5`–`h-2.5` track in `bg-white/[0.06]`, `rounded-full`, filled bar transitions width over `duration-500` — the system's primary way of showing any 0–1 completion value (habit compliance, level progress, budget usage), always preferred over a bare percentage number alone.
+### Progress bars
+- `h-1` por defecto (antes `h-1.5`–`h-2.5`): delgadas y elegantes, relleno verde Kaizen salvo que representen datos por categoría (entonces usan el color de esa categoría).
 
 ### Navigation
-- **Desktop sidebar:** fixed `w-56`, translucent (`bg-white/[0.015] backdrop-blur-xl`), items as full-width rows (`rounded-lg`, `px-3 py-2`); the active item gets a 2px sky pill on its left edge plus a sky-tinted icon — never a filled background block alone.
-- **Mobile:** a fixed top bar (brand + hamburger) and a fixed bottom tab bar (4 primary destinations + "Más") share the same translucent, blurred, hairline-bordered treatment as cards; the "Más" overflow opens as a bottom sheet (`rounded-t-2xl`, drag handle bar, backdrop scrim) rather than a dropdown or a new screen.
+- Ítem activo: pill de 2px + ícono en el color de identidad de esa sección (verde Kaizen en Panel, terracota en Hábitos, verde-azulado en Finanzas, dorado en Recompensas) — nunca un bloque de fondo saturado. Las pestañas fuera de las 4 principales (Cierre, Temporada, Reconocimientos, Historial, Config.) no tienen color propio y usan verde Kaizen por defecto.
 
-### Radar Chart (signature component)
-A borderless SVG radar built from the active habit areas: concentric rings and axis spokes render in the quiet Void 700 grid color, the filled polygon uses a low-opacity Signal-Sky fill (`#5b8def` at ~20% via `33` hex alpha) with a solid Signal-Sky stroke, and each vertex is a solid dot in that habit's own Data Color — the one place a habit color is allowed to sit directly on top of the accent's polygon. This is the system's clearest expression of "many small honest instruments, one shared frame."
+### Radar (componente insignia)
+Anillos y ejes en `border-base-700`; el polígono de cumplimiento usa un relleno verde Kaizen muy sutil (`#7B835C22`) con trazo del mismo verde a 1.5px — cada vértice es un punto sólido en el color propio de esa categoría. Debe leerse como una herramienta de análisis personal, no como un gráfico de videojuego.
 
-### Floating Quick-Add (FAB)
-A 56px `rounded-full` sky-filled circle, fixed bottom-right and offset above the mobile tab bar, carrying the Action Glow shadow. It opens a bottom-anchored (mobile) / centered (desktop) modal sheet with the same Overlay Lift treatment as every other modal — the FAB is a placement pattern for the single most frequent action, not a separate visual language.
+### Isotipo Kaizen
+Una "K" geométrica de dos trazos en degradado verde oliva (`#B7BC9C` → `#636B47`), usable sola (favicon, logros, pantallas de carga) o junto al wordmark "KAIZEN" en el header. Vive como componente SVG reutilizable, nunca como raster.
+
+## Finanzas: control de gastos, no economía de recompensas
+
+Finanzas se rediseñó como una herramienta de control y visualización de gastos personales — sin presupuesto asignado, sin "dinero libre", sin banco de recompensas. Prioridad de lectura en la pantalla: **total gastado → gastos recientes → categorías → métodos de pago → tarjetas**. Las tarjetas de crédito (hasta 3, con nombre y día de corte) se muestran como filas sobrias con un ícono neutro — nunca imitando el chrome de una app bancaria real. Los resúmenes (de corte y mensuales) siguen una jerarquía editorial fija: TOTAL GASTADO primero y grande, después "¿en qué?", "¿cuánto?" y "¿cómo lo pagué?" — con barras delgadas de distribución por categoría, sin gráficas complejas.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** pair every elevated surface with both an inset highlight and a soft, diffuse ambient shadow (Card Float / Action Glow / Overlay Lift) — depth is load-bearing, not decorative.
-- **Do** keep Signal Sky as the only color that means "act" or "active"; let habit Data Colors stay confined to that habit's own data points.
-- **Do** represent any 0–1 progress value as a bar, ring, or radar, never a bare number alone.
-- **Do** reserve celebratory motion (`pop`, `confetti-fall`, `wiggle`) for moments the user actually earned — a level-up, a closed week, an unlocked achievement.
-- **Do** use `rounded-full` for anything meant to feel tappable-and-alive (FAB, badges, avatars) and `rounded-xl`/`rounded-2xl` for everything else; never a sharp corner.
+- **Do** mantener el verde Kaizen como el único color que significa "actúa aquí" en botones primarios y focus rings.
+- **Do** usar bordes finos y sólidos (`border-base-700`) más una sombra casi imperceptible como única fuente de profundidad.
+- **Do** dejar que los colores de categoría vivan solo en el ícono, punto o barra de esa categoría, atenuados por nivel fuera del wizard.
+- **Do** dar al número más importante de cada tarjeta el mayor tamaño tipográfico disponible.
+- **Do** representar hábitos, rachas y logros sin ninguna referencia a dinero — son rachas, niveles y reconocimientos, punto.
+- **Do** usar el color de identidad de cada sección (Panel/Hábitos/Finanzas/Recompensas) solo en su nav, su título de página y sus propios elementos — nunca en botones primarios.
+- **Do** animar las interacciones de todos los días (marcar un hábito, un número que cambia, cambiar de sección) siempre que la animación sea corta (100-220ms) — feedback instantáneo, no una espera.
+- **Do** reservar la animación más presente (toast con barra, celebración dorada) para los momentos que el usuario realmente ganó (guardar el día, un hito, una protección usada).
 
 ### Don't:
-- **Don't** render any content-bearing surface flat — no translucency, no blur, no shadow reads as unfinished, not minimal, and is the one failure mode this system must never fall into.
-- **Don't** introduce a second brand accent color alongside Signal Sky; a new affordance borrows sky rather than inventing a hue.
-- **Don't** use a habit's Data Color outside that habit's own row, icon, or chart point — it must never become a page-wide theme color or a generic status color.
-- **Don't** reach for saturated, loot-box-style color blasts, gold badge icons, or competing celebratory chrome — the system earns delight through restraint and timing, not through decoration density.
-- **Don't** render the financial views as a dense literal spreadsheet (heavy table borders, monospaced grids by default); budgets and expenses use the same glass cards and progress bars as every other panel.
+- **Don't** usar glow, blur, gradientes de color o translucidez estilo vidrio — es la antigua identidad, y queda descartada por completo.
+- **Don't** introducir azul eléctrico ni ningún color fuera de los 4 acentos de sección documentados aquí.
+- **Don't** dejar que el color de una sección se filtre a otra, o que reemplace al verde Kaizen en un botón primario.
+- **Don't** mostrar dinero como recompensa, penalización o mecánica de juego en ningún lugar de Hábitos.
+- **Don't** convertir Finanzas en una imitación de app bancaria o de inversión — es control de gastos personal, nada más.
+- **Don't** usar un color de categoría como fondo grande de sección o como tinte de navegación.
+- **Don't** dejar que una animación rutinaria dure más de ~220ms — si se siente como una espera, ya no es feedback.

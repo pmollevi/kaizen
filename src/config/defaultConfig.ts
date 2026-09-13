@@ -27,7 +27,6 @@ export function areaDesdeCatalogo(id: string, peso: number): AreaConfig {
     color: p.color,
     nivel: 1,
     semanasConsecutivas: 0,
-    vinculoFinanciero: p.vinculoFinanciero,
   };
 }
 
@@ -55,11 +54,19 @@ export const USUARIO_DEFAULT: Usuario = {
 };
 
 export const FINANZAS_DEFAULT: Finanzas = {
-  presupuestos: [],
+  categorias: [
+    { id: "cat_comida", nombre: "Comida" },
+    { id: "cat_transporte", nombre: "Transporte" },
+    { id: "cat_vivienda", nombre: "Vivienda" },
+    { id: "cat_salud", nombre: "Salud" },
+    { id: "cat_ocio", nombre: "Ocio" },
+    { id: "cat_otros", nombre: "Otros" },
+  ],
+  tarjetas: [],
   gastos: [],
   resumenesMensuales: [],
-  bancoRecompensas: { saldo: 0, tope: 9000 },
-  ahorroExtra: 0,
+  resumenesTarjeta: [],
+  ingresosMensuales: [],
 };
 
 export function temporadaDefault(): Temporada {
@@ -117,19 +124,11 @@ export const CONFIG_DEFAULT: Config = {
     umbralProteccionMensual: 0.85,
     ventanaProteccionHoras: 48,
     diasPorProteccion: 7,
-    topeBancoRecompensasMeses: 3,
     diasRegistroRetroactivo: 3,
-    destinoSobranteDefault: "ahorro",
-  },
-  imperio: {
-    pesoNegocio: 0.5,
-    pesoFinanzas: 0.5,
-    metaSemanalHorasNegocio: 10,
   },
   bonos: [
     { id: "b_examen", nombre: "Examen aprobado", valorPP: 150 },
     { id: "b_calif", nombre: "Calificación sobre el umbral", valorPP: 100 },
-    { id: "b_meta_fin", nombre: "Meta financiera del mes alcanzada", valorPP: 120 },
     { id: "b_record", nombre: "Récord personal en gimnasio", valorPP: 80 },
     { id: "b_proyecto", nombre: "Proyecto entregado", valorPP: 150 },
     { id: "b_desafio", nombre: "Desafío completado", valorPP: 100 },
@@ -152,27 +151,11 @@ export const CONFIG_DEFAULT: Config = {
       secreto: false,
     },
     {
-      id: "ach_presupuesto_3",
-      nombre: "Cuentas claras",
-      descripcion: "Cierra 3 meses seguidos dentro de presupuesto.",
-      rareza: "Raro",
-      categoria: "financiero",
-      secreto: false,
-    },
-    {
-      id: "ach_ahorro_total",
-      nombre: "Guardián del sobrante",
-      descripcion: "Ahorra el 100% del sobrante de una categoría en un mes.",
-      rareza: "Común",
-      categoria: "financiero",
-      secreto: false,
-    },
-    {
       id: "ach_gastos_90",
       nombre: "Bitácora completa",
       descripcion: "Registra 90 días consecutivos de gastos.",
       rareza: "Épico",
-      categoria: "financiero",
+      categoria: "constancia",
       secreto: false,
     },
     {
@@ -191,6 +174,38 @@ export const CONFIG_DEFAULT: Config = {
       categoria: "constancia",
       secreto: true,
     },
+    {
+      id: "ach_racha_7d",
+      nombre: "Constante",
+      descripcion: "7 días seguidos cumpliendo todos tus hábitos activos.",
+      rareza: "Común",
+      categoria: "constancia",
+      secreto: false,
+    },
+    {
+      id: "ach_racha_30d",
+      nombre: "Disciplinado",
+      descripcion: "30 días seguidos cumpliendo todos tus hábitos activos.",
+      rareza: "Raro",
+      categoria: "constancia",
+      secreto: false,
+    },
+    {
+      id: "ach_racha_90d",
+      nombre: "Inquebrantable",
+      descripcion: "90 días seguidos cumpliendo todos tus hábitos activos.",
+      rareza: "Épico",
+      categoria: "constancia",
+      secreto: false,
+    },
+    {
+      id: "ach_racha_365d",
+      nombre: "Maestro Kaizen",
+      descripcion: "365 días seguidos cumpliendo todos tus hábitos activos.",
+      rareza: "Legendario",
+      categoria: "constancia",
+      secreto: false,
+    },
   ],
 };
 
@@ -200,7 +215,11 @@ export function estadoInicial(nombreUsuario: string): KaizenState {
     usuario: { ...USUARIO_DEFAULT, nombre: nombreUsuario },
     areas: AREAS_DEFAULT.map((a) => ({ ...a })),
     registrosDiarios: [],
-    finanzas: { ...FINANZAS_DEFAULT, bancoRecompensas: { ...FINANZAS_DEFAULT.bancoRecompensas } },
+    finanzas: {
+      ...FINANZAS_DEFAULT,
+      categorias: FINANZAS_DEFAULT.categorias.map((c) => ({ ...c })),
+      tarjetas: [],
+    },
     cierresSemanales: [],
     temporadaActual: temporadaDefault(),
     historial: {

@@ -1,13 +1,14 @@
 import React, { useMemo, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, Field, Input, Textarea, Button, Badge, ProgressBar, Stat } from "@/components/ui/Primitives";
+import { Card, SectionTitle, Field, Input, Textarea, Button, Badge, ProgressBar, Stat, InfoTip, useCountUp } from "@/components/ui/Primitives";
 import { finSemana, formatoLargo, hoyISO, inicioSemana, sumarDias } from "@/lib/dates";
 import type { AreaId, Gasto } from "@/types";
 import { plantillaPorId } from "@/config/areaCatalog";
 import { iconoDeHabito } from "@/config/habitIcons";
 import { cumplimientoSemanalArea, nivelDesdePP } from "@/lib/formulas";
-import { rachaDiariaVigente } from "@/lib/achievements";
-import { CheckCircle2, Flame, Minus, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { HITOS_RACHA, rachaDiariaVigente } from "@/lib/achievements";
+import { COLOR_SECCION, colorPorNivel } from "@/lib/color";
+import { CheckCircle2, Flame, Minus, Plus, ShieldCheck, Trash2, Trophy } from "lucide-react";
 
 function valoresVacios(areas: { id: AreaId }[]): Record<AreaId, number> {
   return Object.fromEntries(areas.map((a) => [a.id, 0]));
@@ -32,7 +33,7 @@ function HabitoCard({
   valor,
   onCambiar,
 }: {
-  area: { id: AreaId; nombre: string; metrica: string; color: string };
+  area: { id: AreaId; nombre: string; metrica: string; color: string; nivel: number };
   valor: number;
   onCambiar: (v: number) => void;
 }) {
@@ -41,44 +42,55 @@ function HabitoCard({
   const paso = PASO_POR_TIPO[tipo] ?? 1;
   const contestado = tipo !== "binaria" && tipo !== "conteo3" && valor > 0;
   const Icono = iconoDeHabito(area.id);
+  const color = colorPorNivel(area.color, area.nivel);
+  const valorMostrado = useCountUp(valor);
+
+  // Rebote corto (180ms) al marcar/ajustar el hábito — feedback instantáneo,
+  // no una animación que haya que esperar.
+  const [flash, setFlash] = useState(false);
+  const marcar = (v: number) => {
+    onCambiar(v);
+    setFlash(true);
+    setTimeout(() => setFlash(false), 180);
+  };
 
   return (
     <div
-      className="rounded-2xl p-4 border transition-all duration-300"
+      className={`rounded-2xl p-4 border transition-all duration-300 ${flash ? "animate-tap" : ""}`}
       style={{
-        borderColor: contestado ? `${area.color}66` : "rgba(255,255,255,0.06)",
-        background: contestado ? `${area.color}14` : "rgba(255,255,255,0.02)",
+        borderColor: contestado ? `${color}66` : "rgba(255,255,255,0.06)",
+        background: contestado ? `${color}14` : "rgba(255,255,255,0.02)",
       }}
     >
       <div className="flex items-center gap-2.5 mb-3">
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: `${area.color}26` }}
+          style={{ background: `${color}26` }}
         >
-          <Icono className="w-4 h-4" style={{ color: area.color }} />
+          <Icono className="w-4 h-4" style={{ color }} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-base-100 truncate">{area.nombre}</div>
-          <div className="text-xs text-base-500 truncate">{area.metrica}</div>
+          <div className="text-xs text-base-500 truncate">{plantilla?.descripcion ?? area.metrica}</div>
         </div>
-        {contestado && <CheckCircle2 className="w-4 h-4 shrink-0 animate-pop" style={{ color: area.color }} />}
+        {contestado && <CheckCircle2 className="w-4 h-4 shrink-0 animate-pop" style={{ color }} />}
       </div>
 
       {tipo === "binaria" && (
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => onCambiar(1)}
+            onClick={() => marcar(1)}
             className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-              valor === 1 ? "text-white" : "bg-white/[0.04] text-base-400"
+              valor === 1 ? "text-base-100" : "bg-base-850 text-base-400"
             }`}
-            style={valor === 1 ? { background: area.color } : undefined}
+            style={valor === 1 ? { background: color } : undefined}
           >
             Sí
           </button>
           <button
-            onClick={() => onCambiar(0)}
+            onClick={() => marcar(0)}
             className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-              valor === 0 ? "bg-base-700 text-base-100" : "bg-white/[0.04] text-base-400"
+              valor === 0 ? "bg-base-700 text-base-100" : "bg-base-850 text-base-400"
             }`}
           >
             No
@@ -91,11 +103,11 @@ function HabitoCard({
           {[0, 1, 2, 3].map((n) => (
             <button
               key={n}
-              onClick={() => onCambiar(n)}
+              onClick={() => marcar(n)}
               className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-                valor === n ? "text-white" : "bg-white/[0.04] text-base-400"
+                valor === n ? "text-base-100" : "bg-base-850 text-base-400"
               }`}
-              style={valor === n ? { background: area.color } : undefined}
+              style={valor === n ? { background: color } : undefined}
             >
               {n}
             </button>
@@ -106,18 +118,18 @@ function HabitoCard({
       {(tipo === "horas" || tipo === "paginas" || tipo === "minutos" || tipo === "veces") && (
         <div className="flex items-center gap-3">
           <button
-            onClick={() => onCambiar(Math.max(0, Math.round((valor - paso) * 100) / 100))}
-            className="w-11 h-11 rounded-xl bg-white/[0.04] text-base-300 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+            onClick={() => marcar(Math.max(0, Math.round((valor - paso) * 100) / 100))}
+            className="w-11 h-11 rounded-xl bg-base-850 text-base-300 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
           >
             <Minus className="w-4 h-4" />
           </button>
           <div className="flex-1 text-center">
-            <span className="text-xl font-semibold tabular-nums">{valor || 0}</span>
+            <span className="text-xl font-semibold tabular-nums">{valorMostrado || 0}</span>
           </div>
           <button
-            onClick={() => onCambiar(Math.round((valor + paso) * 100) / 100)}
+            onClick={() => marcar(Math.round((valor + paso) * 100) / 100)}
             className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-white active:scale-90 transition-transform"
-            style={{ background: area.color }}
+            style={{ background: color }}
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -143,6 +155,7 @@ export function RegistroDiarioView() {
   );
   const [observacion, setObservacion] = useState(registroExistente?.observacion ?? "");
   const [confirmacion, setConfirmacion] = useState<string | null>(null);
+  const [hitoCelebrado, setHitoCelebrado] = useState<(typeof HITOS_RACHA)[number] | null>(null);
 
   const cambiarFecha = (nueva: string) => {
     setFecha(nueva);
@@ -152,21 +165,28 @@ export function RegistroDiarioView() {
   };
 
   const guardar = () => {
+    const antes = new Set(useKaizenStore.getState().historial.reconocimientos.map((r) => r.id));
     registrarDia(fecha, valores, observacion.slice(0, 200));
-    setConfirmacion(FRASES_EXITO[Math.floor(Math.random() * FRASES_EXITO.length)]);
-    setTimeout(() => setConfirmacion(null), 2600);
+    const despues = useKaizenStore.getState().historial.reconocimientos;
+    const hito = HITOS_RACHA.find((h) => !antes.has(h.id) && despues.some((r) => r.id === h.id));
+    if (hito) {
+      setHitoCelebrado(hito);
+      setTimeout(() => setHitoCelebrado(null), 3400);
+    } else {
+      setConfirmacion(FRASES_EXITO[Math.floor(Math.random() * FRASES_EXITO.length)]);
+      setTimeout(() => setConfirmacion(null), 2600);
+    }
   };
 
   const gastosDelDia = state.finanzas.gastos.filter((g) => g.fecha === fecha);
   const [montoGasto, setMontoGasto] = useState("");
   const [categoriaGasto, setCategoriaGasto] = useState("");
   const [palabraGasto, setPalabraGasto] = useState("");
-  const presupuestoMes = state.finanzas.presupuestos.find((p) => p.mes === fecha.slice(0, 7));
 
   const agregarGastoDelDia = () => {
     const monto = parseFloat(montoGasto);
     if (!monto || monto <= 0 || !categoriaGasto || !palabraGasto.trim()) return;
-    agregarGasto({ fecha, monto, categoriaId: categoriaGasto, palabraClave: palabraGasto.trim() } as Omit<Gasto, "id">);
+    agregarGasto({ fecha, monto, categoriaId: categoriaGasto, palabraClave: palabraGasto.trim(), metodo: "efectivo" } as Omit<Gasto, "id">);
     setMontoGasto("");
     setPalabraGasto("");
   };
@@ -180,35 +200,54 @@ export function RegistroDiarioView() {
   const nivel = nivelDesdePP(state.usuario.ppTotales, state.config);
   const inicio = inicioSemana(hoy);
   const fin = finSemana(hoy);
-  const presupuestoMesActual = state.finanzas.presupuestos.find((p) => p.mes === hoy.slice(0, 7));
+  const racha = rachaDiariaVigente(state);
+  const rachaMostrada = useCountUp(racha);
+  const ppMostrados = useCountUp(state.usuario.ppTotales);
 
   return (
     <div className="space-y-6 relative">
-      <SectionTitle title="Hábitos" subtitle="Menos de 5 minutos. Sin números de progreso a la vista." />
+      <SectionTitle title="Hábitos" subtitle="Menos de 5 minutos. Sin números de progreso a la vista." accent={COLOR_SECCION.habitos} />
 
       <Card>
         <SectionTitle title="Progreso" />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-          <Stat label="Nivel global" value={nivel.nivel} hint={`faltan ${nivel.faltante} PP`} />
-          <Stat label="PP totales" value={state.usuario.ppTotales.toLocaleString()} />
+          <Stat label="Nivel global" value={nivel.nivel} hint={`${Math.round(nivel.progresoPct * 100)}% al siguiente nivel`} />
           <Stat
+            label={
+              <span className="inline-flex items-center gap-1">
+                PP totales <InfoTip text="Puntos de Progreso: subes de nivel acumulándolos cada semana según tu cumplimiento." />
+              </span>
+            }
+            value={ppMostrados.toLocaleString()}
+          />
+          <Stat
+            size="lg"
             label="Racha diaria"
             value={
-              <span className="inline-flex items-center gap-1">
-                <Flame className="w-4 h-4 text-amber-400" /> {rachaDiariaVigente(state)}
+              <span className="inline-flex items-center gap-1.5">
+                <Flame className={`w-6 h-6 text-amber-400 ${racha > 0 ? "animate-flicker" : ""}`} /> {rachaMostrada}
               </span>
+            }
+            hint={
+              racha === 0 && state.registrosDiarios.length > 0
+                ? "Se pausó, no se borró. Hoy es buen día para reiniciarla."
+                : undefined
             }
           />
           <Stat
-            label="Protecciones"
+            label={
+              <span className="inline-flex items-center gap-1">
+                Protecciones <InfoTip text="Escudos que cubren una semana floja sin romper tu racha. Se ganan acumulando días seguidos de constancia." />
+              </span>
+            }
             value={
               <span className="inline-flex items-center gap-1">
-                <ShieldCheck className="w-4 h-4 text-sky-400" /> {state.usuario.protecciones}
+                <ShieldCheck className="w-4 h-4 text-kaizen-400" /> {state.usuario.protecciones}
               </span>
             }
           />
         </div>
-        <ProgressBar value={nivel.progresoPct} colorClass="bg-sky-500" height="h-2.5" />
+        <ProgressBar value={nivel.progresoPct} colorClass="bg-kaizen-500" height="h-1.5" />
         <div className="flex items-center justify-between text-xs text-base-500 mt-1.5 mb-5">
           <span>Nivel {nivel.nivel}</span>
           <span>Nivel {nivel.nivel + 1}</span>
@@ -216,27 +255,20 @@ export function RegistroDiarioView() {
         <div className="space-y-3">
           {state.areas.map((a) => {
             const Icono = iconoDeHabito(a.id);
-            const cumplimiento = cumplimientoSemanalArea(
-              a,
-              state.config,
-              state.registrosDiarios,
-              inicio,
-              fin,
-              state.finanzas.gastos,
-              presupuestoMesActual
-            );
+            const cumplimiento = cumplimientoSemanalArea(a, state.config, state.registrosDiarios, inicio, fin);
+            const color = colorPorNivel(a.color, a.nivel);
             return (
               <div key={a.id}>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="font-medium text-base-200 inline-flex items-center gap-1.5">
-                    <Icono className="w-3.5 h-3.5" style={{ color: a.color }} />
+                    <Icono className="w-3.5 h-3.5" style={{ color }} />
                     {a.nombre} · Nv. {a.nivel}
                   </span>
                   <span className="text-base-500">
                     racha {a.semanasConsecutivas}/{state.config.economia.semanasParaNivelArea}
                   </span>
                 </div>
-                <ProgressBar value={cumplimiento} color={a.color} />
+                <ProgressBar value={cumplimiento} color={color} />
               </div>
             );
           })}
@@ -254,8 +286,8 @@ export function RegistroDiarioView() {
               onClick={() => cambiarFecha(d)}
               className={`px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap border transition-all disabled:opacity-30 ${
                 d === fecha
-                  ? "border-sky-500 bg-sky-500/15 text-sky-300 scale-105"
-                  : "border-white/10 text-base-400 hover:text-base-100"
+                  ? "border-habitos-500/50 bg-habitos-500/10 text-habitos-300 scale-105"
+                  : "border-base-700 text-base-400 hover:text-base-100"
               }`}
             >
               {d === hoy ? "Hoy" : formatoLargo(d).split(" de ")[0]}
@@ -295,12 +327,12 @@ export function RegistroDiarioView() {
           />
         </Field>
 
-        <div className="mt-6 border-t border-white/10 pt-5">
+        <div className="mt-6 border-t border-base-700 pt-5">
           <div className="text-xs uppercase tracking-wide text-base-400 mb-3">Gastos del día</div>
           {gastosDelDia.length > 0 && (
             <ul className="space-y-1.5 mb-3">
               {gastosDelDia.map((g) => (
-                <li key={g.id} className="flex items-center justify-between text-sm bg-white/[0.04] rounded-xl px-3 py-2">
+                <li key={g.id} className="flex items-center justify-between text-sm bg-base-850 rounded-xl px-3 py-2">
                   <span className="text-base-300">{g.palabraClave}</span>
                   <div className="flex items-center gap-3">
                     <span className="font-medium">${g.monto.toLocaleString()}</span>
@@ -312,7 +344,7 @@ export function RegistroDiarioView() {
               ))}
             </ul>
           )}
-          {presupuestoMes ? (
+          {state.finanzas.categorias.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               <Input
                 className="w-28"
@@ -323,12 +355,12 @@ export function RegistroDiarioView() {
                 onChange={(e) => setMontoGasto(e.target.value)}
               />
               <select
-                className="bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm"
+                className="bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm"
                 value={categoriaGasto}
                 onChange={(e) => setCategoriaGasto(e.target.value)}
               >
                 <option value="">Categoría</option>
-                {presupuestoMes.categorias.map((c) => (
+                {state.finanzas.categorias.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.nombre}
                   </option>
@@ -345,7 +377,7 @@ export function RegistroDiarioView() {
               </Button>
             </div>
           ) : (
-            <div className="text-sm text-base-500">Configura el presupuesto de este mes en Finanzas para registrar gastos.</div>
+            <div className="text-sm text-base-500">Agrega una categoría de gasto en Finanzas para registrar gastos.</div>
           )}
         </div>
 
@@ -363,8 +395,20 @@ export function RegistroDiarioView() {
 
       {confirmacion && (
         <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-40 animate-pop">
-          <div className="bg-sky-500 text-white text-sm font-semibold px-5 py-3 rounded-full shadow-[inset_0_1px_0_0_rgba(255,255,255,0.3),0_12px_28px_-8px_rgba(59,130,246,0.7)] border border-white/10">
-            {confirmacion}
+          <div className="relative overflow-hidden bg-base-900 text-base-100 text-sm font-medium px-5 py-3 rounded-2xl shadow-soft border border-habitos-500/40 min-w-[200px] text-center">
+            <span className="relative z-10">{confirmacion}</span>
+            <span className="absolute inset-x-0 bottom-0 h-0.5 bg-habitos-500 animate-toast-fill" />
+          </div>
+        </div>
+      )}
+
+      {hitoCelebrado && (
+        <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-40 animate-pop">
+          <div className="flex items-center gap-2.5 bg-base-900 text-base-100 text-sm px-5 py-3 rounded-2xl shadow-soft border border-gold-500/40">
+            <Trophy className="w-4 h-4 text-gold-400 shrink-0" />
+            <span>
+              <span className="font-semibold text-gold-400">{hitoCelebrado.titulo}.</span> Racha de {hitoCelebrado.dias} días — nuevo título activo.
+            </span>
           </div>
         </div>
       )}

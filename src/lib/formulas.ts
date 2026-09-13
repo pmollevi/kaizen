@@ -1,13 +1,5 @@
-import type {
-  AreaConfig,
-  AreaId,
-  CategoriaPresupuesto,
-  Config,
-  Gasto,
-  PresupuestoMensual,
-  RegistroDiario,
-} from "@/types";
-import { diasDelMes, diaDelMes, mesDe } from "@/lib/dates";
+import type { AreaConfig, AreaId, CategoriaGasto, Config, DistribucionCategoria, Gasto, RegistroDiario, Tarjeta } from "@/types";
+import { diasDelMes, diaDelMes, mesDe, parseISO, sumarDias, toISO } from "@/lib/dates";
 
 // ---------------------------------------------------------------------------
 // 6.5 — Progresión por etapas: la exigencia sube cada N niveles, no cada nivel.
@@ -24,18 +16,18 @@ export function multiplicadorEtapa(area: AreaConfig, config: Config, metaBase: n
   return metaBase > 0 ? metaTope / metaBase : 1;
 }
 
-export function metaSemanalBase(area: AreaConfig, config: Config): number {
-  return area.vinculoFinanciero ? config.imperio.metaSemanalHorasNegocio : area.metaSemanalBase;
+export function metaSemanalBase(area: AreaConfig): number {
+  return area.metaSemanalBase;
 }
 
 export function metaSemanalEfectiva(area: AreaConfig, config: Config): number {
-  const base = metaSemanalBase(area, config);
+  const base = metaSemanalBase(area);
   return base * multiplicadorEtapa(area, config, base);
 }
 
 export function metaDiariaEfectiva(area: AreaConfig, config: Config): number | null {
   if (area.metaDiaria === null) return null;
-  const base = metaSemanalBase(area, config);
+  const base = metaSemanalBase(area);
   return area.metaDiaria * multiplicadorEtapa(area, config, base);
 }
 
@@ -61,62 +53,14 @@ export function sumaAreaEnSemana(registros: RegistroDiario[], areaId: AreaId): n
   return registros.reduce((acc, r) => acc + (r.valores[areaId] ?? 0), 0);
 }
 
-/** Categorías de tipo "gasto" que están dentro de su ritmo a la fecha dada. */
-export function categoriasDentroDePresupuesto(
-  presupuesto: PresupuestoMensual | undefined,
-  gastos: Gasto[],
-  fechaCorte: string
-): { dentro: number; total: number } {
-  if (!presupuesto) return { dentro: 0, total: 0 };
-  const asignaciones = calcularAsignaciones(presupuesto);
-  const categoriasGasto = presupuesto.categorias.filter((c) => c.tipo === "gasto");
-  const dias = diasDelMes(presupuesto.mes);
-  const diaActual = Math.min(diaDelMes(fechaCorte), dias);
-  let dentro = 0;
-  for (const cat of categoriasGasto) {
-    const asignado = asignaciones.get(cat.id) ?? 0;
-    const gastado = gastos
-      .filter((g) => g.categoriaId === cat.id && mesDe(g.fecha) === presupuesto.mes && g.fecha <= fechaCorte)
-      .reduce((acc, g) => acc + g.monto, 0);
-    const ritmoEsperado = asignado * (diaActual / dias);
-    if (gastado <= ritmoEsperado || asignado === 0) dentro += 1;
-  }
-  return { dentro, total: categoriasGasto.length };
-}
-
-export function cumplimientoFinancieroSemanal(
-  registros: RegistroDiario[],
-  gastos: Gasto[],
-  presupuesto: PresupuestoMensual | undefined,
-  inicio: string,
-  fin: string
-): number {
-  if (!presupuesto) return 0; // sin presupuesto del mes no hay nada contra qué cumplir
-  const gastosEnSemana = gastos.filter((g) => g.fecha >= inicio && g.fecha <= fin);
-  const diasConGasto = new Set(gastosEnSemana.map((g) => g.fecha)).size;
-  const { dentro, total } = categoriasDentroDePresupuesto(presupuesto, gastos, fin);
-  const parteRegistro = diasConGasto / 7;
-  const parteCategorias = total > 0 ? dentro / total : 1;
-  return 0.5 * parteRegistro + 0.5 * parteCategorias;
-}
-
 export function cumplimientoSemanalArea(
   area: AreaConfig,
   config: Config,
   registros: RegistroDiario[],
   inicio: string,
-  fin: string,
-  gastos: Gasto[],
-  presupuestoDelMes: PresupuestoMensual | undefined
+  fin: string
 ): number {
   const registrosSemana = registrosDeSemana(registros, inicio, fin);
-  if (area.vinculoFinanciero) {
-    const horasNegocio = sumaAreaEnSemana(registrosSemana, area.id);
-    const metaNegocio = metaSemanalEfectiva(area, config);
-    const cumplNegocio = metaNegocio > 0 ? Math.min(1, horasNegocio / metaNegocio) : 0;
-    const cumplFinanzas = cumplimientoFinancieroSemanal(registros, gastos, presupuestoDelMes, inicio, fin);
-    return config.imperio.pesoNegocio * cumplNegocio + config.imperio.pesoFinanzas * cumplFinanzas;
-  }
   const total = sumaAreaEnSemana(registrosSemana, area.id);
   const meta = metaSemanalEfectiva(area, config);
   return meta > 0 ? Math.min(1, total / meta) : 0;
@@ -161,78 +105,72 @@ export function nivelDesdePP(ppTotales: number, config: Config) {
 }
 
 // ---------------------------------------------------------------------------
-// 8.3 — Panel financiero
+// 8 — Finanzas: control de gastos puro (sin presupuesto ni recompensas).
 // ---------------------------------------------------------------------------
 
-export function calcularAsignaciones(presupuesto: PresupuestoMensual): Map<string, number> {
-  const resultado = new Map<string, number>();
-  let usado = 0;
-  let categoriaResto: CategoriaPresupuesto | null = null;
-  for (const cat of presupuesto.categorias) {
-    if (cat.modo === "fijo") {
-      resultado.set(cat.id, cat.valor);
-      usado += cat.valor;
-    } else if (cat.modo === "porcentaje") {
-      const monto = presupuesto.dineroUtil * (cat.valor / 100);
-      resultado.set(cat.id, monto);
-      usado += monto;
-    } else {
-      categoriaResto = cat;
-    }
-  }
-  if (categoriaResto) {
-    resultado.set(categoriaResto.id, Math.max(0, presupuesto.dineroUtil - usado));
-  }
-  return resultado;
-}
-
-export function sinAsignar(presupuesto: PresupuestoMensual): number {
-  const tieneResto = presupuesto.categorias.some((c) => c.modo === "resto");
-  if (tieneResto) return 0;
-  const asignaciones = calcularAsignaciones(presupuesto);
-  const usado = [...asignaciones.values()].reduce((a, b) => a + b, 0);
-  return Math.max(0, presupuesto.dineroUtil - usado);
-}
-
-export function gastadoEnCategoria(gastos: Gasto[], categoriaId: string, mes: string): number {
+export function gastadoEnCategoria(gastos: Gasto[], categoriaId: string, desde: string, hasta: string): number {
   return gastos
-    .filter((g) => g.categoriaId === categoriaId && mesDe(g.fecha) === mes)
+    .filter((g) => g.categoriaId === categoriaId && g.fecha >= desde && g.fecha <= hasta)
     .reduce((acc, g) => acc + g.monto, 0);
 }
 
-export function ritmoDiarioPermitido(asignado: number, gastado: number, diasRestantes: number): number {
-  if (diasRestantes <= 0) return 0;
-  return (asignado - gastado) / diasRestantes;
+export function distribucionCategorias(
+  gastos: Gasto[],
+  categorias: CategoriaGasto[],
+  desde: string,
+  hasta: string
+): DistribucionCategoria[] {
+  const enRango = gastos.filter((g) => g.fecha >= desde && g.fecha <= hasta);
+  const total = enRango.reduce((acc, g) => acc + g.monto, 0);
+  return categorias
+    .map((c) => {
+      const monto = enRango.filter((g) => g.categoriaId === c.id).reduce((acc, g) => acc + g.monto, 0);
+      return { categoriaId: c.id, nombre: c.nombre, monto, porcentaje: total > 0 ? monto / total : 0 };
+    })
+    .filter((c) => c.monto > 0)
+    .sort((a, b) => b.monto - a.monto);
 }
 
-export function proyeccionCierre(gastoPromedioDiario: number, mes: string): number {
-  return gastoPromedioDiario * diasDelMes(mes);
+export function gastoPromedioDiario(gastos: Gasto[], desde: string, hasta: string): number {
+  const dias = Math.max(1, diasDelMes(mesDe(hasta)));
+  const total = gastos.filter((g) => g.fecha >= desde && g.fecha <= hasta).reduce((acc, g) => acc + g.monto, 0);
+  return total / dias;
 }
 
-export function semaforo(pctUso: number): "verde" | "amarillo" | "rojo" {
-  if (pctUso >= 1) return "rojo";
-  if (pctUso >= 0.9) return "amarillo";
-  return "verde";
-}
-
-// ---------------------------------------------------------------------------
-// 9.1 — Dinero libre: se desbloquea semana a semana, en proporción a tu
-// cumplimiento de esa semana (el mismo % que ya define tus PP).
-// ---------------------------------------------------------------------------
-
-/** Cuántas semanas (domingos) tiene un mes — así se reparte el dinero libre entre ellas. */
-export function semanasEnMes(mes: string): number {
-  const [y, m] = mes.split("-").map(Number);
-  const dias = diasDelMes(mes);
-  let domingos = 0;
-  for (let d = 1; d <= dias; d++) {
-    if (new Date(y, m - 1, d).getDay() === 0) domingos += 1;
+export function diaMasCaro(gastos: Gasto[], desde: string, hasta: string): { fecha: string; monto: number } | null {
+  const porFecha = new Map<string, number>();
+  for (const g of gastos) {
+    if (g.fecha < desde || g.fecha > hasta) continue;
+    porFecha.set(g.fecha, (porFecha.get(g.fecha) ?? 0) + g.monto);
   }
-  return Math.max(1, domingos);
+  let mejor: { fecha: string; monto: number } | null = null;
+  for (const [fecha, monto] of porFecha) {
+    if (!mejor || monto > mejor.monto) mejor = { fecha, monto };
+  }
+  return mejor;
 }
 
-export function montoLiberadoSemana(montoPorSemana: number, cumplimientoGlobal: number): number {
-  return Math.round(montoPorSemana * Math.min(1, cumplimientoGlobal));
+/** Ciclo de corte de una tarjeta que contiene `fechaRef`, a partir de su día de corte. */
+export function cicloTarjeta(tarjeta: Tarjeta, fechaRef: string): { inicio: string; fin: string } {
+  const d = parseISO(fechaRef);
+  const diaCorteMesActual = Math.min(tarjeta.diaCorte, diasDelMes(mesDe(fechaRef)));
+  const corteEsteMes = toISO(new Date(d.getFullYear(), d.getMonth(), diaCorteMesActual));
+
+  const fin = fechaRef <= corteEsteMes ? corteEsteMes : (() => {
+    const mesSig = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    const diaCorteSig = Math.min(tarjeta.diaCorte, new Date(mesSig.getFullYear(), mesSig.getMonth() + 1, 0).getDate());
+    return toISO(new Date(mesSig.getFullYear(), mesSig.getMonth(), diaCorteSig));
+  })();
+
+  const inicio = sumarDias(cicloAnteriorFin(tarjeta, fin), 1);
+  return { inicio, fin };
+}
+
+function cicloAnteriorFin(tarjeta: Tarjeta, finActual: string): string {
+  const d = parseISO(finActual);
+  const mesAnt = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+  const diaCorteAnt = Math.min(tarjeta.diaCorte, new Date(mesAnt.getFullYear(), mesAnt.getMonth() + 1, 0).getDate());
+  return toISO(new Date(mesAnt.getFullYear(), mesAnt.getMonth(), diaCorteAnt));
 }
 
 // ---------------------------------------------------------------------------
@@ -244,3 +182,6 @@ export function dentroDeVentanaProteccion(finSemanaISO: string, ahora: Date, hor
   const limite = new Date(cierre.getTime() + horasVentana * 3600 * 1000);
   return ahora <= limite;
 }
+
+// re-export para quien solo necesite el día del mes al calcular ciclos de corte
+export { diaDelMes };

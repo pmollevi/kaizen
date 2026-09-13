@@ -2,21 +2,28 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type {
   AreaId,
-  CategoriaPresupuesto,
   Desafio,
   Evento,
   Gasto,
   KaizenState,
   ReconocimientoCatalogo,
+  Tarjeta,
 } from "@/types";
 import { areaDesdeCatalogo, estadoInicial, temporadaDefault } from "@/config/defaultConfig";
 import { plantillaPorId } from "@/config/areaCatalog";
 import { claveDatos, getPerfilActivo } from "@/store/profiles";
 import { generarId } from "@/lib/id";
-import { diaDelMes, diasDelMes, finSemana, hoyISO, inicioSemana, mesDe, sumarDias } from "@/lib/dates";
-import { calcularCierreMensual, calcularCierreSemanal, mesesPendientesDeCierre, semanasPendientes } from "@/lib/cierre";
-import { calcularAsignaciones } from "@/lib/formulas";
-import { evaluarReconocimientos, rachaDiariaVigente } from "@/lib/achievements";
+import { finSemana, hoyISO, inicioSemana, mesDe, sumarDias } from "@/lib/dates";
+import {
+  calcularCierreMensual,
+  calcularCierreSemanal,
+  mesesPendientesDeCierre,
+  resumenesTarjetaPendientes,
+  semanasPendientes,
+} from "@/lib/cierre";
+import { HITOS_RACHA, evaluarReconocimientos, rachaDiariaVigente } from "@/lib/achievements";
+
+const MAX_TARJETAS = 3;
 
 const storageAdapter = {
   getItem: (_name: string) => {
@@ -44,11 +51,14 @@ interface Acciones {
   editarRegistro: (id: string, valores: Record<AreaId, number>, observacion: string) => void;
   eliminarRegistro: (id: string) => void;
 
-  setPresupuestoMes: (mes: string, dineroUtil: number, categorias: CategoriaPresupuesto[]) => void;
-  clonarPresupuesto: (mesOrigen: string, mesDestino: string) => void;
-  setModoAtipico: (mes: string, activo: boolean, nota: string) => void;
   agregarGasto: (gasto: Omit<Gasto, "id">) => void;
   eliminarGasto: (id: string) => void;
+  agregarCategoriaGasto: (nombre: string) => void;
+  eliminarCategoriaGasto: (id: string) => void;
+  agregarTarjeta: (tarjeta: Omit<Tarjeta, "id">) => { ok: boolean; motivo?: string };
+  editarTarjeta: (id: string, cambios: Partial<Omit<Tarjeta, "id">>) => void;
+  eliminarTarjeta: (id: string) => void;
+  setIngresoMensual: (mes: string, monto: number) => void;
 
   cerrarSemana: (inicio: string, bonosIds: string[], proteger: boolean) => void;
   procesarCierresMensualesPendientes: () => void;
@@ -58,7 +68,6 @@ interface Acciones {
   actualizarPesos: (pesos: Record<AreaId, number>) => void;
   actualizarAreaConfig: (areaId: AreaId, cambios: Partial<{ metaDiaria: number | null; metaSemanalBase: number; topeMetaSemanal: number }>) => void;
   actualizarConfigEconomia: (cambios: Partial<KaizenState["config"]["economia"]>) => void;
-  actualizarConfigImperio: (cambios: Partial<KaizenState["config"]["imperio"]>) => void;
   actualizarTextos: (cambios: Partial<KaizenState["config"]["textos"]>) => void;
   setCatalogoReconocimientos: (catalogo: ReconocimientoCatalogo[]) => void;
   setBonos: (bonos: KaizenState["config"]["bonos"]) => void;
@@ -66,9 +75,6 @@ interface Acciones {
   aplicarPlanMensual: (input: {
     mes: string;
     habitos: { id: string; peso: number; metaSemanal: number }[];
-    dineroUtil: number;
-    gastosFijos: { nombre: string; monto: number }[];
-    ahorro: number;
   }) => void;
 
   setMetaMensual: (mes: string, descripcion: string) => void;
@@ -97,13 +103,25 @@ export const useKaizenStore = create<KaizenStore>()(
       setNombreUsuario: (nombre) => set((s) => ({ usuario: { ...s.usuario, nombre } })),
       setTituloActivo: (id) => set((s) => ({ usuario: { ...s.usuario, tituloActivo: id } })),
 
-      registrarDia: (fecha, valores, observacion) =>
+      registrarDia: (fecha, valores, observacion) => {
         set((s) => ({
           registrosDiarios: [
             ...s.registrosDiarios.filter((r) => r.fecha !== fecha),
             { id: generarId("r"), fecha, valores, observacion, creadoEn: new Date().toISOString() },
           ],
-        })),
+        }));
+        const nuevos = evaluarReconocimientos(get());
+        if (nuevos.length > 0) {
+          const hito = [...HITOS_RACHA].reverse().find((h) => nuevos.includes(h.id));
+          set((st) => ({
+            historial: {
+              ...st.historial,
+              reconocimientos: [...st.historial.reconocimientos, ...nuevos.map((id) => ({ id, fecha: hoyISO() }))],
+            },
+            usuario: hito ? { ...st.usuario, tituloActivo: hito.id } : st.usuario,
+          }));
+        }
+      },
 
       editarRegistro: (id, valores, observacion) =>
         set((s) => ({
@@ -111,40 +129,6 @@ export const useKaizenStore = create<KaizenStore>()(
         })),
 
       eliminarRegistro: (id) => set((s) => ({ registrosDiarios: s.registrosDiarios.filter((r) => r.id !== id) })),
-
-      setPresupuestoMes: (mes, dineroUtil, categorias) =>
-        set((s) => {
-          const existe = s.finanzas.presupuestos.some((p) => p.mes === mes);
-          const presupuestos = existe
-            ? s.finanzas.presupuestos.map((p) => (p.mes === mes ? { ...p, dineroUtil, categorias } : p))
-            : [...s.finanzas.presupuestos, { mes, dineroUtil, categorias, modoAtipico: false }];
-          return { finanzas: { ...s.finanzas, presupuestos } };
-        }),
-
-      clonarPresupuesto: (mesOrigen, mesDestino) =>
-        set((s) => {
-          const origen = s.finanzas.presupuestos.find((p) => p.mes === mesOrigen);
-          if (!origen) return {};
-          const yaExiste = s.finanzas.presupuestos.some((p) => p.mes === mesDestino);
-          if (yaExiste) return {};
-          const clon = {
-            mes: mesDestino,
-            dineroUtil: origen.dineroUtil,
-            categorias: origen.categorias.map((c) => ({ ...c, id: generarId("cat") })),
-            modoAtipico: false,
-          };
-          return { finanzas: { ...s.finanzas, presupuestos: [...s.finanzas.presupuestos, clon] } };
-        }),
-
-      setModoAtipico: (mes, activo, nota) =>
-        set((s) => ({
-          finanzas: {
-            ...s.finanzas,
-            presupuestos: s.finanzas.presupuestos.map((p) =>
-              p.mes === mes ? { ...p, modoAtipico: activo, notaAtipico: nota } : p
-            ),
-          },
-        })),
 
       agregarGasto: (gasto) =>
         set((s) => ({
@@ -154,18 +138,67 @@ export const useKaizenStore = create<KaizenStore>()(
       eliminarGasto: (id) =>
         set((s) => ({ finanzas: { ...s.finanzas, gastos: s.finanzas.gastos.filter((g) => g.id !== id) } })),
 
+      agregarCategoriaGasto: (nombre) => {
+        if (!nombre.trim()) return;
+        set((s) => ({
+          finanzas: {
+            ...s.finanzas,
+            categorias: [...s.finanzas.categorias, { id: generarId("cat"), nombre: nombre.trim() }],
+          },
+        }));
+      },
+
+      eliminarCategoriaGasto: (id) =>
+        set((s) => ({
+          finanzas: { ...s.finanzas, categorias: s.finanzas.categorias.filter((c) => c.id !== id) },
+        })),
+
+      agregarTarjeta: (tarjeta) => {
+        const s = get();
+        if (s.finanzas.tarjetas.length >= MAX_TARJETAS) {
+          return { ok: false, motivo: `Ya tienes ${MAX_TARJETAS} tarjetas registradas.` };
+        }
+        if (!tarjeta.nombre.trim()) return { ok: false, motivo: "Ponle un nombre a la tarjeta." };
+        set((st) => ({
+          finanzas: {
+            ...st.finanzas,
+            tarjetas: [...st.finanzas.tarjetas, { ...tarjeta, id: generarId("tj"), nombre: tarjeta.nombre.trim() }],
+          },
+        }));
+        return { ok: true };
+      },
+
+      editarTarjeta: (id, cambios) =>
+        set((s) => ({
+          finanzas: {
+            ...s.finanzas,
+            tarjetas: s.finanzas.tarjetas.map((t) => (t.id === id ? { ...t, ...cambios } : t)),
+          },
+        })),
+
+      eliminarTarjeta: (id) =>
+        set((s) => ({ finanzas: { ...s.finanzas, tarjetas: s.finanzas.tarjetas.filter((t) => t.id !== id) } })),
+
+      setIngresoMensual: (mes, monto) =>
+        set((s) => {
+          const existe = s.finanzas.ingresosMensuales.some((i) => i.mes === mes);
+          const ingresosMensuales = existe
+            ? s.finanzas.ingresosMensuales.map((i) => (i.mes === mes ? { ...i, monto } : i))
+            : [...s.finanzas.ingresosMensuales, { mes, monto }];
+          return { finanzas: { ...s.finanzas, ingresosMensuales } };
+        }),
+
       cerrarSemana: (inicio, bonosIds, proteger) => {
         const s = get();
         if (proteger && s.usuario.protecciones <= 0) return;
         const fin = finSemana(inicio);
-        const { cierre, areas, usuario, saldoBanco, ahorroExtra } = calcularCierreSemanal(s, inicio, fin, bonosIds, proteger);
+        const { cierre, areas, usuario } = calcularCierreSemanal(s, inicio, fin, bonosIds, proteger);
         const nivelesMaximos = { ...s.historial.nivelesMaximos };
         for (const a of areas) nivelesMaximos[a.id] = Math.max(nivelesMaximos[a.id] ?? 1, a.nivel);
         set({
           cierresSemanales: [...s.cierresSemanales, cierre],
           areas,
           usuario,
-          finanzas: { ...s.finanzas, bancoRecompensas: { ...s.finanzas.bancoRecompensas, saldo: saldoBanco }, ahorroExtra },
           historial: { ...s.historial, nivelesMaximos },
         });
         get().procesarCierresMensualesPendientes();
@@ -184,28 +217,14 @@ export const useKaizenStore = create<KaizenStore>()(
       },
 
       procesarCierresMensualesPendientes: () => {
-        const mesActual = mesDe(hoyISO());
+        const hoy = hoyISO();
+        const mesActual = mesDe(hoy);
         let s = get();
         const pendientes = mesesPendientesDeCierre(s, mesActual);
         for (const mes of pendientes) {
-          const { resumen, saldoBanco, proteccionGanada, bumpDineroUtilMesSiguiente } = calcularCierreMensual(s, mes);
-          const mesSig = resumen.mes;
-          const [y, m] = mesSig.split("-").map(Number);
-          const dNext = new Date(y, m, 1);
-          const mesSiguiente = `${dNext.getFullYear()}-${String(dNext.getMonth() + 1).padStart(2, "0")}`;
+          const { resumen, proteccionGanada } = calcularCierreMensual(s, mes);
           set((st) => ({
-            finanzas: {
-              ...st.finanzas,
-              resumenesMensuales: [...st.finanzas.resumenesMensuales, resumen],
-              bancoRecompensas: { ...st.finanzas.bancoRecompensas, saldo: saldoBanco },
-              ahorroExtra: 0, // ya se volcó a totalAhorrado del resumen de este mes
-              presupuestos:
-                bumpDineroUtilMesSiguiente > 0
-                  ? st.finanzas.presupuestos.map((p) =>
-                      p.mes === mesSiguiente ? { ...p, dineroUtil: p.dineroUtil + bumpDineroUtilMesSiguiente } : p
-                    )
-                  : st.finanzas.presupuestos,
-            },
+            finanzas: { ...st.finanzas, resumenesMensuales: [...st.finanzas.resumenesMensuales, resumen] },
             usuario: proteccionGanada
               ? {
                   ...st.usuario,
@@ -217,6 +236,16 @@ export const useKaizenStore = create<KaizenStore>()(
               : st.usuario,
           }));
           s = get();
+        }
+
+        const nuevosResumenesTarjeta = resumenesTarjetaPendientes(s, hoy);
+        if (nuevosResumenesTarjeta.length > 0) {
+          set((st) => ({
+            finanzas: {
+              ...st.finanzas,
+              resumenesTarjeta: [...st.finanzas.resumenesTarjeta, ...nuevosResumenesTarjeta],
+            },
+          }));
         }
       },
 
@@ -249,16 +278,13 @@ export const useKaizenStore = create<KaizenStore>()(
       actualizarConfigEconomia: (cambios) =>
         set((s) => ({ config: { ...s.config, economia: { ...s.config.economia, ...cambios } } })),
 
-      actualizarConfigImperio: (cambios) =>
-        set((s) => ({ config: { ...s.config, imperio: { ...s.config.imperio, ...cambios } } })),
-
       actualizarTextos: (cambios) =>
         set((s) => ({ config: { ...s.config, textos: { ...s.config.textos, ...cambios } } })),
 
       setCatalogoReconocimientos: (catalogo) => set((s) => ({ config: { ...s.config, catalogoReconocimientos: catalogo } })),
       setBonos: (bonos) => set((s) => ({ config: { ...s.config, bonos } })),
 
-      aplicarPlanMensual: ({ mes, habitos, dineroUtil, gastosFijos, ahorro }) => {
+      aplicarPlanMensual: ({ mes, habitos }) => {
         const s = get();
 
         const areas = habitos.map(({ id, peso, metaSemanal }) => {
@@ -287,61 +313,13 @@ export const useKaizenStore = create<KaizenStore>()(
             topeMetaSemanal,
             peso,
             color: plantilla.color,
-            vinculoFinanciero: plantilla.vinculoFinanciero,
             nivel: existente?.nivel ?? 1,
             semanasConsecutivas: existente?.semanasConsecutivas ?? 0,
           };
         });
 
-        // Si ya existía un presupuesto para este mes, reutilizamos el id de las categorías
-        // con el mismo nombre y tipo para no huérfanar los gastos ya registrados contra ellas.
-        const categoriasPrevias = s.finanzas.presupuestos.find((p) => p.mes === mes)?.categorias ?? [];
-        const idPrevio = (nombre: string, tipo: string) =>
-          categoriasPrevias.find((c) => c.tipo === tipo && c.nombre.trim().toLowerCase() === nombre.trim().toLowerCase())
-            ?.id;
-
-        const categorias: CategoriaPresupuesto[] = [
-          ...gastosFijos
-            .filter((g) => g.nombre.trim() && g.monto > 0)
-            .map((g) => ({
-              id: idPrevio(g.nombre, "gasto") ?? generarId("cat"),
-              nombre: g.nombre.trim(),
-              tipo: "gasto" as const,
-              modo: "fijo" as const,
-              valor: g.monto,
-            })),
-          ...(ahorro > 0
-            ? [
-                {
-                  id: idPrevio("Ahorro", "ahorro") ?? generarId("cat"),
-                  nombre: "Ahorro",
-                  tipo: "ahorro" as const,
-                  modo: "fijo" as const,
-                  valor: ahorro,
-                },
-              ]
-            : []),
-          {
-            id:
-              idPrevio("Dinero para lujos", "recompensas") ??
-              idPrevio("Dinero libre", "recompensas") ??
-              idPrevio("Recompensas (el juego)", "recompensas") ??
-              generarId("cat"),
-            nombre: "Dinero para lujos",
-            tipo: "recompensas" as const,
-            modo: "resto" as const,
-            valor: 0,
-          },
-        ];
-
-        const yaExistePresupuesto = s.finanzas.presupuestos.some((p) => p.mes === mes);
-        const presupuestos = yaExistePresupuesto
-          ? s.finanzas.presupuestos.map((p) => (p.mes === mes ? { ...p, dineroUtil, categorias } : p))
-          : [...s.finanzas.presupuestos, { mes, dineroUtil, categorias, modoAtipico: false }];
-
         set({
           areas,
-          finanzas: { ...s.finanzas, presupuestos },
           planesMensuales: s.planesMensuales.includes(mes) ? s.planesMensuales : [...s.planesMensuales, mes],
         });
       },
@@ -424,12 +402,9 @@ export const useKaizenStore = create<KaizenStore>()(
           const valores = cierresTemporada.map((c) => c.cumplimientoPorArea[a.id] ?? 0);
           cumplimientoPromedioPorArea[a.id] = valores.length ? valores.reduce((x, y) => x + y, 0) / valores.length : 0;
         }
-        const presupuestado = s.finanzas.presupuestos
-          .filter((p) => p.mes >= s.temporadaActual.inicio.slice(0, 7) && p.mes <= s.temporadaActual.fin.slice(0, 7))
-          .reduce((acc, p) => acc + p.dineroUtil, 0);
-        const gastado = s.finanzas.resumenesMensuales
-          .filter((r) => r.mes >= s.temporadaActual.inicio.slice(0, 7) && r.mes <= s.temporadaActual.fin.slice(0, 7))
-          .reduce((acc, r) => acc + r.totalGastado, 0);
+        const gastoTotalTemporada = s.finanzas.gastos
+          .filter((g) => g.fecha >= s.temporadaActual.inicio && g.fecha <= s.temporadaActual.fin)
+          .reduce((acc, g) => acc + g.monto, 0);
 
         const historialTemporada = {
           id: s.temporadaActual.id,
@@ -438,7 +413,7 @@ export const useKaizenStore = create<KaizenStore>()(
           fin: hoyISO(),
           cumplimientoPromedioPorArea,
           ppTotales: s.usuario.ppTotales,
-          gastadoVsPresupuestado: { gastado, presupuestado },
+          gastoTotalTemporada,
           reconocimientosObtenidos: s.historial.reconocimientos.length,
           retoFinalCompletado: s.temporadaActual.retoFinal.completado,
         };
@@ -484,7 +459,6 @@ export const useKaizenStore = create<KaizenStore>()(
             ...current.config,
             ...(p.config ?? {}),
             economia: { ...current.config.economia, ...(p.config?.economia ?? {}) },
-            imperio: { ...current.config.imperio, ...(p.config?.imperio ?? {}) },
             textos: { ...current.config.textos, ...(p.config?.textos ?? {}) },
           },
         };
@@ -493,13 +467,5 @@ export const useKaizenStore = create<KaizenStore>()(
   )
 );
 
-export function presupuestoDelMes(state: KaizenState, mes: string) {
-  return state.finanzas.presupuestos.find((p) => p.mes === mes);
-}
-
-export function asignacionesDelMes(state: KaizenState, mes: string) {
-  const p = presupuestoDelMes(state, mes);
-  return p ? calcularAsignaciones(p) : new Map<string, number>();
-}
-
-export { inicioSemana, finSemana, diasDelMes, diaDelMes, semanasPendientes };
+export { inicioSemana, finSemana, semanasPendientes };
+export { diasDelMes, diaDelMes } from "@/lib/dates";

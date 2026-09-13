@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, Field, Input, Select, Button, EmptyState } from "@/components/ui/Primitives";
-import { hoyISO, mesDe, formatoLargo } from "@/lib/dates";
+import { Card, SectionTitle, Field, Input, Select, Button, Badge, EmptyState } from "@/components/ui/Primitives";
+import { hoyISO, formatoLargo } from "@/lib/dates";
 import type { Gasto, MetodoPago } from "@/types";
 import { Repeat, Trash2 } from "lucide-react";
 
@@ -11,14 +11,15 @@ export function GastosTab() {
   const eliminarGasto = useKaizenStore((s) => s.eliminarGasto);
 
   const hoy = hoyISO();
-  const presupuestoMes = state.finanzas.presupuestos.find((p) => p.mes === mesDe(hoy));
 
   const [fecha, setFecha] = useState(hoy);
   const [monto, setMonto] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
   const [palabraClave, setPalabraClave] = useState("");
-  const [metodo, setMetodo] = useState<MetodoPago | "">("");
+  const [metodo, setMetodo] = useState<MetodoPago>("efectivo");
+  const [tarjetaId, setTarjetaId] = useState("");
   const [nota, setNota] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const ultimasPalabras = useMemo(() => {
     const vistas = new Set<string>();
@@ -50,30 +51,44 @@ export function GastosTab() {
     setMonto(String(g.monto));
     setCategoriaId(g.categoriaId);
     setPalabraClave(g.palabraClave);
-    setMetodo(g.metodo ?? "");
+    setMetodo(g.metodo);
+    setTarjetaId(g.tarjetaId ?? "");
   };
 
   const guardar = () => {
     const m = parseFloat(monto);
-    if (!m || m <= 0 || !categoriaId || !palabraClave.trim()) return;
-    agregarGasto({ fecha, monto: m, categoriaId, palabraClave: palabraClave.trim(), metodo: metodo || undefined, nota: nota || undefined });
+    if (!m || m <= 0) return setError("Indica un monto válido.");
+    if (!categoriaId) return setError("Elige una categoría.");
+    if (!palabraClave.trim()) return setError("Indica qué compraste.");
+    if (metodo === "tarjeta" && !tarjetaId) return setError("Elige con qué tarjeta pagaste.");
+    setError(null);
+    agregarGasto({
+      fecha,
+      monto: m,
+      categoriaId,
+      palabraClave: palabraClave.trim(),
+      metodo,
+      tarjetaId: metodo === "tarjeta" ? tarjetaId : undefined,
+      nota: nota || undefined,
+    });
     setMonto("");
     setPalabraClave("");
     setNota("");
   };
 
   const gastosRecientes = [...state.finanzas.gastos].sort((a, b) => (a.fecha < b.fecha ? 1 : -1)).slice(0, 15);
+  const categoriaNombre = (id: string) => state.finanzas.categorias.find((c) => c.id === id)?.nombre ?? "—";
 
   return (
     <div className="space-y-5">
       <Card>
         <SectionTitle title="Registrar gasto" subtitle="Menos de 10 segundos." />
-        {!presupuestoMes ? (
-          <EmptyState text="Define el presupuesto del mes antes de registrar gastos." />
+        {state.finanzas.categorias.length === 0 ? (
+          <EmptyState text="Agrega una categoría de gasto en la pestaña Tarjetas antes de registrar gastos." />
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Field label="Monto (MXN)">
+              <Field label="Monto">
                 <Input type="number" inputMode="decimal" autoFocus value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="0" />
               </Field>
               <Field label="Fecha">
@@ -82,26 +97,43 @@ export function GastosTab() {
               <Field label="Categoría">
                 <Select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}>
                   <option value="">Elige...</option>
-                  {presupuestoMes.categorias.map((c) => (
+                  {state.finanzas.categorias.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.nombre}
                     </option>
                   ))}
                 </Select>
               </Field>
-              <Field label="Método (opcional)">
-                <Select value={metodo} onChange={(e) => setMetodo(e.target.value as MetodoPago | "")}>
-                  <option value="">—</option>
+              <Field label="Método de pago">
+                <Select value={metodo} onChange={(e) => setMetodo(e.target.value as MetodoPago)}>
                   <option value="efectivo">Efectivo</option>
-                  <option value="debito">Débito</option>
-                  <option value="credito">Crédito</option>
+                  <option value="tarjeta">Tarjeta</option>
                 </Select>
               </Field>
             </div>
 
+            {metodo === "tarjeta" && (
+              <div className="mt-3">
+                {state.finanzas.tarjetas.length === 0 ? (
+                  <div className="text-sm text-base-500">Registra una tarjeta en la pestaña Tarjetas primero.</div>
+                ) : (
+                  <Field label="Tarjeta">
+                    <Select value={tarjetaId} onChange={(e) => setTarjetaId(e.target.value)}>
+                      <option value="">Elige...</option>
+                      {state.finanzas.tarjetas.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.nombre}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                )}
+              </div>
+            )}
+
             <div className="mt-3">
-              <Field label="Palabra clave">
-                <Input value={palabraClave} onChange={(e) => setPalabraClave(e.target.value)} placeholder="café, uber hospital..." />
+              <Field label="¿Qué compraste?">
+                <Input value={palabraClave} onChange={(e) => setPalabraClave(e.target.value)} placeholder="café, uber, supermercado..." />
               </Field>
               {ultimasPalabras.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
@@ -124,7 +156,7 @@ export function GastosTab() {
               </Field>
             </div>
 
-            <div className="mt-4 flex items-center justify-between">
+            <div className="mt-4 flex items-center justify-between gap-3">
               {gastoFrecuente ? (
                 <Button variant="ghost" onClick={() => repetir(gastoFrecuente)} className="inline-flex items-center gap-1.5">
                   <Repeat className="w-4 h-4" /> Repetir "{gastoFrecuente.palabraClave}"
@@ -132,7 +164,10 @@ export function GastosTab() {
               ) : (
                 <span />
               )}
-              <Button onClick={guardar}>Guardar gasto</Button>
+              <div className="flex items-center gap-3">
+                {error && <Badge tone="red">{error}</Badge>}
+                <Button onClick={guardar}>Guardar gasto</Button>
+              </div>
             </div>
           </>
         )}
@@ -143,26 +178,23 @@ export function GastosTab() {
         {gastosRecientes.length === 0 ? (
           <EmptyState text="Sin gastos todavía." />
         ) : (
-          <ul className="divide-y divide-base-800">
-            {gastosRecientes.map((g) => {
-              const cat = state.finanzas.presupuestos.find((p) => p.mes === mesDe(g.fecha))?.categorias.find((c) => c.id === g.categoriaId);
-              return (
-                <li key={g.id} className="flex items-center justify-between py-2.5 text-sm">
-                  <div className="min-w-0">
-                    <div className="font-medium text-base-200 truncate">{g.palabraClave}</div>
-                    <div className="text-xs text-base-500">
-                      {formatoLargo(g.fecha)} · {cat?.nombre ?? "—"}
-                    </div>
+          <ul className="divide-y divide-base-700">
+            {gastosRecientes.map((g) => (
+              <li key={g.id} className="flex items-center justify-between py-2.5 text-sm">
+                <div className="min-w-0">
+                  <div className="font-medium text-base-200 truncate">{g.palabraClave}</div>
+                  <div className="text-xs text-base-500">
+                    {formatoLargo(g.fecha)} · {categoriaNombre(g.categoriaId)} · {g.metodo === "tarjeta" ? "tarjeta" : "efectivo"}
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="font-medium">${g.monto.toLocaleString()}</span>
-                    <button onClick={() => eliminarGasto(g.id)} className="text-base-500 hover:text-rose-400">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="font-medium">${g.monto.toLocaleString()}</span>
+                  <button onClick={() => eliminarGasto(g.id)} className="text-base-500 hover:text-rose-400">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </li>
+            ))}
           </ul>
         )}
       </Card>

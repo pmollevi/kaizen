@@ -14,10 +14,9 @@ export interface AreaConfig {
   metaSemanalBase: number;
   topeMetaSemanal: number; // tope máximo tras progresión por etapas
   peso: number; // 0-1, deben sumar 1 entre todas las áreas activas
-  color: string; // color hex, ej. "#5b8def"
+  color: string; // color hex, ej. "#6B7A8F"
   nivel: number;
   semanasConsecutivas: number; // contador hacia el siguiente nivel de área
-  vinculoFinanciero?: boolean; // si true, su cumplimiento incluye la submétrica financiera (§8.5)
 }
 
 export interface RegistroDiario {
@@ -28,26 +27,18 @@ export interface RegistroDiario {
   creadoEn: string; // ISO timestamp, para detectar registro tardío
 }
 
-export type ModoAsignacion = "fijo" | "porcentaje" | "resto";
-export type TipoCategoria = "gasto" | "ahorro" | "recompensas";
+export type MetodoPago = "efectivo" | "tarjeta";
 
-export interface CategoriaPresupuesto {
+export interface CategoriaGasto {
   id: string;
   nombre: string;
-  tipo: TipoCategoria;
-  modo: ModoAsignacion;
-  valor: number; // monto (fijo) o porcentaje (porcentaje); ignorado en "resto"
 }
 
-export interface PresupuestoMensual {
-  mes: string; // YYYY-MM
-  dineroUtil: number;
-  categorias: CategoriaPresupuesto[];
-  modoAtipico: boolean;
-  notaAtipico?: string;
+export interface Tarjeta {
+  id: string;
+  nombre: string;
+  diaCorte: number; // 1-31
 }
-
-export type MetodoPago = "efectivo" | "debito" | "credito";
 
 export interface Gasto {
   id: string;
@@ -55,47 +46,53 @@ export interface Gasto {
   monto: number;
   categoriaId: string;
   palabraClave: string;
-  metodo?: MetodoPago;
+  metodo: MetodoPago;
+  tarjetaId?: string; // solo si metodo === "tarjeta"
   nota?: string;
 }
 
-export interface ResumenCategoriaMensual {
+export interface DistribucionCategoria {
   categoriaId: string;
   nombre: string;
-  asignado: number;
-  gastado: number;
-  diferencia: number;
-  porcentajeUso: number;
-  sobregiro: boolean;
+  monto: number;
+  porcentaje: number; // 0-1
+}
+
+export interface ResumenTarjeta {
+  id: string;
+  tarjetaId: string;
+  periodoInicio: string;
+  periodoFin: string;
+  totalGastado: number;
+  numeroGastos: number;
+  categorias: DistribucionCategoria[];
 }
 
 export interface ResumenMensual {
   mes: string;
   totalGastado: number;
-  totalAhorrado: number;
-  dineroUtil: number;
-  categorias: ResumenCategoriaMensual[];
-  topPalabrasClavePorMonto: { palabra: string; monto: number }[];
-  topPalabrasClavePorFrecuencia: { palabra: string; frecuencia: number }[];
+  totalEfectivo: number;
+  totalTarjeta: number;
+  categorias: DistribucionCategoria[];
+  topCategorias: DistribucionCategoria[]; // top 3
   gastoPromedioDiario: number;
   diaMasCaro: { fecha: string; monto: number } | null;
   comparativaMesesAnteriores: { mes: string; totalGastado: number }[];
   promedioHistorico: number;
-  destinoSobrante: "ahorro" | "acumula" | "banco";
-  cumplimientoPromedioMes: number;
 }
 
-export interface BancoRecompensas {
-  saldo: number;
-  tope: number;
+export interface IngresoMensual {
+  mes: string; // YYYY-MM
+  monto: number;
 }
 
 export interface Finanzas {
-  presupuestos: PresupuestoMensual[];
+  categorias: CategoriaGasto[];
+  tarjetas: Tarjeta[]; // máx 3, garantizado por el store
   gastos: Gasto[];
   resumenesMensuales: ResumenMensual[];
-  bancoRecompensas: BancoRecompensas;
-  ahorroExtra: number; // dinero libre semanal no liberado, pendiente de sumarse al ahorro en el cierre de mes
+  resumenesTarjeta: ResumenTarjeta[];
+  ingresosMensuales: IngresoMensual[]; // opcional; solo para comparar gasto vs. ingreso del mes
 }
 
 export interface CierreSemanal {
@@ -107,7 +104,6 @@ export interface CierreSemanal {
   ppBase: number;
   bonosAplicados: { id: string; nombre: string; valorPP: number }[];
   ppGanados: number;
-  dineroLiberado: number; // parte del "dinero libre" del mes que se desbloqueó esta semana
   protegida: boolean;
   nivelesAreaSubidos: AreaId[];
 }
@@ -117,7 +113,7 @@ export interface ReconocimientoCatalogo {
   nombre: string;
   descripcion: string;
   rareza: "Común" | "Raro" | "Épico" | "Legendario";
-  categoria: "constancia" | "volumen" | "records" | "financiero" | "temporada";
+  categoria: "constancia" | "volumen" | "records" | "temporada";
   secreto: boolean;
 }
 
@@ -174,7 +170,7 @@ export interface TemporadaHistorial {
   fin: string;
   cumplimientoPromedioPorArea: Record<AreaId, number>;
   ppTotales: number;
-  gastadoVsPresupuestado: { gastado: number; presupuestado: number };
+  gastoTotalTemporada: number;
   reconocimientosObtenidos: number;
   retoFinalCompletado: boolean;
 }
@@ -206,12 +202,6 @@ export interface Bono {
   valorPP: number;
 }
 
-export interface ConfigImperio {
-  pesoNegocio: number; // 0-1
-  pesoFinanzas: number; // 0-1
-  metaSemanalHorasNegocio: number;
-}
-
 export interface ConfigEconomia {
   ppBase: number;
   curvaBase: number;
@@ -224,9 +214,7 @@ export interface ConfigEconomia {
   umbralProteccionMensual: number; // 0.85
   ventanaProteccionHoras: number; // 48
   diasPorProteccion: number; // días de racha diaria que se canjean por 1 protección
-  topeBancoRecompensasMeses: number; // 3
   diasRegistroRetroactivo: number; // 3
-  destinoSobranteDefault: "ahorro" | "acumula" | "banco";
 }
 
 export interface Textos {
@@ -244,7 +232,6 @@ export interface Textos {
 export interface Config {
   textos: Textos;
   economia: ConfigEconomia;
-  imperio: ConfigImperio;
   bonos: Bono[];
   catalogoReconocimientos: ReconocimientoCatalogo[];
 }

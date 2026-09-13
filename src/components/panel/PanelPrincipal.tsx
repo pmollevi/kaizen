@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { CalendarRange, Flame, Target, Wallet } from "lucide-react";
+import { CalendarRange, Flame, Target } from "lucide-react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, ProgressBar, Stat, Badge, Button, EmptyState, Textarea } from "@/components/ui/Primitives";
+import { Card, SectionTitle, ProgressBar, Stat, Badge, Button, EmptyState, Textarea, useCountUp } from "@/components/ui/Primitives";
 import { RadarChart } from "@/components/RadarChart";
 import { PlanMensualWizard } from "@/components/planeacion/PlanMensualWizard";
 import { iconoDeHabito } from "@/config/habitIcons";
-import {
-  cumplimientoGlobalSemanal,
-  cumplimientoSemanalArea,
-  gastadoEnCategoria,
-  ritmoDiarioPermitido,
-  calcularAsignaciones,
-} from "@/lib/formulas";
+import { cumplimientoGlobalSemanal, cumplimientoSemanalArea } from "@/lib/formulas";
 import { rachaDiariaVigente } from "@/lib/achievements";
-import { diasDelMes, diaDelMes, finSemana, hoyISO, inicioSemana, mesDe, formatoLargo, formatoMes } from "@/lib/dates";
+import { COLOR_SECCION, colorPorNivel } from "@/lib/color";
+import { finSemana, hoyISO, inicioSemana, mesDe, formatoLargo, formatoMes } from "@/lib/dates";
 import { semanasPendientes } from "@/lib/cierre";
+import { Coachmarks } from "@/components/onboarding/Coachmarks";
+import { coachmarksYaVistos, marcarCoachmarksVistos } from "@/lib/coachmarks";
+import { getPerfilActivo } from "@/store/profiles";
+import { Trophy } from "lucide-react";
 
 function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
   const state = useKaizenStore();
@@ -22,15 +21,13 @@ function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
   const registroHoy = state.registrosDiarios.find((r) => r.fecha === hoy);
   const inicio = inicioSemana(hoy);
   const fin = finSemana(hoy);
-  const presupuestoMesActual = state.finanzas.presupuestos.find((p) => p.mes === mesDe(hoy));
 
   const cumplimientoPorArea = Object.fromEntries(
-    state.areas.map((a) => [
-      a.id,
-      cumplimientoSemanalArea(a, state.config, state.registrosDiarios, inicio, fin, state.finanzas.gastos, presupuestoMesActual),
-    ])
+    state.areas.map((a) => [a.id, cumplimientoSemanalArea(a, state.config, state.registrosDiarios, inicio, fin)])
   ) as Record<string, number>;
-  const cumplimientoGlobal = cumplimientoGlobalSemanal(cumplimientoPorArea as any, state.areas);
+  const cumplimientoGlobal = cumplimientoGlobalSemanal(cumplimientoPorArea, state.areas);
+  const racha = rachaDiariaVigente(state);
+  const rachaMostrada = useCountUp(racha);
 
   return (
     <Card className="lg:col-span-2">
@@ -50,17 +47,18 @@ function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
           {state.areas.map((a) => {
             const Icono = iconoDeHabito(a.id);
             const hecho = (registroHoy?.valores[a.id] ?? 0) > 0;
+            const color = colorPorNivel(a.color, a.nivel);
             return (
               <div
                 key={a.id}
                 title={a.nombre}
                 className="w-10 h-10 rounded-xl flex items-center justify-center border transition-colors"
                 style={{
-                  background: hecho ? `${a.color}26` : "rgba(255,255,255,0.03)",
-                  borderColor: hecho ? `${a.color}55` : "rgba(255,255,255,0.08)",
+                  background: hecho ? `${color}26` : "transparent",
+                  borderColor: hecho ? `${color}55` : "#292C2A",
                 }}
               >
-                <Icono className="w-4 h-4" style={{ color: hecho ? a.color : undefined }} />
+                <Icono className="w-4 h-4" style={{ color: hecho ? color : undefined }} />
               </div>
             );
           })}
@@ -68,14 +66,17 @@ function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
       )}
       <div className="flex items-center gap-6">
         <Stat label="Esta semana" value={`${Math.round(cumplimientoGlobal * 100)}%`} hint="cumplimiento global" />
-        <Stat
-          label="Racha diaria"
-          value={
-            <span className="inline-flex items-center gap-1">
-              <Flame className="w-4 h-4 text-amber-400" /> {rachaDiariaVigente(state)}
-            </span>
-          }
-        />
+        <div data-coach="coach-racha">
+          <Stat
+            size="lg"
+            label="Racha diaria"
+            value={
+              <span className="inline-flex items-center gap-1.5">
+                <Flame className={`w-6 h-6 text-amber-400 ${racha > 0 ? "animate-flicker" : ""}`} /> {rachaMostrada}
+              </span>
+            }
+          />
+        </div>
       </div>
     </Card>
   );
@@ -86,45 +87,43 @@ function TarjetaGastosMensuales({ irA }: { irA: (tab: string) => void }) {
   const { finanzas } = state;
   const hoy = hoyISO();
   const mesActual = mesDe(hoy);
-  const presupuestoMesActual = finanzas.presupuestos.find((p) => p.mes === mesActual);
-  const asignaciones = presupuestoMesActual ? calcularAsignaciones(presupuestoMesActual) : new Map<string, number>();
-  const totalAsignado = [...asignaciones.values()].reduce((a, b) => a + b, 0);
-  const totalGastadoMes = presupuestoMesActual
-    ? presupuestoMesActual.categorias
-        .filter((c) => c.tipo === "gasto")
-        .reduce((acc, c) => acc + gastadoEnCategoria(finanzas.gastos, c.id, mesActual), 0)
-    : 0;
-  const diasRestantesMes = Math.max(1, diasDelMes(mesActual) - diaDelMes(hoy) + 1);
-  const ritmo = ritmoDiarioPermitido(totalAsignado, totalGastadoMes, diasRestantesMes);
-  const pct = totalAsignado > 0 ? totalGastadoMes / totalAsignado : 0;
+  const gastosDelMes = finanzas.gastos.filter((g) => mesDe(g.fecha) === mesActual);
+  const totalMes = gastosDelMes.reduce((acc, g) => acc + g.monto, 0);
+  const totalEfectivo = gastosDelMes.filter((g) => g.metodo === "efectivo").reduce((acc, g) => acc + g.monto, 0);
+  const totalTarjeta = gastosDelMes.filter((g) => g.metodo === "tarjeta").reduce((acc, g) => acc + g.monto, 0);
+  const ingreso = finanzas.ingresosMensuales.find((i) => i.mes === mesActual)?.monto ?? 0;
+  const pctIngreso = ingreso > 0 ? totalMes / ingreso : null;
 
   return (
     <Card>
       <SectionTitle
-        title="Gastos mensuales"
+        title="Gastos del mes"
+        accent={COLOR_SECCION.finanzas}
         action={
           <Button variant="secondary" onClick={() => irA("finanzas")}>
             Ver finanzas
           </Button>
         }
       />
-      {presupuestoMesActual ? (
+      {gastosDelMes.length > 0 ? (
         <>
-          <div className="grid grid-cols-3 gap-4 mb-3">
-            <Stat label="Dinero útil" value={`$${presupuestoMesActual.dineroUtil.toLocaleString()}`} />
-            <Stat label="Gastado" value={`$${totalGastadoMes.toLocaleString()}`} />
-            <Stat label="Ritmo diario" value={`$${Math.max(0, ritmo).toFixed(0)}`} hint="permitido por día" />
+          <Stat label="Total gastado" value={`$${totalMes.toLocaleString()}`} hint={formatoMes(mesActual)} />
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <Stat label="Efectivo" value={`$${totalEfectivo.toLocaleString()}`} />
+            <Stat label="Tarjeta" value={`$${totalTarjeta.toLocaleString()}`} />
           </div>
-          <ProgressBar value={pct} colorClass={pct > 1 ? "bg-rose-500" : "bg-sky-500"} />
-          <div className="flex items-center justify-between mt-5 pt-4 border-t border-white/10 text-sm">
-            <span className="text-base-300 inline-flex items-center gap-1.5">
-              <Wallet className="w-4 h-4 text-emerald-400" /> Dinero para lujos
-            </span>
-            <span className="font-semibold text-base-100">${finanzas.bancoRecompensas.saldo.toLocaleString()}</span>
-          </div>
+          {pctIngreso !== null && (
+            <div className="mt-4 pt-4 border-t border-base-700">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-base-400">Llevas gastado del ingreso del mes</span>
+                <span className="font-medium text-base-200">{Math.round(pctIngreso * 100)}%</span>
+              </div>
+              <ProgressBar value={pctIngreso} colorClass={pctIngreso > 1 ? "bg-rose-500" : "bg-finanzas-500"} />
+            </div>
+          )}
         </>
       ) : (
-        <EmptyState text="Aún no defines el presupuesto de este mes." />
+        <EmptyState text="Registra tu primer gasto del mes y aquí verás en qué se te va el dinero." />
       )}
     </Card>
   );
@@ -150,8 +149,8 @@ function TarjetaMetaGrande() {
       {!editando && metaActual?.descripcion ? (
         <>
           <div className="flex items-start gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
-              <Target className="w-4 h-4 text-sky-400" />
+            <div className="w-9 h-9 rounded-xl bg-kaizen-500/10 border border-kaizen-500/20 flex items-center justify-center shrink-0">
+              <Target className="w-4 h-4 text-kaizen-400" />
             </div>
             <p className="text-sm text-base-200 leading-relaxed">{metaActual.descripcion}</p>
           </div>
@@ -170,14 +169,14 @@ function TarjetaMetaGrande() {
         </>
       ) : (
         <div className="space-y-3">
-          {!editando && <EmptyState text="Todavía no defines tu meta grande de este mes." />}
+          {!editando && <EmptyState text="¿Qué quieres poder decir que lograste al terminar el mes? Escríbelo abajo." />}
           {(editando || !metaActual?.descripcion) && (
             <>
               <Textarea
                 rows={2}
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
-                placeholder="Ej. Cerrar el mes sin sobregiro y entrenar 4 veces por semana"
+                placeholder="Ej. Entrenar 4 veces por semana y leer 100 páginas"
               />
               <Button onClick={guardar} disabled={!texto.trim()}>
                 Guardar meta
@@ -186,6 +185,31 @@ function TarjetaMetaGrande() {
           )}
         </div>
       )}
+    </Card>
+  );
+}
+
+/**
+ * Estado de "primer día": aparece solo antes del primer registro real y
+ * desaparece en cuanto existe uno — nada de banderas nuevas en el modelo,
+ * se deriva de `registrosDiarios` directamente.
+ */
+function SpotlightPrimerDia({ irA }: { irA: (tab: string) => void }) {
+  const state = useKaizenStore();
+  if (state.areas.length === 0) return null;
+  const nombres = state.areas.map((a) => a.nombre).join(", ");
+
+  return (
+    <Card className="border-kaizen-500/30 bg-kaizen-500/[0.05]">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-xs uppercase tracking-wider text-kaizen-400 font-medium mb-1">Da tu primer paso hoy</div>
+          <div className="text-sm text-base-200">Ya elegiste {nombres}. Regístralos hoy — el primer día es el que empieza todo.</div>
+        </div>
+        <Button onClick={() => irA("registro")} className="shrink-0">
+          Registrar ahora
+        </Button>
+      </div>
     </Card>
   );
 }
@@ -201,9 +225,9 @@ function BannerMetaPendiente() {
   if (!pendiente) return null;
 
   return (
-    <Card className="border border-sky-500/20 bg-sky-500/[0.06]">
-      <div className="text-sm text-sky-200 mb-3">
-        ¿Cumpliste tu meta de {formatoMes(pendiente.mes)}? <span className="text-sky-300/80">"{pendiente.descripcion}"</span>
+    <Card className="border border-kaizen-500/20 bg-kaizen-500/[0.05]">
+      <div className="text-sm text-base-200 mb-3">
+        ¿Cumpliste tu meta de {formatoMes(pendiente.mes)}? <span className="text-base-300">"{pendiente.descripcion}"</span>
       </div>
       <div className="flex items-center gap-2">
         <Button onClick={() => marcarMetaMensual(pendiente.mes, true)}>Sí, la cumplí</Button>
@@ -220,6 +244,7 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
   const { usuario, areas, config } = state;
   const hoy = hoyISO();
   const [wizardAbierto, setWizardAbierto] = useState(false);
+  const [mostrarCoach, setMostrarCoach] = useState(false);
   const mesPlaneado = state.planesMensuales.includes(mesDe(hoy));
   const esPerfilNuevo = state.planesMensuales.length === 0;
 
@@ -231,27 +256,39 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
 
   const inicio = inicioSemana(hoy);
   const pendientes = semanasPendientes(state, inicio);
+  const tituloDelUsuario = state.config.catalogoReconocimientos.find((c) => c.id === usuario.tituloActivo)?.nombre ?? null;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Hola, {usuario.nombre || "de nuevo"}</h1>
-          <p className="text-sm text-base-400 mt-0.5">{formatoLargo(hoy)}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Hola, {usuario.nombre || "de nuevo"}</h1>
+          <p className="text-sm text-base-400 mt-0.5 flex items-center gap-2">
+            {formatoLargo(hoy)}
+            {tituloDelUsuario && (
+              <span className="inline-flex items-center gap-1 text-gold-400">
+                <Trophy className="w-3 h-3" /> {tituloDelUsuario}
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => setWizardAbierto(true)} className="inline-flex items-center gap-1.5">
             <CalendarRange className="w-4 h-4" /> Planear {mesPlaneado ? "de nuevo" : "el mes"}
           </Button>
-          <Button onClick={() => irA("registro")}>Registrar el día</Button>
+          <Button dataCoach="coach-registrar-dia" onClick={() => irA("registro")}>
+            Registrar el día
+          </Button>
         </div>
       </div>
 
+      {mesPlaneado && state.registrosDiarios.length === 0 && <SpotlightPrimerDia irA={irA} />}
+
       {!mesPlaneado && (
-        <Card className="border border-sky-500/20 bg-sky-500/[0.06]">
+        <Card className="border border-kaizen-500/20 bg-kaizen-500/[0.05]">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-sky-300">
-              Aún no planeas {formatoMes(mesDe(hoy))}: elige tus hábitos, sus metas y tu presupuesto del mes.
+            <div className="text-sm text-base-200">
+              Aún no planeas {formatoMes(mesDe(hoy))}: elige tus hábitos y ponles una meta.
             </div>
             <Button onClick={() => setWizardAbierto(true)}>Planear ahora</Button>
           </div>
@@ -259,9 +296,9 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
       )}
 
       {pendientes.length > 0 && (
-        <Card className="border border-amber-500/20 bg-amber-500/[0.06]">
+        <Card className="border border-gold-500/20 bg-gold-500/[0.05]">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-amber-300">
+            <div className="text-sm text-gold-400">
               Tienes {pendientes.length} {pendientes.length === 1 ? "semana pendiente" : "semanas pendientes"} de cierre.
             </div>
             <Button variant="secondary" onClick={() => irA("cierre")}>
@@ -281,7 +318,7 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
             puntos={areas.map((a) => ({
               label: a.nombre,
               value: Math.min(1, (a.nivel - 1) / 19),
-              color: a.color,
+              color: colorPorNivel(a.color, a.nivel),
             }))}
           />
         </Card>
@@ -292,7 +329,22 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
         <TarjetaMetaGrande />
       </div>
 
-      {wizardAbierto && <PlanMensualWizard onClose={() => setWizardAbierto(false)} />}
+      {wizardAbierto && (
+        <PlanMensualWizard
+          onClose={() => {
+            setWizardAbierto(false);
+            if (esPerfilNuevo) {
+              const perfilId = getPerfilActivo();
+              if (perfilId && !coachmarksYaVistos(perfilId)) {
+                marcarCoachmarksVistos(perfilId);
+                setMostrarCoach(true);
+              }
+            }
+          }}
+        />
+      )}
+
+      {mostrarCoach && <Coachmarks onTerminar={() => setMostrarCoach(false)} />}
     </div>
   );
 }

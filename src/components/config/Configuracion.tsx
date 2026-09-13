@@ -34,7 +34,7 @@ function IdentidadYAreas() {
       <Card>
         <SectionTitle
           title="Áreas de desarrollo y pesos"
-          subtitle="Los pesos deben sumar 100%."
+          subtitle="Ajuste fino: el asistente mensual reparte los pesos en automático, aquí puedes personalizarlos. Deben sumar 100%."
           action={
             <Badge tone={suma === 100 ? "green" : "red"}>{suma}%</Badge>
           }
@@ -91,7 +91,6 @@ function IdentidadYAreas() {
 function Economia() {
   const state = useKaizenStore();
   const actualizar = useKaizenStore((s) => s.actualizarConfigEconomia);
-  const actualizarImperio = useKaizenStore((s) => s.actualizarConfigImperio);
   const e = state.config.economia;
 
   return (
@@ -151,52 +150,6 @@ function Economia() {
           </Field>
           <Field label="Días de racha por protección">
             <Input type="number" value={e.diasPorProteccion} onChange={(ev) => actualizar({ diasPorProteccion: parseInt(ev.target.value) || 1 })} />
-          </Field>
-        </div>
-      </Card>
-
-      <Card>
-        <SectionTitle title="Finanzas y dinero para lujos" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Field label="Tope Banco (meses de fondo)">
-            <Input type="number" value={e.topeBancoRecompensasMeses} onChange={(ev) => actualizar({ topeBancoRecompensasMeses: parseInt(ev.target.value) || 1 })} />
-          </Field>
-          <Field label="Destino del sobrante">
-            <Select value={e.destinoSobranteDefault} onChange={(ev) => actualizar({ destinoSobranteDefault: ev.target.value as any })}>
-              <option value="ahorro">Ahorro</option>
-              <option value="acumula">Acumula al mes siguiente</option>
-              <option value="banco">Dinero para lujos</option>
-            </Select>
-          </Field>
-          <Field label="Tope de dinero para lujos acumulado ($)">
-            <Input
-              type="number"
-              value={state.finanzas.bancoRecompensas.tope}
-              onChange={(ev) =>
-                useKaizenStore.setState((s) => ({
-                  finanzas: { ...s.finanzas, bancoRecompensas: { ...s.finanzas.bancoRecompensas, tope: parseFloat(ev.target.value) || 0 } },
-                }))
-              }
-            />
-          </Field>
-        </div>
-      </Card>
-
-      <Card>
-        <SectionTitle title="Submétricas de Imperio" subtitle="Deben sumar 1 (negocio + finanzas)." />
-        <div className="grid grid-cols-3 gap-4">
-          <Field label="Peso negocio">
-            <Input type="number" step={0.05} value={state.config.imperio.pesoNegocio} onChange={(ev) => actualizarImperio({ pesoNegocio: parseFloat(ev.target.value) || 0 })} />
-          </Field>
-          <Field label="Peso finanzas">
-            <Input type="number" step={0.05} value={state.config.imperio.pesoFinanzas} onChange={(ev) => actualizarImperio({ pesoFinanzas: parseFloat(ev.target.value) || 0 })} />
-          </Field>
-          <Field label="Meta semanal horas de negocio">
-            <Input
-              type="number"
-              value={state.config.imperio.metaSemanalHorasNegocio}
-              onChange={(ev) => actualizarImperio({ metaSemanalHorasNegocio: parseFloat(ev.target.value) || 0 })}
-            />
           </Field>
         </div>
       </Card>
@@ -263,7 +216,7 @@ function CatalogoReconocimientos() {
       />
       <div className="space-y-2">
         {state.config.catalogoReconocimientos.map((r) => (
-          <div key={r.id} className="grid grid-cols-12 gap-2 items-center bg-white/[0.04] rounded-lg px-3 py-2.5">
+          <div key={r.id} className="grid grid-cols-12 gap-2 items-center bg-base-850 rounded-lg px-3 py-2.5">
             <Input className="col-span-3" value={r.nombre} onChange={(e) => actualizar(r.id, { nombre: e.target.value })} />
             <Input className="col-span-4" value={r.descripcion} onChange={(e) => actualizar(r.id, { descripcion: e.target.value })} />
             <Select className="col-span-2" value={r.rareza} onChange={(e) => actualizar(r.id, { rareza: e.target.value as any })}>
@@ -276,7 +229,6 @@ function CatalogoReconocimientos() {
               <option value="constancia">constancia</option>
               <option value="volumen">volumen</option>
               <option value="records">récords</option>
-              <option value="financiero">financiero</option>
               <option value="temporada">temporada</option>
             </Select>
             <button onClick={() => actualizar(r.id, { secreto: !r.secreto })} className="col-span-1 justify-self-center">
@@ -320,11 +272,9 @@ function DatosYMitigaciones() {
   const fallas = [
     ["Inflación de progreso", "La curva de nivel (base/exponente) y el PP base son editables por temporada, y las metas solo suben por etapas de 5 niveles (10%) con tope máximo, así la exigencia crece más lento que la curva de PP."],
     ["Auto-engaño en el registro", `Solo se puede registrar hasta ${state.config.economia.diasRegistroRetroactivo} días atrás; cada registro guarda la hora real de creación para poder auditarlo.`],
-    ["Olvido del registro financiero", "Entrada de gasto en menos de 10 segundos, con últimas palabras clave y botón de repetir gasto frecuente; el panel principal muestra siempre el bloque financiero."],
+    ["Olvido del registro de gastos", "Entrada de gasto en menos de 10 segundos, con últimas palabras clave y botón de repetir gasto frecuente; el panel principal muestra siempre el total del mes."],
     ["Abuso de protecciones", `Ventana de ${state.config.economia.ventanaProteccionHoras}h tras el cierre y tope de ${state.config.economia.proteccionesMaxAcumulables} acumulables.`],
-    ["Desalineación presupuesto/realidad", "Modo mes atípico por presupuesto, que etiqueta el mes sin alterar las fórmulas del resto del sistema."],
     ["Fatiga de temporada", "El cierre de temporada limita la duración a un máximo razonable (recomendado 12 semanas)."],
-    ["Dinero para lujos desconectado del esfuerzo", "El dinero para lujos ya no se desbloquea de golpe una vez al mes: se reparte entre las semanas del mes y cada semana libera solo la parte proporcional a tu cumplimiento real de esa semana."],
     ["Sobrecarga de métricas", "El catálogo de hábitos tiene 10 opciones fijas; agregar una nueva requiere tocar código. El asistente de planeación avisa cuando activas más de 7-8 a la vez."],
   ];
 
@@ -371,13 +321,13 @@ export function ConfiguracionView() {
   return (
     <div className="space-y-5">
       <SectionTitle title="Configuración" subtitle="Todo valor de las fórmulas se lee de aquí. Cero números mágicos en el código." />
-      <div className="flex gap-1 border-b border-white/10 overflow-x-auto">
+      <div className="flex gap-1 border-b border-base-700 overflow-x-auto">
         {SECCIONES.map((s) => (
           <button
             key={s}
             onClick={() => setSeccion(s)}
             className={`px-3.5 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
-              seccion === s ? "border-sky-500 text-sky-400" : "border-transparent text-base-400 hover:text-base-100"
+              seccion === s ? "border-kaizen-500 text-kaizen-400" : "border-transparent text-base-400 hover:text-base-100"
             }`}
           >
             {s}

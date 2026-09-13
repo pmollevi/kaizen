@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Stat, Button, Badge, EmptyState, ProgressBar } from "@/components/ui/Primitives";
-import { Flame, ShieldCheck, Wallet } from "lucide-react";
+import { Flame, ShieldCheck } from "lucide-react";
 import { formatoLargo } from "@/lib/dates";
 import { rachaDiariaVigente } from "@/lib/achievements";
+import { COLOR_SECCION } from "@/lib/color";
 
 export function RecompensasView() {
   const state = useKaizenStore();
@@ -22,45 +23,32 @@ export function RecompensasView() {
     setTimeout(() => setMensaje(null), 3500);
   };
 
-  const cierresConDinero = [...state.cierresSemanales]
-    .filter((c) => c.dineroLiberado > 0 || c.protegida)
+  const cierresRecientes = [...state.cierresSemanales]
     .sort((a, b) => (a.semanaInicio < b.semanaInicio ? 1 : -1))
     .slice(0, 8);
 
   return (
     <div className="space-y-5">
       <SectionTitle
-        title="Dinero para lujos y racha"
-        subtitle="Tu dinero para lujos se libera semana a semana según tu cumplimiento. Tu racha diaria se cambia por protecciones."
+        title="Racha y protecciones"
+        subtitle="Tu racha diaria se cambia por protecciones que cubren una semana mala sin romper tu historial."
+        accent={COLOR_SECCION.recompensas}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <Card>
-          <Stat
-            label="Dinero para lujos disponible"
-            value={
-              <span className="inline-flex items-center gap-1.5">
-                <Wallet className="w-5 h-5 text-emerald-400" />${state.finanzas.bancoRecompensas.saldo.toLocaleString()}
-              </span>
-            }
-            hint={`tope $${state.finanzas.bancoRecompensas.tope.toLocaleString()}`}
-          />
-        </Card>
-        <Card>
-          <Stat
-            label="Racha diaria actual"
-            value={
-              <span className="inline-flex items-center gap-1.5">
-                <Flame className="w-5 h-5 text-amber-400" />
-                {racha} {racha === 1 ? "día" : "días"}
-              </span>
-            }
-            hint="días seguidos cumpliendo todos tus hábitos"
-          />
-        </Card>
-      </div>
+      <Card>
+        <Stat
+          label="Racha diaria actual"
+          value={
+            <span className="inline-flex items-center gap-1.5">
+              <Flame className={`w-5 h-5 text-amber-400 ${racha > 0 ? "animate-flicker" : ""}`} />
+              {racha} {racha === 1 ? "día" : "días"}
+            </span>
+          }
+          hint="días seguidos cumpliendo todos tus hábitos"
+        />
+      </Card>
 
-      {mensaje && <div className="text-sm px-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/10">{mensaje}</div>}
+      {mensaje && <div className="text-sm px-4 py-2.5 rounded-lg bg-base-850 border border-base-700">{mensaje}</div>}
 
       <Card>
         <SectionTitle
@@ -75,7 +63,7 @@ export function RecompensasView() {
             {disponible} / {diasPorProteccion} días hacia la próxima
           </span>
         </div>
-        <ProgressBar value={disponible / diasPorProteccion} color="#e0a63a" height="h-2" />
+        <ProgressBar value={disponible / diasPorProteccion} color="#C5A85B" height="h-1.5" />
         <Button className="mt-4" disabled={!puedeCanjear} onClick={intentarCanje}>
           <span className="inline-flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4" /> Canjear racha por protección
@@ -84,12 +72,12 @@ export function RecompensasView() {
       </Card>
 
       <Card>
-        <SectionTitle title="Desbloqueos recientes" />
-        {cierresConDinero.length === 0 ? (
-          <EmptyState text="Todavía no hay semanas cerradas con dinero para lujos." />
+        <SectionTitle title="Cierres recientes" />
+        {cierresRecientes.length === 0 ? (
+          <EmptyState text="Todavía no hay semanas cerradas." />
         ) : (
-          <ul className="divide-y divide-white/10">
-            {cierresConDinero.map((c) => (
+          <ul className="divide-y divide-base-700">
+            {cierresRecientes.map((c) => (
               <li key={c.id} className="flex items-center justify-between py-2.5 text-sm">
                 <span className="text-base-300">
                   {formatoLargo(c.semanaInicio)} – {formatoLargo(c.semanaFin)}
@@ -98,7 +86,7 @@ export function RecompensasView() {
                   <Badge tone="blue">semana protegida</Badge>
                 ) : (
                   <span className="text-base-400">
-                    +${c.dineroLiberado.toLocaleString()} · {Math.round(c.cumplimientoGlobal * 100)}% cumplido
+                    +{c.ppGanados} PP · {Math.round(c.cumplimientoGlobal * 100)}% cumplido
                   </span>
                 )}
               </li>

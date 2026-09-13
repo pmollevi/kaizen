@@ -3,7 +3,9 @@ import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Button, Badge, ProgressBar, EmptyState, Stat } from "@/components/ui/Primitives";
 import { semanasPendientes } from "@/lib/cierre";
 import { dentroDeVentanaProteccion } from "@/lib/formulas";
+import { rachaDiariaVigente } from "@/lib/achievements";
 import { finSemana, formatoLargo, hoyISO, inicioSemana } from "@/lib/dates";
+import { ShieldCheck } from "lucide-react";
 
 function FormularioCierre({ inicio, onCerrado }: { inicio: string; onCerrado: () => void }) {
   const state = useKaizenStore();
@@ -19,7 +21,7 @@ function FormularioCierre({ inicio, onCerrado }: { inicio: string; onCerrado: ()
   const toggleBono = (id: string) => setBonosIds((b) => (b.includes(id) ? b.filter((x) => x !== id) : [...b, id]));
 
   return (
-    <Card className="border border-sky-500/20">
+    <Card className="border-kaizen-500/20">
       <SectionTitle title={`Cerrar semana`} subtitle={`${formatoLargo(inicio)} – ${formatoLargo(fin)}`} />
       <div className="mb-4">
         <div className="text-xs uppercase tracking-wide text-base-400 mb-2">Bonos por resultados reales</div>
@@ -30,7 +32,7 @@ function FormularioCierre({ inicio, onCerrado }: { inicio: string; onCerrado: ()
               onClick={() => toggleBono(b.id)}
               disabled={proteger}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-40 ${
-                bonosIds.includes(b.id) ? "border-sky-600 bg-sky-600/10 text-sky-400" : "border-white/10 text-base-400"
+                bonosIds.includes(b.id) ? "border-kaizen-600 bg-kaizen-600/10 text-kaizen-400" : "border-base-700 text-base-400"
               }`}
             >
               {b.nombre} (+{b.valorPP} PP)
@@ -63,16 +65,21 @@ function ResultadoCierre({ id }: { id: string }) {
   const cierre = state.cierresSemanales.find((c) => c.id === id);
   if (!cierre) return null;
   return (
-    <Card className="border border-emerald-900 bg-emerald-950/20">
+    <Card className="border-emerald-900 bg-emerald-950/20">
       <SectionTitle title="Semana cerrada" subtitle={`${formatoLargo(cierre.semanaInicio)} – ${formatoLargo(cierre.semanaFin)}`} />
       {cierre.protegida ? (
-        <Badge tone="blue">Semana protegida, sin PP, racha conservada</Badge>
+        <div className="flex items-center gap-2.5 rounded-xl border border-gold-500/40 bg-gold-500/[0.06] px-4 py-3 animate-pop">
+          <ShieldCheck className="w-5 h-5 text-gold-400 shrink-0" />
+          <span className="text-sm text-base-200">
+            Tu racha de <span className="font-semibold text-gold-400">{rachaDiariaVigente(state)} días</span> se salvó ✓ — se usó una
+            protección, sin PP esta semana.
+          </span>
+        </div>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <Stat label="Cumplimiento global" value={`${Math.round(cierre.cumplimientoGlobal * 100)}%`} />
             <Stat label="PP ganados" value={cierre.ppGanados} />
-            <Stat label="Dinero para lujos liberado" value={`$${cierre.dineroLiberado.toLocaleString()}`} />
           </div>
           {cierre.nivelesAreaSubidos.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -101,7 +108,7 @@ export function CierreSemanalView() {
 
   return (
     <div className="space-y-5">
-      <SectionTitle title="Cierre semanal" subtitle="Aquí se revelan los PP, el dinero libre y los niveles de la semana." />
+      <SectionTitle title="Cierre semanal" subtitle="Aquí se revelan los PP y los niveles de la semana." />
 
       {pendientes.length === 0 && !ultimoCerrado && <EmptyState text="No hay semanas pendientes de cierre." />}
 
@@ -131,12 +138,12 @@ export function CierreSemanalView() {
         ) : (
           <div className="space-y-2">
             {historico.map((c) => (
-              <div key={c.id} className="flex items-center justify-between text-sm bg-white/[0.04] rounded-lg px-3 py-2.5">
+              <div key={c.id} className="flex items-center justify-between text-sm bg-base-850 rounded-lg px-3 py-2.5">
                 <span className="text-base-300">
                   {formatoLargo(c.semanaInicio)} – {formatoLargo(c.semanaFin)}
                 </span>
                 <div className="flex items-center gap-3">
-                  <ProgressBar value={c.cumplimientoGlobal} colorClass="bg-sky-500" height="h-1.5" />
+                  <ProgressBar value={c.cumplimientoGlobal} colorClass="bg-kaizen-500" height="h-1" />
                   <span className="text-base-400 w-10 text-right">{Math.round(c.cumplimientoGlobal * 100)}%</span>
                   {c.protegida ? <Badge tone="blue">protegida</Badge> : <Badge>+{c.ppGanados} PP</Badge>}
                 </div>

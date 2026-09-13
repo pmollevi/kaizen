@@ -9,22 +9,14 @@ import {
   Medal,
   Menu,
   Settings,
-  Sparkles,
   Trophy,
   Wallet,
 } from "lucide-react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import {
-  crearPerfil,
-  getPerfilActivo,
-  listarPerfiles,
-  setPerfilActivo,
-  verificarPassword,
-  type Perfil,
-} from "@/store/profiles";
+import { crearPerfil, getPerfilActivo, listarPerfiles, setPerfilActivo, verificarPassword } from "@/store/profiles";
 import { Button, Card, Field, Input, Badge } from "@/components/ui/Primitives";
+import { KaizenMark } from "@/components/ui/KaizenMark";
 import { FabAgregarGasto } from "@/components/finanzas/FabAgregarGasto";
-import { ArrowLeft, Lock, User } from "lucide-react";
 import { PanelPrincipal } from "@/components/panel/PanelPrincipal";
 import { BienvenidaFlow } from "@/components/onboarding/Bienvenida";
 import { RegistroDiarioView } from "@/components/registro/RegistroDiario";
@@ -54,52 +46,64 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
 // sidebar en escritorio); el resto se accede desde el menú ☰ de arriba a la derecha.
 const TABS_PRINCIPALES: TabId[] = ["panel", "registro", "finanzas", "recompensas"];
 
+// Identidad de color por sección (ver DESIGN.md "Identidad de sección"): el
+// fondo y el acento de acción (botones) no cambian, solo el nav de cada una.
+// Clases completas y literales a propósito — Tailwind necesita verlas así para generarlas.
+const ACENTO_TAB: Record<string, { pill: string; icon: string; iconInactivo?: string }> = {
+  panel: { pill: "bg-kaizen-500", icon: "text-kaizen-400" },
+  registro: { pill: "bg-habitos-500", icon: "text-habitos-400" },
+  finanzas: { pill: "bg-finanzas-500", icon: "text-finanzas-400" },
+  recompensas: { pill: "bg-gold-500", icon: "text-gold-400" },
+};
+const DATA_COACH_TAB: Partial<Record<TabId, string>> = {
+  registro: "coach-nav-registro",
+  finanzas: "coach-nav-finanzas",
+  recompensas: "coach-nav-recompensas",
+};
+
 function Logo() {
   return (
-    <div className="w-11 h-11 rounded-2xl bg-sky-500 flex items-center justify-center mb-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.3),0_8px_24px_-8px_rgba(59,130,246,0.6)]">
-      <Sparkles className="w-5 h-5 text-white" />
+    <div className="w-11 h-11 rounded-2xl bg-base-850 border border-base-700 flex items-center justify-center mb-3">
+      <KaizenMark size={22} />
     </div>
   );
 }
 
 function PantallaLogin({
-  perfiles,
   onEntrar,
   onIrACrear,
 }: {
-  perfiles: Perfil[];
   onEntrar: (esNuevo: boolean) => void;
   onIrACrear: () => void;
 }) {
   const reiniciar = useKaizenStore((s) => s.reiniciarConNombre);
-  const [seleccionado, setSeleccionado] = useState<Perfil | null>(null);
+  const [nombre, setNombre] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
-  const entrarComo = async (p: Perfil, pass: string) => {
-    setCargando(true);
-    setError("");
-    const ok = await verificarPassword(p, pass);
-    setCargando(false);
-    if (!ok) {
-      setError("Contraseña incorrecta.");
+  // No se lista quién tiene cuenta en este navegador: el usuario escribe su
+  // nombre y contraseña como en cualquier login, y solo se busca el perfil
+  // que coincide puertas adentro. Un usuario o contraseña equivocados dan el
+  // mismo mensaje genérico — no revela cuáles nombres existen.
+  const entrar = async () => {
+    if (!nombre.trim()) {
+      setError("Escribe tu nombre de usuario.");
       return;
     }
-    setPerfilActivo(p.id);
-    reiniciar(p.nombre);
+    setCargando(true);
+    setError("");
+    const perfil = listarPerfiles().find((p) => p.nombre.trim().toLowerCase() === nombre.trim().toLowerCase());
+    const ok = perfil ? await verificarPassword(perfil, password) : false;
+    setCargando(false);
+    if (!perfil || !ok) {
+      setError("Usuario o contraseña incorrectos.");
+      return;
+    }
+    setPerfilActivo(perfil.id);
+    reiniciar(perfil.nombre);
     useKaizenStore.persist.rehydrate();
     onEntrar(false);
-  };
-
-  const elegir = (p: Perfil) => {
-    setError("");
-    setPassword("");
-    if (!p.passwordHash) {
-      entrarComo(p, "");
-    } else {
-      setSeleccionado(p);
-    }
   };
 
   return (
@@ -110,57 +114,32 @@ function PantallaLogin({
         <div className="text-sm text-base-400 mt-1">Entra a tu perfil de Kaizen en este navegador.</div>
       </div>
 
-      {!seleccionado ? (
-        perfiles.length > 0 ? (
-          <div className="space-y-2 mb-5">
-            {perfiles.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => elegir(p)}
-                className="w-full flex items-center gap-3 text-left px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 active:scale-[0.98] text-sm font-medium transition-all"
-              >
-                <div className="w-8 h-8 rounded-full bg-white/[0.08] flex items-center justify-center shrink-0">
-                  <User className="w-4 h-4 text-base-300" />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate">{p.nombre}</div>
-                  {p.email && <div className="text-xs text-base-500 truncate">{p.email}</div>}
-                </div>
-                {p.passwordHash && <Lock className="w-3.5 h-3.5 text-base-500 ml-auto shrink-0" />}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-base-500 mb-5">Todavía no tienes un perfil en este navegador.</p>
-        )
-      ) : (
-        <div className="space-y-3 mb-5">
-          <button
-            onClick={() => setSeleccionado(null)}
-            className="inline-flex items-center gap-1.5 text-xs text-base-500 hover:text-base-300"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Elegir otro perfil
-          </button>
-          <div className="text-sm font-medium">{seleccionado.nombre}</div>
-          <Field label="Contraseña">
-            <Input
-              type="password"
-              autoFocus
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && entrarComo(seleccionado, password)}
-            />
-          </Field>
-          {error && <Badge tone="red">{error}</Badge>}
-          <Button className="w-full" disabled={cargando} onClick={() => entrarComo(seleccionado, password)}>
-            {cargando ? "Entrando..." : "Entrar"}
-          </Button>
-        </div>
-      )}
+      <div className="space-y-3 mb-5">
+        <Field label="Usuario">
+          <Input
+            autoFocus
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && entrar()}
+          />
+        </Field>
+        <Field label="Contraseña">
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && entrar()}
+          />
+        </Field>
+        {error && <Badge tone="red">{error}</Badge>}
+        <Button className="w-full" disabled={cargando} onClick={entrar}>
+          {cargando ? "Entrando..." : "Entrar"}
+        </Button>
+      </div>
 
       <p className="text-sm text-base-400">
         ¿No tienes cuenta?{" "}
-        <button onClick={onIrACrear} className="text-sky-400 font-medium hover:text-sky-300">
+        <button onClick={onIrACrear} className="text-kaizen-400 font-medium hover:text-kaizen-300">
           Crear una
         </button>
       </p>
@@ -235,7 +214,7 @@ function PantallaCrearCuenta({
       {hayPerfiles && (
         <p className="text-sm text-base-400 mt-4">
           ¿Ya tienes cuenta?{" "}
-          <button onClick={onIrALogin} className="text-sky-400 font-medium hover:text-sky-300">
+          <button onClick={onIrALogin} className="text-kaizen-400 font-medium hover:text-kaizen-300">
             Iniciar sesión
           </button>
         </p>
@@ -252,11 +231,11 @@ function ProfileGate({ onEntrar }: { onEntrar: (esNuevo: boolean) => void }) {
     <div className="min-h-screen flex items-center justify-center px-4">
       <Card className="w-full max-w-sm relative animate-fade-up">
         {modo === "login" ? (
-          <PantallaLogin perfiles={perfiles} onEntrar={onEntrar} onIrACrear={() => setModo("signup")} />
+          <PantallaLogin onEntrar={onEntrar} onIrACrear={() => setModo("signup")} />
         ) : (
           <PantallaCrearCuenta hayPerfiles={perfiles.length > 0} onEntrar={onEntrar} onIrALogin={() => setModo("login")} />
         )}
-        <p className="text-xs text-base-500 mt-4 pt-4 border-t border-white/10">
+        <p className="text-xs text-base-500 mt-4 pt-4 border-t border-base-700">
           Tus datos se guardan solo en este navegador. Exporta desde Configuración para respaldarlos.
         </p>
       </Card>
@@ -285,10 +264,10 @@ function MenuOpciones({
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative w-full md:w-72 bg-base-900/95 backdrop-blur-xl border border-white/10 rounded-t-2xl md:rounded-2xl p-4 pb-8 md:pb-4 animate-fade-up max-h-[75vh] overflow-y-auto shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)]"
+        className="relative w-full md:w-72 bg-base-900 border border-base-700 rounded-t-2xl md:rounded-2xl p-4 pb-8 md:pb-4 animate-fade-up max-h-[75vh] overflow-y-auto shadow-soft"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1 rounded-full bg-white/15 mx-auto mb-4 md:hidden" />
+        <div className="w-10 h-1 rounded-full bg-base-700 mx-auto mb-4 md:hidden" />
         <div className="space-y-1.5">
           {otras.map((t) => {
             const Icon = t.icon;
@@ -299,8 +278,8 @@ function MenuOpciones({
                 onClick={() => onElegir(t.id)}
                 className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors border ${
                   activo
-                    ? "bg-sky-500/10 text-sky-400 border-sky-500/20"
-                    : "bg-white/[0.03] text-base-300 border-white/[0.06] hover:bg-white/[0.06]"
+                    ? "bg-kaizen-500/10 text-kaizen-400 border-kaizen-500/20"
+                    : "bg-base-850 text-base-300 border-base-700 hover:bg-base-800"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -311,7 +290,7 @@ function MenuOpciones({
         </div>
         <button
           onClick={onCambiarPerfil}
-          className="w-full text-center text-sm text-base-400 mt-4 pt-4 border-t border-white/10"
+          className="w-full text-center text-sm text-base-400 mt-4 pt-4 border-t border-base-700"
         >
           Cambiar de perfil
         </button>
@@ -327,6 +306,7 @@ export default function App() {
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const usuario = useKaizenStore((s) => s.usuario);
   const nombreSistema = useKaizenStore((s) => s.config.textos.nombreSistema);
+  const tituloActivo = useKaizenStore((s) => s.config.catalogoReconocimientos.find((c) => c.id === s.usuario.tituloActivo)?.nombre ?? null);
   const procesarCierres = useKaizenStore((s) => s.procesarCierresMensualesPendientes);
 
   useEffect(() => {
@@ -359,10 +339,10 @@ export default function App() {
   return (
     <div className="min-h-screen text-base-100 flex">
       {/* Sidebar de escritorio */}
-      <aside className="hidden md:flex w-56 shrink-0 border-r border-white/[0.08] flex-col bg-white/[0.015] backdrop-blur-xl">
+      <aside className="hidden md:flex w-56 shrink-0 border-r border-base-700 flex-col bg-base-900">
         <div className="px-4 py-5 flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center shadow-[inset_0_1px_0_0_rgba(255,255,255,0.3),0_4px_14px_-4px_rgba(59,130,246,0.7)]">
-            <Sparkles className="w-3.5 h-3.5 text-white" />
+          <div className="w-7 h-7 rounded-lg bg-base-850 border border-base-700 flex items-center justify-center">
+            <KaizenMark size={16} />
           </div>
           <span className="font-semibold tracking-tight">{nombreSistema}</span>
         </div>
@@ -370,26 +350,31 @@ export default function App() {
           {TABS.filter((t) => TABS_PRINCIPALES.includes(t.id)).map((t) => {
             const Icon = t.icon;
             const activo = tab === t.id;
+            const acento = ACENTO_TAB[t.id];
             return (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
+                data-coach={DATA_COACH_TAB[t.id]}
                 className={`relative w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${
-                  activo ? "bg-white/[0.06] text-base-100" : "text-base-400 hover:text-base-100 hover:bg-white/[0.03]"
+                  activo ? "bg-base-850 text-base-100" : "text-base-400 hover:text-base-100 hover:bg-base-850/60"
                 }`}
               >
-                {activo && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-sky-400" />}
-                <Icon className={`w-4 h-4 ${activo ? "text-sky-400" : ""}`} />
+                {activo && <span className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full ${acento.pill}`} />}
+                <Icon className={`w-4 h-4 ${activo ? acento.icon : ""}`} />
                 {t.label}
               </button>
             );
           })}
         </nav>
-        <div className="px-4 py-4 border-t border-white/[0.08]">
+        <div className="px-4 py-4 border-t border-base-700">
           <div className="text-sm font-medium truncate">{perfilActual?.nombre ?? usuario.nombre}</div>
           <div className="text-xs text-base-500 mt-0.5 flex items-center gap-1">
             <Activity className="w-3 h-3" /> Nivel {usuario.nivelGlobal}
           </div>
+          {tituloActivo && (
+            <div className="text-xs text-gold-400 mt-0.5 truncate">{tituloActivo}</div>
+          )}
           <button className="text-xs text-base-500 hover:text-base-300 mt-2" onClick={cambiarDePerfil}>
             Cambiar de perfil
           </button>
@@ -397,10 +382,10 @@ export default function App() {
       </aside>
 
       {/* Barra superior de celular */}
-      <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4 h-14 bg-base-900/80 backdrop-blur-xl border-b border-white/[0.08]">
+      <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4 h-14 bg-base-900/95 border-b border-base-700">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-sky-500 flex items-center justify-center">
-            <Sparkles className="w-3 h-3 text-white" />
+          <div className="w-6 h-6 rounded-lg bg-base-850 border border-base-700 flex items-center justify-center">
+            <KaizenMark size={13} />
           </div>
           <span className="font-semibold text-sm">{nombreSistema}</span>
         </div>
@@ -413,35 +398,39 @@ export default function App() {
       <button
         onClick={() => setMenuMovilAbierto(true)}
         aria-label="Más opciones"
-        className="hidden md:flex fixed top-5 right-6 z-30 w-10 h-10 rounded-full bg-base-900/80 backdrop-blur-xl border border-white/10 items-center justify-center text-base-300 hover:text-base-100 hover:bg-white/[0.06] transition-colors shadow-card"
+        className="hidden md:flex fixed top-5 right-6 z-30 w-10 h-10 rounded-full bg-base-900 border border-base-700 items-center justify-center text-base-300 hover:text-base-100 hover:bg-base-850 transition-colors shadow-card"
       >
         <Menu className="w-5 h-5" />
       </button>
 
       <main className="flex-1 min-w-0 px-4 md:px-6 py-6 pt-20 pb-24 md:pt-6 md:pb-6 max-w-6xl mx-auto w-full">
-        {tab === "panel" && <PanelPrincipal irA={(t) => setTab(t as TabId)} />}
-        {tab === "registro" && <RegistroDiarioView />}
-        {tab === "finanzas" && <FinanzasView />}
-        {tab === "cierre" && <CierreSemanalView />}
-        {tab === "temporada" && <TemporadaView />}
-        {tab === "recompensas" && <RecompensasView />}
-        {tab === "reconocimientos" && <ReconocimientosView />}
-        {tab === "historial" && <HistorialView />}
-        {tab === "config" && <ConfiguracionView />}
+        <div key={tab} className="animate-fade-up">
+          {tab === "panel" && <PanelPrincipal irA={(t) => setTab(t as TabId)} />}
+          {tab === "registro" && <RegistroDiarioView />}
+          {tab === "finanzas" && <FinanzasView />}
+          {tab === "cierre" && <CierreSemanalView />}
+          {tab === "temporada" && <TemporadaView />}
+          {tab === "recompensas" && <RecompensasView />}
+          {tab === "reconocimientos" && <ReconocimientosView />}
+          {tab === "historial" && <HistorialView />}
+          {tab === "config" && <ConfiguracionView />}
+        </div>
       </main>
 
       {/* Barra inferior de celular: mismas 4 secciones principales que el sidebar de escritorio. */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch bg-base-900/80 backdrop-blur-xl border-t border-white/[0.08] pb-[env(safe-area-inset-bottom)]">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch bg-base-900 border-t border-base-700 pb-[env(safe-area-inset-bottom)]">
         {TABS_PRINCIPALES.map((id) => {
           const t = TABS.find((x) => x.id === id)!;
           const Icon = t.icon;
           const activo = tab === id;
+          const acento = ACENTO_TAB[id];
           return (
             <button
               key={id}
               onClick={() => setTab(id)}
+              data-coach={DATA_COACH_TAB[id]}
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors ${
-                activo ? "text-sky-400" : "text-base-500"
+                activo ? acento.icon : "text-base-500"
               }`}
             >
               <Icon className="w-5 h-5" />

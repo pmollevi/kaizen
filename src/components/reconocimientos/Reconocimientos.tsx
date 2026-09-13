@@ -44,7 +44,7 @@ export function ReconocimientosView() {
                     <div className="text-xs text-base-500">Desbloqueado el {formatoLargo(desbloqueados.get(r.id)!)}</div>
                     <button
                       onClick={() => setTituloActivo(tituloActivo === r.id ? null : r.id)}
-                      className={`text-xs font-medium ${tituloActivo === r.id ? "text-sky-400" : "text-base-500 hover:text-base-300"}`}
+                      className={`text-xs font-medium ${tituloActivo === r.id ? "text-kaizen-400" : "text-base-500 hover:text-base-300"}`}
                     >
                       {tituloActivo === r.id ? "Título activo" : "Usar como título"}
                     </button>
