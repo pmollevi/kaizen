@@ -3,21 +3,28 @@ import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Stat, EmptyState } from "@/components/ui/Primitives";
 import { formatoMes, mesDe } from "@/lib/dates";
 import { GraficaCategorias, GraficaMetodoPago, GraficaProgresoHabitos } from "@/components/finanzas/charts/FinanzasCharts";
+import { COLOR_SECCION } from "@/lib/color";
 
 function etiquetaSemana(fecha: string): string {
   const [y, m, d] = fecha.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
 }
 
-export function ResumenMensualTab() {
+// Vive fuera de Finanzas a propósito: combina progreso de hábitos y gasto del
+// mes, así que no tiene dueño natural entre las 4 secciones principales.
+export function ResumenMesView() {
   const state = useKaizenStore();
   const resumenes = [...state.finanzas.resumenesMensuales].sort((a, b) => (a.mes < b.mes ? 1 : -1));
   const [abierto, setAbierto] = useState<string | null>(resumenes[0]?.mes ?? null);
 
   return (
     <div className="space-y-5">
+      <SectionTitle
+        title="Resumen mensual"
+        subtitle="Hábitos y gasto del mes juntos. Se genera automáticamente al cerrar cada mes — nada se borra."
+        accent={COLOR_SECCION.resumenMes}
+      />
       <Card>
-        <SectionTitle title="Resumen mensual" subtitle="Se genera automáticamente al cerrar cada mes. Nada se borra." />
         {resumenes.length === 0 ? (
           <EmptyState text="Aún no hay meses cerrados." />
         ) : (

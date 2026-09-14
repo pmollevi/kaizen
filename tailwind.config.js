@@ -98,7 +98,7 @@ export default {
         },
         tap: {
           "0%": { transform: "scale(1)" },
-          "50%": { transform: "scale(1.12)" },
+          "50%": { transform: "scale(1.015)" },
           "100%": { transform: "scale(1)" },
         },
         flicker: {
@@ -116,7 +116,7 @@ export default {
         wiggle: "wiggle 0.4s ease-in-out",
         confetti: "confetti-fall 0.9s ease-in forwards",
         "toast-fill": "toast-fill 2.4s cubic-bezier(0.16,1,0.3,1) forwards",
-        tap: "tap 0.18s ease-out",
+        tap: "tap 0.12s ease-out",
         flicker: "flicker 1.8s ease-in-out infinite",
         "radar-in": "radar-in 0.45s cubic-bezier(0.16,1,0.3,1)",
       },

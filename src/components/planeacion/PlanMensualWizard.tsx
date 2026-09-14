@@ -155,8 +155,13 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="relative min-h-0 flex-1">
-          <div ref={scrollRef} onScroll={onScroll} className="h-full overflow-y-auto p-6">
+        {/* flex flex-col aquí en vez de solo "relative": con contenido largo (ver
+            punto 1 de la ronda de UX, lista vertical de hábitos) el hijo con
+            h-full no siempre resolvía su alto por porcentaje contra este padre
+            y terminaba creciendo al alto de su contenido en vez de recortarse.
+            Anidar flex-1/min-h-0 en vez de depender de un porcentaje evita eso. */}
+        <div className="relative min-h-0 flex-1 flex flex-col">
+          <div ref={scrollRef} onScroll={onScroll} className="flex-1 min-h-0 overflow-y-auto p-6">
             {step === 1 && (
               <div className="space-y-4">
                 <div>
@@ -169,7 +174,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                       : "Elige los que quieras trabajar. Más de 7-8 suele ser difícil de sostener."}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
                   {CATALOGO_AREAS.map((c) => {
                     const activo = seleccionados.includes(c.id);
                     const Icono = iconoDeHabito(c.id);
@@ -177,7 +182,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                       <button
                         key={c.id}
                         onClick={() => toggleHabito(c.id)}
-                        className={`relative text-left rounded-xl border px-3 py-2.5 transition-all active:scale-[0.98] ${
+                        className={`relative w-full text-left rounded-xl border px-3 py-2.5 transition-all active:scale-[0.98] ${
                           activo ? "border-kaizen-500/40 bg-base-850" : "border-base-700 hover:border-base-600"
                         }`}
                       >
@@ -187,7 +192,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                           <span className="text-sm font-medium flex-1 text-base-200">{c.nombre}</span>
                           {activo && <Check className="w-3.5 h-3.5 text-kaizen-400" />}
                         </div>
-                        <div className="text-xs text-base-500 mt-0.5 pl-6 line-clamp-2">{c.descripcion}</div>
+                        <div className="text-xs text-base-500 mt-0.5 pl-6 whitespace-pre-line break-words">{c.descripcion}</div>
                       </button>
                     );
                   })}

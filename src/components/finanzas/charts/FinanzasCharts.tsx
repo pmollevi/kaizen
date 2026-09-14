@@ -77,17 +77,18 @@ export function GraficaMetodoPago({ efectivo, tarjeta }: { efectivo: number; tar
 
   return (
     <div className="flex items-center gap-4">
-      <div style={{ width: 108, height: 108 }} className="shrink-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={datos} dataKey="valor" nameKey="nombre" innerRadius={32} outerRadius={50} paddingAngle={2} stroke="none">
-              {datos.map((d) => (
-                <Cell key={d.nombre} fill={d.color} />
-              ))}
-            </Pie>
-            <Tooltip contentStyle={ESTILO_TOOLTIP} formatter={(v) => [formatoMoneda(Number(v)), ""]} />
-          </PieChart>
-        </ResponsiveContainer>
+      {/* Tamaño fijo conocido de antemano: PieChart directo en vez de
+          ResponsiveContainer, que en un contenedor flex chico a veces mide 0
+          en el primer render y deja la dona diminuta hasta el próximo resize. */}
+      <div className="shrink-0">
+        <PieChart width={108} height={108}>
+          <Pie data={datos} dataKey="valor" nameKey="nombre" innerRadius={32} outerRadius={50} paddingAngle={2} stroke="none">
+            {datos.map((d) => (
+              <Cell key={d.nombre} fill={d.color} />
+            ))}
+          </Pie>
+          <Tooltip contentStyle={ESTILO_TOOLTIP} formatter={(v) => [formatoMoneda(Number(v)), ""]} />
+        </PieChart>
       </div>
       <div className="space-y-1.5">
         {datos.map((d) => (

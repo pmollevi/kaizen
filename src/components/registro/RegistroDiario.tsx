@@ -46,13 +46,13 @@ function HabitoCard({
   const color = colorPorNivel(area.color, area.nivel);
   const valorMostrado = useCountUp(valor);
 
-  // Rebote corto (180ms) al marcar/ajustar el hábito — feedback instantáneo,
-  // no una animación que haya que esperar.
+  // Rebote corto y sutil (120ms) al marcar/ajustar el hábito — feedback
+  // instantáneo sin distraer ni interrumpir el resto de la interacción.
   const [flash, setFlash] = useState(false);
   const marcar = (v: number) => {
     onCambiar(v);
     setFlash(true);
-    setTimeout(() => setFlash(false), 180);
+    setTimeout(() => setFlash(false), 120);
   };
 
   return (
@@ -142,7 +142,13 @@ function HabitoCard({
   );
 }
 
-export function RegistroDiarioView() {
+export function RegistroDiarioView({
+  autoScrollAlFormulario = false,
+  onAutoScrollConsumido,
+}: {
+  autoScrollAlFormulario?: boolean;
+  onAutoScrollConsumido?: () => void;
+}) {
   const state = useKaizenStore();
   const registrarDia = useKaizenStore((s) => s.registrarDia);
   const agregarGasto = useKaizenStore((s) => s.agregarGasto);
@@ -208,15 +214,17 @@ export function RegistroDiarioView() {
   const rachaMostrada = useCountUp(racha);
   const ppMostrados = useCountUp(state.usuario.ppTotales);
 
-  // Al entrar a Hábitos (desde "Registrar el día" o el nav), lleva directo al
-  // selector de día + tarjetas de registro en vez de dejar al usuario en las
-  // estadísticas de arriba y tener que buscar el formulario con scroll manual.
+  // Solo cuando se llega aquí desde el botón "Registrar el día" del Panel
+  // (autoScrollAlFormulario) se hace scroll directo al formulario — entrar a
+  // Hábitos por el menú/nav debe abrir arriba, como cualquier otra pestaña.
   useEffect(() => {
+    if (!autoScrollAlFormulario) return;
     const t = setTimeout(() => {
       document.getElementById("registro-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      onAutoScrollConsumido?.();
     }, 80);
     return () => clearTimeout(t);
-  }, []);
+  }, [autoScrollAlFormulario]);
 
   return (
     <div className="space-y-6 relative">

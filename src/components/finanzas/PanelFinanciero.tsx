@@ -41,9 +41,11 @@ export function PanelFinancieroTab() {
         </div>
         {pctIngreso !== null && (
           <div className="mt-5 pt-5 border-t border-base-700">
-            <div className="flex items-center justify-between text-sm mb-1.5">
-              <span className="text-base-400">Llevas gastado del ingreso del mes</span>
-              <span className="font-medium text-base-200">{Math.round(pctIngreso * 100)}%</span>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm text-base-400">Llevas gastado del ingreso del mes</span>
+              <span className={`text-2xl font-bold tabular-nums ${pctIngreso > 1 ? "text-rose-400" : "text-base-100"}`}>
+                {Math.round(pctIngreso * 100)}%
+              </span>
             </div>
             <ProgressBar value={pctIngreso} colorClass={pctIngreso > 1 ? "bg-rose-500" : "bg-finanzas-500"} height="h-1.5" />
           </div>

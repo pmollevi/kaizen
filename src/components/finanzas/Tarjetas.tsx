@@ -3,11 +3,12 @@ import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, InputDiaDelMes, Button, Badge, EmptyState } from "@/components/ui/Primitives";
 import { hoyISO, formatoMes, mesDe } from "@/lib/dates";
 import { COLOR_SECCION } from "@/lib/color";
+import { distribucionCategorias } from "@/lib/formulas";
 import { Plus, Trash2, CreditCard } from "lucide-react";
 
 // La librería de gráficas solo se necesita aquí — separada en su propio chunk.
-const ResumenesTarjeta = lazy(() =>
-  import("@/components/finanzas/ResumenTarjeta").then((m) => ({ default: m.ResumenesTarjeta }))
+const GraficaCategorias = lazy(() =>
+  import("@/components/finanzas/charts/FinanzasCharts").then((m) => ({ default: m.GraficaCategorias }))
 );
 
 const MAX_TARJETAS = 3;
@@ -103,22 +104,36 @@ function TarjetasSection() {
         }
       />
       <div className="space-y-2.5">
-        {state.finanzas.tarjetas.map((t) => (
-          <div key={t.id} className="flex items-center justify-between rounded-xl border border-finanzas-500/40 bg-finanzas-500/[0.08] px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-finanzas-500/15 flex items-center justify-center shrink-0">
-                <CreditCard className="w-4 h-4 text-finanzas-400" />
+        {state.finanzas.tarjetas.map((t) => {
+          const gastosDeTarjeta = state.finanzas.gastos.filter((g) => g.tarjetaId === t.id);
+          const categoriasDeTarjeta = distribucionCategorias(gastosDeTarjeta, state.finanzas.categorias, "0000-01-01", "9999-12-31");
+          return (
+            <div key={t.id} className="rounded-xl border border-finanzas-500/40 bg-finanzas-500/[0.08] px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-finanzas-500/15 flex items-center justify-center shrink-0">
+                    <CreditCard className="w-4 h-4 text-finanzas-400" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-base-200">{t.nombre}</div>
+                    <div className="text-xs text-base-500">Corte el día {t.diaCorte}</div>
+                  </div>
+                </div>
+                <button onClick={() => eliminarTarjeta(t.id)} className="text-base-500 hover:text-rose-400">
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
-              <div>
-                <div className="text-sm font-medium text-base-200">{t.nombre}</div>
-                <div className="text-xs text-base-500">Corte el día {t.diaCorte}</div>
-              </div>
+              {categoriasDeTarjeta.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-finanzas-500/20">
+                  <div className="text-[11px] uppercase tracking-wide text-base-500 mb-2">Gastos por categoría en esta tarjeta</div>
+                  <Suspense fallback={<div className="text-xs text-base-500 py-2">Cargando gráfica…</div>}>
+                    <GraficaCategorias datos={categoriasDeTarjeta} />
+                  </Suspense>
+                </div>
+              )}
             </div>
-            <button onClick={() => eliminarTarjeta(t.id)} className="text-base-500 hover:text-rose-400">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
+          );
+        })}
         {state.finanzas.tarjetas.length === 0 && !formAbierto && <EmptyState text="Aún no registras ninguna tarjeta." />}
         {formAbierto && <FormTarjeta onCancelar={() => setFormAbierto(false)} />}
       </div>
@@ -174,9 +189,6 @@ export function TarjetasTab() {
       <IngresoMensualSection />
       <TarjetasSection />
       <CategoriasSection />
-      <Suspense fallback={<div className="text-sm text-base-500 py-8 text-center">Cargando gráficas…</div>}>
-        <ResumenesTarjeta />
-      </Suspense>
     </div>
   );
 }

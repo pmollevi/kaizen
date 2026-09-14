@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   CalendarClock,
@@ -8,6 +8,7 @@ import {
   ListChecks,
   Medal,
   Menu,
+  PieChart,
   Settings,
   Trophy,
   Wallet,
@@ -31,12 +32,18 @@ import { sincronizarDatosRecordatorio } from "@/lib/push";
 import { SplashScreen } from "@/components/SplashScreen";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
-type TabId = "panel" | "registro" | "finanzas" | "cierre" | "temporada" | "recompensas" | "reconocimientos" | "historial" | "config";
+// La librería de gráficas solo se necesita aquí — separada en su propio chunk.
+const ResumenMesView = lazy(() =>
+  import("@/components/resumenmes/ResumenMes").then((m) => ({ default: m.ResumenMesView }))
+);
+
+type TabId = "panel" | "registro" | "finanzas" | "resumenMes" | "cierre" | "temporada" | "recompensas" | "reconocimientos" | "historial" | "config";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "panel", label: "Panel", icon: LayoutDashboard },
   { id: "registro", label: "Hábitos", icon: ListChecks },
   { id: "finanzas", label: "Finanzas", icon: Wallet },
+  { id: "resumenMes", label: "Resumen", icon: PieChart },
   { id: "cierre", label: "Cierre semanal", icon: CalendarClock },
   { id: "temporada", label: "Temporada", icon: Gauge },
   { id: "recompensas", label: "Recompensas", icon: Gift },
@@ -45,9 +52,9 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "config", label: "Config.", icon: Settings },
 ];
 
-// Las 4 secciones principales viven siempre visibles (barra inferior en celular,
+// Las 5 secciones principales viven siempre visibles (barra inferior en celular,
 // sidebar en escritorio); el resto se accede desde el menú ☰ de arriba a la derecha.
-const TABS_PRINCIPALES: TabId[] = ["panel", "registro", "finanzas", "recompensas"];
+const TABS_PRINCIPALES: TabId[] = ["panel", "registro", "finanzas", "resumenMes", "recompensas"];
 
 // Identidad de color por sección (ver DESIGN.md "Identidad de sección"): el
 // fondo y el acento de acción (botones) no cambian, solo el nav de cada una.
@@ -56,6 +63,7 @@ const ACENTO_TAB: Record<string, { pill: string; icon: string; iconInactivo?: st
   panel: { pill: "bg-kaizen-500", icon: "text-kaizen-400" },
   registro: { pill: "bg-habitos-500", icon: "text-habitos-400" },
   finanzas: { pill: "bg-finanzas-500", icon: "text-finanzas-400" },
+  resumenMes: { pill: "bg-teal-500", icon: "text-teal-400" },
   recompensas: { pill: "bg-gold-500", icon: "text-gold-400" },
 };
 const DATA_COACH_TAB: Partial<Record<TabId, string>> = {
@@ -306,9 +314,27 @@ export default function App() {
   const [perfilId, setPerfilId] = useState<string | null>(getPerfilActivo());
   const [bienvenidaPendiente, setBienvenidaPendiente] = useState(false);
   const [tab, setTab] = useState<TabId>("panel");
+  // Solo el botón "Registrar el día" del Panel debe llevar directo al formulario
+  // dentro de Hábitos; entrar a esa pestaña por el menú debe abrir arriba, como
+  // cualquier otra. Esta bandera se activa solo desde ese botón (ver PanelPrincipal)
+  // y RegistroDiarioView la consume una sola vez.
+  const [pedirScrollARegistro, setPedirScrollARegistro] = useState(false);
+  const irAConScroll = (t: string) => {
+    setTab(t as TabId);
+    if (t === "registro") setPedirScrollARegistro(true);
+  };
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const [splashVisible, setSplashVisible] = useState(true);
   const [splashSaliendo, setSplashSaliendo] = useState(false);
+
+  // Cambiar de pestaña siempre abre arriba, como cualquier pantalla nueva —
+  // sin esto, el scroll del documento se queda donde estaba en la pestaña
+  // anterior (una SPA no navega de página, así que el navegador no lo resetea
+  // solo). Corre antes del auto-scroll al formulario de "Registrar el día"
+  // (ver RegistroDiarioView), que lo anima hacia abajo justo después si aplica.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [tab]);
 
   useEffect(() => {
     const salir = setTimeout(() => setSplashSaliendo(true), 1200);
@@ -458,9 +484,19 @@ export default function App() {
 
       <main className="flex-1 min-w-0 px-4 md:px-6 py-6 pt-20 pb-24 md:pt-6 md:pb-6 max-w-6xl mx-auto w-full">
         <div key={tab} className="animate-fade-up">
-          {tab === "panel" && <PanelPrincipal irA={(t) => setTab(t as TabId)} />}
-          {tab === "registro" && <RegistroDiarioView />}
+          {tab === "panel" && <PanelPrincipal irA={irAConScroll} />}
+          {tab === "registro" && (
+            <RegistroDiarioView
+              autoScrollAlFormulario={pedirScrollARegistro}
+              onAutoScrollConsumido={() => setPedirScrollARegistro(false)}
+            />
+          )}
           {tab === "finanzas" && <FinanzasView />}
+          {tab === "resumenMes" && (
+            <Suspense fallback={<div className="text-sm text-base-500 py-8 text-center">Cargando gráficas…</div>}>
+              <ResumenMesView />
+            </Suspense>
+          )}
           {tab === "cierre" && <CierreSemanalView />}
           {tab === "temporada" && <TemporadaView />}
           {tab === "recompensas" && <RecompensasView />}

@@ -43,4 +43,5 @@ export const COLOR_SECCION = {
   habitos: "#FF9600",
   finanzas: "#4FC3F7",
   recompensas: "#FFC800",
+  resumenMes: "#2DD4BF",
 } as const;
