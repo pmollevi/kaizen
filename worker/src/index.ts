@@ -29,10 +29,10 @@ interface RegistroPerfil {
 const PREFIJO = "sub:";
 const DIAS_AVISO_CORTE = 2;
 const RETENCION_AVISOS_DIAS = 45;
-// Solo se acepta este origen exacto (el sitio publicado en GitHub Pages).
+// Solo se acepta este origen exacto (el sitio publicado en Cloudflare Pages).
 // Si ALLOWED_ORIGIN no está configurado, se usa este valor — nunca se
 // refleja el Origin de la solicitud ni se responde con "*".
-const ORIGEN_PERMITIDO_DEFAULT = "https://pmollevi.github.io";
+const ORIGEN_PERMITIDO_DEFAULT = "https://origo-app.pages.dev";
 
 function corsHeaders(env: Env): HeadersInit {
   return {

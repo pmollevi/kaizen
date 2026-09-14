@@ -32,7 +32,14 @@ sigue siendo válido — solo hay que verificar un dominio primero.
   Se ven en **kaizen-push → Settings → Trigger Events**.
 - **Variables** (no secretas, visibles en el dashboard/`wrangler.toml`):
   `VAPID_PUBLIC_RAW`, `VAPID_SUBJECT`, `ALLOWED_ORIGIN` (fijo en
-  `https://pmollevi.github.io` — el Worker solo acepta ese origen).
+  `https://origo-app.pages.dev` — el Worker solo acepta ese origen).
+- **Frontend (Cloudflare Pages)**: proyecto `origo-app`, publicado en
+  `https://origo-app.pages.dev`. Se ve en el dashboard bajo **Workers &
+  Pages → origo-app**. No tiene deploy automático conectado a GitHub —
+  para publicar cambios del frontend corre, desde la raíz del repo:
+  `npm run build && npx wrangler pages deploy dist --project-name=origo-app`.
+  (Antes se usaba GitHub Pages en `pmollevi.github.io/kaizen/` — se
+  desactivó, se borró `.github/workflows/deploy.yml`.)
 - **Secreto**: `VAPID_PRIVATE_JWK` — se subió con `wrangler secret put`,
   nunca queda en el repo ni es legible desde el dashboard una vez guardado
   (ni siquiera por wrangler: `secret list` solo muestra el nombre, nunca el
