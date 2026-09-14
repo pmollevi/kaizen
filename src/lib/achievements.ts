@@ -10,7 +10,7 @@ export const HITOS_RACHA: { id: string; dias: number; titulo: string }[] = [
   { id: "ach_racha_7d", dias: 7, titulo: "Constante" },
   { id: "ach_racha_30d", dias: 30, titulo: "Disciplinado" },
   { id: "ach_racha_90d", dias: 90, titulo: "Inquebrantable" },
-  { id: "ach_racha_365d", dias: 365, titulo: "Maestro Kaizen" },
+  { id: "ach_racha_365d", dias: 365, titulo: "Maestro Origo" },
 ];
 
 /** Evalúa el catálogo de reconocimientos y devuelve los ids recién desbloqueados. */

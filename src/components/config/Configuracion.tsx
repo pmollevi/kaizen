@@ -53,7 +53,7 @@ function NotificacionesSection() {
     <Card>
       <SectionTitle
         title="Notificaciones"
-        subtitle="Avisos reales del sistema — racha en riesgo, corte de tarjeta próximo y festejo de hitos — aunque Kaizen esté cerrado. Al activarlas, tu suscripción push y lo mínimo necesario para avisarte se guardan en un servidor; el resto de tus datos sigue solo en este navegador."
+        subtitle="Avisos reales del sistema — racha en riesgo, corte de tarjeta próximo y festejo de hitos — aunque Origo esté cerrado. Al activarlas, tu suscripción push y lo mínimo necesario para avisarte se guardan en un servidor; el resto de tus datos sigue solo en este navegador."
       />
       {estado === "denied" ? (
         <Badge tone="red">Bloqueadas en el navegador — actívalas desde su configuración de sitio.</Badge>
@@ -322,7 +322,7 @@ function DatosYMitigaciones() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `kaizen-${state.usuario.nombre || "backup"}.json`;
+    a.download = `origo-${state.usuario.nombre || "backup"}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -334,7 +334,7 @@ function DatosYMitigaciones() {
         const data = JSON.parse(reader.result as string);
         cargarEstado(data);
       } catch {
-        alert("El archivo no es un respaldo válido de Kaizen.");
+        alert("El archivo no es un respaldo válido de Origo.");
       }
     };
     reader.readAsText(file);

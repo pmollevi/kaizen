@@ -1,4 +1,4 @@
-// Worker de avisos de Kaizen: guarda la suscripcion push minima de cada
+// Worker de avisos de Origo: guarda la suscripcion push minima de cada
 // perfil y, dos veces al dia (Cron Trigger), revisa si hay que avisar de una
 // racha en riesgo o de un corte de tarjeta proximo. El festejo de racha NO
 // pasa por aqui — ese lo dispara el propio navegador en el momento (ver
@@ -131,7 +131,7 @@ async function revisarYAvisarPerfil(perfilId: string, registro: RegistroPerfil, 
       registro.subscription,
       {
         title: "No pierdas tu racha",
-        body: "Todavía no registraste tu día en Kaizen — un minuto y la sigues sumando.",
+        body: "Todavía no registraste tu día en Origo — un minuto y la sigues sumando.",
         ir: "registro",
         tag: "kaizen-racha",
       },

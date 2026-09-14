@@ -26,7 +26,7 @@ const FRASES_EXITO = [
   "Buen trabajo hoy.",
   "Un día más, un paso más.",
   "Así se construye la racha.",
-  "Kaizen: mejora sostenida, no perfección.",
+  "Origo: constancia, no perfección.",
 ];
 
 function HabitoCard({

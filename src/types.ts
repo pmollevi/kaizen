@@ -1,4 +1,4 @@
-// Modelo de datos completo de Kaizen. Ver docs/spec para el detalle de cada regla.
+// Modelo de datos completo de Origo. Ver docs/spec para el detalle de cada regla.
 
 // Antes era una unión cerrada de 6 valores; ahora cualquier hábito del catálogo
 // (o uno futuro) puede activarse, así que el id es un string libre.

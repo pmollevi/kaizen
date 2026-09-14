@@ -3,7 +3,7 @@ import { useKaizenStore } from "@/store/useKaizenStore";
 import { Button, Field, Input, Select, Badge } from "@/components/ui/Primitives";
 import { hoyISO } from "@/lib/dates";
 import type { MetodoPago } from "@/types";
-import { KaizenMark } from "@/components/ui/KaizenMark";
+import { OrigoMark } from "@/components/ui/OrigoMark";
 import { Plus, X } from "lucide-react";
 
 // El teclado móvil reduce el visualViewport sin encoger el layout viewport (100vh):
@@ -95,7 +95,7 @@ export function FabAgregarGasto() {
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold inline-flex items-center gap-2">
-                <KaizenMark size={16} /> Agregar gasto
+                <OrigoMark size={16} /> Agregar gasto
               </h3>
               <button onClick={cerrar} className="text-base-400 hover:text-base-100">
                 <X className="w-5 h-5" />

@@ -33,7 +33,7 @@ export default {
           500: "#FFC800",
           600: "#D9A800",
         },
-        // Identidad de sección (Panel = kaizen, Recompensas = gold ya existentes):
+        // Identidad de sección (Panel = kaizen (token sin renombrar), Recompensas = gold ya existentes):
         // Hábitos y Finanzas ganan su propio acento para que el color diga en
         // qué parte de la app estás, sin tocar el fondo/tipografía de base.
         habitos: {

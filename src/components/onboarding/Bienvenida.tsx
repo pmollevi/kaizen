@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Card, Button } from "@/components/ui/Primitives";
-import { KaizenMark } from "@/components/ui/KaizenMark";
+import { OrigoMark } from "@/components/ui/OrigoMark";
 
 function Logo() {
   return (
     <div className="w-11 h-11 rounded-2xl bg-base-850 border border-base-700 flex items-center justify-center mb-3">
-      <KaizenMark size={22} />
+      <OrigoMark size={22} />
     </div>
   );
 }
@@ -19,10 +19,10 @@ export function BienvenidaFlow({ onFinalizar }: { onFinalizar: () => void }) {
         {pantalla === 1 ? (
           <>
             <Logo />
-            <div className="text-lg font-semibold tracking-tight">Bienvenido a Kaizen</div>
+            <div className="text-lg font-semibold tracking-tight">Bienvenido a Origo</div>
             <p className="text-sm text-base-400 mt-2 leading-relaxed">
-              改善 — kaizen: mejora continua. No una transformación de la noche a la mañana, sino un 1% cada día. Aquí
-              ese 1% se ve, en rachas, niveles y logros.
+              Origo — start where you are. No hace falta partir de cero perfecto: cada pequeño avance de hoy es de
+              dónde arrancas mañana. Aquí ese progreso se ve, en rachas, niveles y logros.
             </p>
             <Button className="w-full mt-6" onClick={() => setPantalla(2)}>
               Continuar

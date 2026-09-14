@@ -457,9 +457,25 @@ export const useKaizenStore = create<KaizenStore>()(
         // el nuevo umbral.
         const economiaPersistida = p.config?.economia;
         const diasPorProteccion = economiaPersistida?.diasPorProteccion === 7 ? 21 : economiaPersistida?.diasPorProteccion;
+        // Mismo problema al renombrar el producto de Kaizen a Origo: los perfiles
+        // ya creados tienen "Kaizen" guardado en su propio localStorage. Si nunca
+        // lo personalizaron (sigue exactamente en el valor viejo), adoptan el
+        // nuevo nombre; si lo cambiaron a otra cosa, se respeta su elección.
+        const nombreSistemaPersistido = p.config?.textos?.nombreSistema;
+        const nombreSistema = nombreSistemaPersistido === "Kaizen" ? "Origo" : nombreSistemaPersistido;
+        const sistemaPersistido = p.sistema;
+        const sistema =
+          sistemaPersistido?.nombre === "Kaizen" ? { ...sistemaPersistido, nombre: "Origo" } : sistemaPersistido;
+        // El catálogo de logros también viaja completo en cada perfil guardado:
+        // el logro de 365 días de racha decía "Maestro Kaizen" en su propia copia.
+        const catalogoPersistido = p.config?.catalogoReconocimientos;
+        const catalogoReconocimientos = catalogoPersistido?.map((r) =>
+          r.id === "ach_racha_365d" && r.nombre === "Maestro Kaizen" ? { ...r, nombre: "Maestro Origo" } : r
+        );
         return {
           ...current,
           ...p,
+          ...(sistema ? { sistema } : {}),
           usuario: { ...current.usuario, ...(p.usuario ?? {}) },
           finanzas: { ...current.finanzas, ...(p.finanzas ?? {}) },
           config: {
@@ -470,7 +486,12 @@ export const useKaizenStore = create<KaizenStore>()(
               ...(p.config?.economia ?? {}),
               ...(diasPorProteccion !== undefined ? { diasPorProteccion } : {}),
             },
-            textos: { ...current.config.textos, ...(p.config?.textos ?? {}) },
+            textos: {
+              ...current.config.textos,
+              ...(p.config?.textos ?? {}),
+              ...(nombreSistema !== undefined ? { nombreSistema } : {}),
+            },
+            ...(catalogoReconocimientos ? { catalogoReconocimientos } : {}),
           },
         };
       },

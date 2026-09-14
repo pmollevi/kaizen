@@ -102,7 +102,7 @@ export const HISTORIAL_DEFAULT: Historial = {
 
 export const CONFIG_DEFAULT: Config = {
   textos: {
-    nombreSistema: "Kaizen",
+    nombreSistema: "Origo",
     atributos: "Áreas de desarrollo",
     xp: "Puntos de Progreso",
     escudos: "Protecciones",
@@ -200,7 +200,7 @@ export const CONFIG_DEFAULT: Config = {
     },
     {
       id: "ach_racha_365d",
-      nombre: "Maestro Kaizen",
+      nombre: "Maestro Origo",
       descripcion: "365 días seguidos cumpliendo todos tus hábitos activos.",
       rareza: "Legendario",
       categoria: "constancia",
@@ -211,7 +211,7 @@ export const CONFIG_DEFAULT: Config = {
 
 export function estadoInicial(nombreUsuario: string): KaizenState {
   return {
-    sistema: { nombre: "Kaizen", version: 2 },
+    sistema: { nombre: "Origo", version: 2 },
     usuario: { ...USUARIO_DEFAULT, nombre: nombreUsuario },
     areas: AREAS_DEFAULT.map((a) => ({ ...a })),
     registrosDiarios: [],

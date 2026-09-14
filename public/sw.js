@@ -1,4 +1,4 @@
-// Service worker de Kaizen: solo dos trabajos, nada de cache de app-shell (la
+// Service worker de Origo: solo dos trabajos, nada de cache de app-shell (la
 // app no pide funcionar offline, solo instalarse y recibir push real).
 // 1. Instalabilidad como PWA (requisito del navegador para "Agregar a inicio").
 // 2. Mostrar como notificación real del sistema los push que llegan del
@@ -18,9 +18,9 @@ self.addEventListener("push", (event) => {
   try {
     datos = event.data ? event.data.json() : {};
   } catch {
-    datos = { title: "Kaizen", body: event.data ? event.data.text() : "" };
+    datos = { title: "Origo", body: event.data ? event.data.text() : "" };
   }
-  const titulo = datos.title || "Kaizen";
+  const titulo = datos.title || "Origo";
   const opciones = {
     body: datos.body || "",
     // Rutas relativas al scope del service worker, no a la raiz del dominio

@@ -36,7 +36,7 @@ export function colorPorNivel(colorBase: string, nivel: number, tope = TOPE_NIVE
 /**
  * Identidad de sección: cada una de las 4 secciones principales de navegación
  * tiene su propio acento (ver DESIGN.md "Identidad de sección"). El fondo,
- * la tipografía y el acento de acción (verde Kaizen) no cambian por esto.
+ * la tipografía y el acento de acción (verde Origo) no cambian por esto.
  */
 export const COLOR_SECCION = {
   panel: "#5BDA72",

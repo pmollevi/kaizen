@@ -1,5 +1,5 @@
 ---
-name: Kaizen
+name: Origo
 description: Disciplina personal con energía Duolingo — fondo oscuro constante, colores vivos y saturados por sección, y momentos de acción con una micro-animación breve.
 colors:
   bg: "#0D0E0E"
@@ -98,22 +98,22 @@ components:
     padding: "8px 12px"
 ---
 
-# Design System: Kaizen
+# Design System: Origo
 
 ## Overview
 
 **Creative North Star: "Disciplina con energía" (Duolingo-dark)**
 
-Kaizen vive sobre un fondo casi negro y cálido — eso no cambia — pero encima de ese fondo el color es vivo y saturado, no un acento apagado: verdes, naranjas, azules, morados y amarillos con la misma energía que una app que quiere que volver todos los días se sienta bien. La sobriedad del sistema ya no vive en el color, vive en la estructura: jerarquía tipográfica clara, mucho espacio negativo, bordes finos en vez de vidrio o glow, y animación corta y con intención en vez de ruido. Un número grande (un total gastado, un nivel, una racha) sigue siendo siempre lo primero que se lee — solo que ahora ese número, y la tarjeta que lo rodea, tienen color real.
+Origo vive sobre un fondo casi negro y cálido — eso no cambia — pero encima de ese fondo el color es vivo y saturado, no un acento apagado: verdes, naranjas, azules, morados y amarillos con la misma energía que una app que quiere que volver todos los días se sienta bien. La sobriedad del sistema ya no vive en el color, vive en la estructura: jerarquía tipográfica clara, mucho espacio negativo, bordes finos en vez de vidrio o glow, y animación corta y con intención en vez de ruido. Un número grande (un total gastado, un nivel, una racha) sigue siendo siempre lo primero que se lee — solo que ahora ese número, y la tarjeta que lo rodea, tienen color real.
 
-Esto no es una app de gimnasio, ni un banco, ni un videojuego genérico: es un sistema de crecimiento personal que no le tiene miedo al color. La antigua identidad — panel de vidrio nocturno, azul eléctrico como único acento, sombras con glow, dinero como mecánica de recompensa — se abandona por completo, y así también su reemplazo demasiado apagado ("El Cuaderno Silencioso"): esa fase enseñó la estructura (jerarquía, espacio, bordes finos) que este sistema conserva, pero el color ya no se queda en tonos pastel. El verde Kaizen sigue siendo el acento de **acción** (todo botón primario, todo focus ring); el dorado se reserva para lo que de verdad se ganó. La gamificación (rachas, niveles, logros) se celebra con color y movimiento reales, sin volverse un loot box ruidoso — la diferencia con un videojuego está en el propósito y el tono de la copy, no en apagar el color.
+Esto no es una app de gimnasio, ni un banco, ni un videojuego genérico: es un sistema de crecimiento personal que no le tiene miedo al color. La antigua identidad — panel de vidrio nocturno, azul eléctrico como único acento, sombras con glow, dinero como mecánica de recompensa — se abandona por completo, y así también su reemplazo demasiado apagado ("El Cuaderno Silencioso"): esa fase enseñó la estructura (jerarquía, espacio, bordes finos) que este sistema conserva, pero el color ya no se queda en tonos pastel. El verde Origo sigue siendo el acento de **acción** (todo botón primario, todo focus ring); el dorado se reserva para lo que de verdad se ganó. La gamificación (rachas, niveles, logros) se celebra con color y movimiento reales, sin volverse un loot box ruidoso — la diferencia con un videojuego está en el propósito y el tono de la copy, no en apagar el color.
 
 Las 4 secciones principales de navegación (Panel, Hábitos, Finanzas, Recompensas) tienen su propio color de identidad vivo — en el nav, el título de página, y ahora también en el fondo/borde de la tarjeta principal de cada pantalla (ver "Identidad de sección"). Y los momentos de acción real — guardar el registro del día, salvar una racha con una protección, alcanzar un hito — llevan una micro-animación breve y con intención, nunca decorativa (ver "Motion").
 
 **Key Characteristics:**
 - Fondo casi negro y cálido, superficies planas (`surface`/`surface-2`) con borde fino de 1px — nunca vidrio, nunca glow.
 - Colores vivos y saturados (verde, naranja, azul, morado, amarillo) para acento de acción, identidad de sección y datos por categoría — no tonos pastel ni apagados.
-- Verde Kaizen como acento de **acción** (botones primarios, focus ring); dorado para lo ya ganado; cada sección principal suma su propio color de identidad en nav, título, y el fondo/borde de su tarjeta principal (ver "Identidad de sección").
+- Verde Origo como acento de **acción** (botones primarios, focus ring); dorado para lo ya ganado; cada sección principal suma su propio color de identidad en nav, título, y el fondo/borde de su tarjeta principal (ver "Identidad de sección").
 - Mucho espacio negativo; una jerarquía de tres niveles siempre visible: título → dato principal grande → texto secundario discreto.
 - Barras de progreso delgadas (1px de alto) en vez de gruesas; ninguna sombra decorativa sin función — el color hace el trabajo que antes hacía el glow.
 - Los momentos de acción real tienen una micro-animación breve (pop, barra que se llena) — nunca en cada clic, solo donde el usuario acaba de lograr algo.
@@ -131,17 +131,18 @@ Fondo cálido casi negro constante en el 100% de la superficie, y sobre él, col
 - **Texto secundario** (`#858982`): subtítulos, hints, metadatos.
 
 ### Acento (marca)
-- **Verde Kaizen** (`kaizen-500` `#2FA347` en rellenos con texto claro encima, `kaizen-400` `#5BDA72` como acento de texto/ícono): **The One Signal Rule.** El único color que significa "actúa aquí" — todo botón primario, todo focus ring, el checkbox de hábito seleccionado en el wizard. Ningún otro color reemplaza a este para una acción.
+*(El token de Tailwind sigue llamándose `kaizen-*` en el código — renombrarlo tocaría cientos de clases sin ningún beneficio visible para el usuario; el nombre de marca es Origo, el nombre del token es solo un identificador interno.)*
+- **Verde Origo** (`kaizen-500` `#2FA347` en rellenos con texto claro encima, `kaizen-400` `#5BDA72` como acento de texto/ícono): **The One Signal Rule.** El único color que significa "actúa aquí" — todo botón primario, todo focus ring, el checkbox de hábito seleccionado en el wizard. Ningún otro color reemplaza a este para una acción.
 - **Dorado** (`gold-500` `#FFC800`): reservado para lo que ya se ganó — un logro desbloqueado, un hito de racha, y por eso también la identidad de la sección Recompensas.
 
 ### Identidad de sección
 Cada una de las 4 secciones principales de navegación tiene un acento propio, vivo y saturado, reutilizado en su ítem de nav (activo), el título de su página (`SectionTitle accent=`) y el fondo/borde de la tarjeta principal de esa pantalla:
-- **Panel** → Verde Kaizen `#5BDA72` (`kaizen-400`, es la base, no necesita un color nuevo).
+- **Panel** → Verde Origo `#5BDA72` (`kaizen-400`, es la base, no necesita un color nuevo).
 - **Hábitos** → Naranja vivo `#FF9600` (`habitos-500`).
 - **Finanzas** → Azul vivo `#4FC3F7` (`finanzas-400`) — un azul real y saturado; el "nunca azul" era una regla de la fase anterior, ya no aplica. El fill sólido del FAB de gasto usa este mismo tono claro con ícono oscuro encima (`text-base-950`), no texto claro: así el botón se ve realmente vívido contra el fondo casi negro en vez de leerse como un círculo apagado. El tono más profundo `finanzas-500` (`#0D8FCC`) se reserva para botones con texto/ícono claro encima (donde sí hace falta ese contraste).
 - **Recompensas** → Dorado `#FFC800` (`gold-500`) — coincide con el acento de logros porque la sección **es** rachas, protecciones y logros.
 
-**The Section Identity Rule.** Un color de sección vive en el nav, el título de página, y en el fondo/borde de la tarjeta principal de esa pantalla (`bg-{color}-500/[0.08-0.09]`, `border-{color}-500/35-40`) — no solo en íconos puntuales, con intensidad suficiente para leerse como color real, no como una insinuación. Nunca reemplaza al verde Kaizen en un botón primario o un focus ring, y nunca se usa fuera de su sección (el color de Hábitos no aparece en Finanzas). No es una paleta libre: son 4 acentos fijos, documentados aquí, no uno por feature. Y no es "pintar todo": las tarjetas secundarias (listas, categorías) se quedan más neutras a propósito, para que el color de sección siga marcando la tarjeta protagonista en vez de volverse ruido parejo.
+**The Section Identity Rule.** Un color de sección vive en el nav, el título de página, y en el fondo/borde de la tarjeta principal de esa pantalla (`bg-{color}-500/[0.08-0.09]`, `border-{color}-500/35-40`) — no solo en íconos puntuales, con intensidad suficiente para leerse como color real, no como una insinuación. Nunca reemplaza al verde Origo en un botón primario o un focus ring, y nunca se usa fuera de su sección (el color de Hábitos no aparece en Finanzas). No es una paleta libre: son 4 acentos fijos, documentados aquí, no uno por feature. Y no es "pintar todo": las tarjetas secundarias (listas, categorías) se quedan más neutras a propósito, para que el color de sección siga marcando la tarjeta protagonista en vez de volverse ruido parejo.
 
 ### Datos (categorías de hábito)
 Intelecto `#4D8DFF` · Imperio `#FFA229` · Fuerza `#FF5C5C` · Vitalidad `#3DDC5A` · Energía `#9D6BFF` · Sabiduría `#2BD4C4` · Serenidad `#3DC7EF` · Vínculos `#FF6FB8` · Creatividad `#C77DFF` · Gratitud `#FFCF33` — diez tonos vivos y claramente distinguibles entre sí, estilo Duolingo, no una paleta desaturada de acentos discretos. **The Data-Not-Decoration Rule.** Un color de categoría solo puede aparecer en el ícono, punto de radar o barra de esa categoría específica — nunca en chrome, botones, ni como fondo de sección. En el wizard de planeación se usa el color puro del catálogo (reconocible desde el día 1); en pantallas de uso diario (radar, hábitos, panel) se combina con el nivel del hábito — ver "Color por nivel".
@@ -169,7 +170,7 @@ El shell se mantiene: sidebar fija de 224px en escritorio, barra superior + barr
 
 ## Elevation & Depth
 
-Kaizen dejó de ser un sistema de vidrio. La profundidad ahora viene de un borde fino de 1px (`border-base-700`) y una sombra de contacto muy sutil (`shadow-card`: `0 1px 2px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.2)`) — nunca de blur, translucidez ni glow de color.
+Origo dejó de ser un sistema de vidrio. La profundidad ahora viene de un borde fino de 1px (`border-base-700`) y una sombra de contacto muy sutil (`shadow-card`: `0 1px 2px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.2)`) — nunca de blur, translucidez ni glow de color.
 
 ### Shadow Vocabulary
 - **Card** (`shadow-card`): la sombra por defecto de toda superficie elevada — casi imperceptible, solo separa la tarjeta del fondo.
@@ -202,7 +203,7 @@ Kaizen dejó de ser un sistema de vidrio. La profundidad ahora viene de un borde
 ## Components
 
 ### Buttons
-- **Primary:** relleno verde Kaizen, texto claro, sin sombra de color — solo la sombra de contacto estándar.
+- **Primary:** relleno verde Origo, texto claro, sin sombra de color — solo la sombra de contacto estándar.
 - **Secondary:** `bg-base-850` con borde `border-base-700`.
 - **Ghost:** transparente, hover a `bg-base-850`.
 - **Danger:** relleno rosa translúcido, para confirmaciones destructivas.
@@ -211,21 +212,21 @@ Kaizen dejó de ser un sistema de vidrio. La profundidad ahora viene de un borde
 - Fondo `bg-base-900` sólido, borde `border-base-700`, `shadow-card`, `rounded-2xl`, `p-5`.
 
 ### Inputs
-- `bg-base-850`, `border-base-700`, foco en verde Kaizen (`focus:border-kaizen-400`, `focus:ring-kaizen-400/40`) — nunca azul.
+- `bg-base-850`, `border-base-700`, foco en verde Origo (`focus:border-kaizen-400`, `focus:ring-kaizen-400/40`) — nunca azul.
 
 ### Progress bars
-- `h-1` por defecto (antes `h-1.5`–`h-2.5`): delgadas y elegantes, relleno verde Kaizen salvo que representen datos por categoría (entonces usan el color de esa categoría).
+- `h-1` por defecto (antes `h-1.5`–`h-2.5`): delgadas y elegantes, relleno verde Origo salvo que representen datos por categoría (entonces usan el color de esa categoría).
 
 ### Navigation
-- Ítem activo: pill + ícono en el color de identidad de esa sección (verde Kaizen en Panel, naranja en Hábitos, azul en Finanzas, dorado en Recompensas) — vivo y reconocible, no un tinte discreto. Las pestañas fuera de las 4 principales (Cierre, Temporada, Reconocimientos, Historial, Config.) no tienen color propio y usan verde Kaizen por defecto.
+- Ítem activo: pill + ícono en el color de identidad de esa sección (verde Origo en Panel, naranja en Hábitos, azul en Finanzas, dorado en Recompensas) — vivo y reconocible, no un tinte discreto. Las pestañas fuera de las 4 principales (Cierre, Temporada, Reconocimientos, Historial, Config.) no tienen color propio y usan verde Origo por defecto.
 
 ### Avisos (banners del Centro de Avisos)
 Tarjetas dismissables en la parte alta del Panel, calculadas en el momento (sin backend): borde + fondo muy tenue según el tono — ámbar para urgente (racha en riesgo, tarde y sin registrar), verde-azulado (`finanzas`) para informativo (corte de tarjeta próximo), dorado para logro. Nunca bloquean la pantalla ni son modales; se descartan con una "×" y no vuelven a aparecer ese mismo aviso (bandera en `localStorage`, igual que coachmarks). Opcionalmente se replican como notificación del navegador si el usuario dio permiso y la pestaña está en segundo plano — nunca reemplazan al banner.
 
 ### Radar (componente insignia)
-Anillos y ejes en `border-base-700`; el polígono de cumplimiento usa un relleno verde Kaizen vivo (`#2FA34733`) con trazo del verde más claro (`#5BDA72`) a 1.5px — cada vértice es un punto sólido en el color propio de esa categoría. Debe leerse como una herramienta de análisis personal con energía real, no como un gráfico apagado ni como un HUD de videojuego.
+Anillos y ejes en `border-base-700`; el polígono de cumplimiento usa un relleno verde Origo vivo (`#2FA34733`) con trazo del verde más claro (`#5BDA72`) a 1.5px — cada vértice es un punto sólido en el color propio de esa categoría. Debe leerse como una herramienta de análisis personal con energía real, no como un gráfico apagado ni como un HUD de videojuego.
 
-### Isotipo Kaizen
+### Isotipo Origo
 Una "K" geométrica de dos trazos en degradado verde oliva (`#B7BC9C` → `#636B47`), usable sola (favicon, logros, pantallas de carga) o junto al wordmark "KAIZEN" en el header. Vive como componente SVG reutilizable, nunca como raster.
 
 ## Finanzas: control de gastos, no economía de recompensas
@@ -235,7 +236,7 @@ Finanzas se rediseñó como una herramienta de control y visualización de gasto
 ## Do's and Don'ts
 
 ### Do:
-- **Do** mantener el verde Kaizen como el único color que significa "actúa aquí" en botones primarios y focus rings.
+- **Do** mantener el verde Origo como el único color que significa "actúa aquí" en botones primarios y focus rings.
 - **Do** usar bordes finos y sólidos (`border-base-700`) más una sombra casi imperceptible como única fuente de profundidad.
 - **Do** dejar que los colores de categoría vivan solo en el ícono, punto o barra de esa categoría, atenuados por nivel fuera del wizard.
 - **Do** dar al número más importante de cada tarjeta el mayor tamaño tipográfico disponible.
@@ -248,7 +249,7 @@ Finanzas se rediseñó como una herramienta de control y visualización de gasto
 - **Don't** usar glow, blur, gradientes de color o translucidez estilo vidrio — es la antigua identidad, y queda descartada por completo.
 - **Don't** volver a apagar el color a tonos pastel/desaturados "para verse sobrio" — la sobriedad de este sistema vive en la estructura (jerarquía, espacio, bordes finos), no en apagar el color.
 - **Don't** introducir un color fuera de los acentos documentados aquí (acción, dorado, 4 secciones, 10 categorías) — la paleta es amplia y viva, pero sigue siendo fija, no libre.
-- **Don't** dejar que el color de una sección se filtre a otra, o que reemplace al verde Kaizen en un botón primario.
+- **Don't** dejar que el color de una sección se filtre a otra, o que reemplace al verde Origo en un botón primario.
 - **Don't** mostrar dinero como recompensa, penalización o mecánica de juego en ningún lugar de Hábitos.
 - **Don't** convertir Finanzas en una imitación de app bancaria o de inversión — es control de gastos personal, nada más.
 - **Don't** usar un color de categoría como fondo grande de sección o como tinte de navegación.

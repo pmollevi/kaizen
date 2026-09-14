@@ -46,7 +46,7 @@ export function ResumenMesWrapped() {
 
   const copiarResumen = () => {
     const texto = [
-      `Kaizen — Resumen de ${formatoMes(mes)}`,
+      `Origo — Resumen de ${formatoMes(mes)}`,
       `${ppDelMes.toLocaleString()} PP ganados · ${Math.round(cumplimientoPromedio * 100)}% de cumplimiento promedio`,
       `Mejor racha del mes: ${mejorRacha} ${mejorRacha === 1 ? "día" : "días"}`,
       nivelesSubidos > 0 ? `${nivelesSubidos} ${nivelesSubidos === 1 ? "área subió" : "áreas subieron"} de nivel` : null,

@@ -15,7 +15,7 @@ import {
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { crearPerfil, getPerfilActivo, listarPerfiles, setPerfilActivo, verificarPassword } from "@/store/profiles";
 import { Button, Card, Field, Input, Badge } from "@/components/ui/Primitives";
-import { KaizenMark } from "@/components/ui/KaizenMark";
+import { OrigoMark } from "@/components/ui/OrigoMark";
 import { FabAgregarGasto } from "@/components/finanzas/FabAgregarGasto";
 import { PanelPrincipal } from "@/components/panel/PanelPrincipal";
 import { BienvenidaFlow } from "@/components/onboarding/Bienvenida";
@@ -28,6 +28,7 @@ import { ReconocimientosView } from "@/components/reconocimientos/Reconocimiento
 import { HistorialView } from "@/components/historial/Historial";
 import { ConfiguracionView } from "@/components/config/Configuracion";
 import { sincronizarDatosRecordatorio } from "@/lib/push";
+import { SplashScreen } from "@/components/SplashScreen";
 
 type TabId = "panel" | "registro" | "finanzas" | "cierre" | "temporada" | "recompensas" | "reconocimientos" | "historial" | "config";
 
@@ -65,7 +66,7 @@ const DATA_COACH_TAB: Partial<Record<TabId, string>> = {
 function Logo() {
   return (
     <div className="w-11 h-11 rounded-2xl bg-base-850 border border-base-700 flex items-center justify-center mb-3">
-      <KaizenMark size={22} />
+      <OrigoMark size={22} />
     </div>
   );
 }
@@ -112,7 +113,7 @@ function PantallaLogin({
       <div className="mb-5">
         <Logo />
         <div className="text-lg font-semibold tracking-tight">Iniciar sesión</div>
-        <div className="text-sm text-base-400 mt-1">Entra a tu perfil de Kaizen en este navegador.</div>
+        <div className="text-sm text-base-400 mt-1">Entra a tu perfil de Origo en este navegador.</div>
       </div>
 
       <div className="space-y-3 mb-5">
@@ -183,8 +184,7 @@ function PantallaCrearCuenta({
         <Logo />
         <div className="text-lg font-semibold tracking-tight">Crear cuenta</div>
         <div className="text-sm text-base-400 mt-1">
-          Protege tu progreso con una contraseña. Se guarda solo en este navegador — no hay recuperación si la
-          olvidas.
+          Protege tu progreso con una contraseña — no hay recuperación si la olvidas.
         </div>
       </div>
 
@@ -305,6 +305,17 @@ export default function App() {
   const [bienvenidaPendiente, setBienvenidaPendiente] = useState(false);
   const [tab, setTab] = useState<TabId>("panel");
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
+  const [splashVisible, setSplashVisible] = useState(true);
+  const [splashSaliendo, setSplashSaliendo] = useState(false);
+
+  useEffect(() => {
+    const salir = setTimeout(() => setSplashSaliendo(true), 1200);
+    const ocultar = setTimeout(() => setSplashVisible(false), 1500);
+    return () => {
+      clearTimeout(salir);
+      clearTimeout(ocultar);
+    };
+  }, []);
   const usuario = useKaizenStore((s) => s.usuario);
   const nombreSistema = useKaizenStore((s) => s.config.textos.nombreSistema);
   const tituloActivo = useKaizenStore((s) => s.config.catalogoReconocimientos.find((c) => c.id === s.usuario.tituloActivo)?.nombre ?? null);
@@ -343,17 +354,25 @@ export default function App() {
 
   if (!perfilId) {
     return (
-      <ProfileGate
-        onEntrar={(esNuevo) => {
-          setPerfilId(getPerfilActivo());
-          if (esNuevo) setBienvenidaPendiente(true);
-        }}
-      />
+      <>
+        {splashVisible && <SplashScreen saliendo={splashSaliendo} />}
+        <ProfileGate
+          onEntrar={(esNuevo) => {
+            setPerfilId(getPerfilActivo());
+            if (esNuevo) setBienvenidaPendiente(true);
+          }}
+        />
+      </>
     );
   }
 
   if (bienvenidaPendiente) {
-    return <BienvenidaFlow onFinalizar={() => setBienvenidaPendiente(false)} />;
+    return (
+      <>
+        {splashVisible && <SplashScreen saliendo={splashSaliendo} />}
+        <BienvenidaFlow onFinalizar={() => setBienvenidaPendiente(false)} />
+      </>
+    );
   }
 
   const cambiarDePerfil = () => {
@@ -362,12 +381,14 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen text-base-100 flex">
+    <>
+      {splashVisible && <SplashScreen saliendo={splashSaliendo} />}
+      <div className="min-h-screen text-base-100 flex">
       {/* Sidebar de escritorio */}
       <aside className="hidden md:flex w-56 shrink-0 border-r border-base-700 flex-col bg-base-900">
         <div className="px-4 py-5 flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-base-850 border border-base-700 flex items-center justify-center">
-            <KaizenMark size={16} />
+            <OrigoMark size={16} />
           </div>
           <span className="font-semibold tracking-tight">{nombreSistema}</span>
         </div>
@@ -410,7 +431,7 @@ export default function App() {
       <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4 h-14 bg-base-900/95 border-b border-base-700">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-base-850 border border-base-700 flex items-center justify-center">
-            <KaizenMark size={13} />
+            <OrigoMark size={13} />
           </div>
           <span className="font-semibold text-sm">{nombreSistema}</span>
         </div>
@@ -478,6 +499,7 @@ export default function App() {
       )}
 
       <FabAgregarGasto />
-    </div>
+      </div>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-# Kaizen — Worker de avisos (push real)
+# Origo — Worker de avisos (push real)
 
 Backend mínimo, gratis, para poder avisar (racha en riesgo, corte de tarjeta
 próximo) aunque la app esté cerrada. El festejo de racha NO pasa por aquí —
@@ -101,7 +101,7 @@ Luego: actualizar `VAPID_PUBLIC_KEY` en `src/config/push.ts` (frontend),
 ## Seguridad
 
 - **CORS**: el Worker solo responde `Access-Control-Allow-Origin:
-  https://pmollevi.github.io`, sin importar qué origen mande la solicitud —
+  https://origo-app.pages.dev`, sin importar qué origen mande la solicitud —
   así un navegador bloquea leer la respuesta desde cualquier otro sitio.
   Ojo: CORS es una protección de **navegador**, no detiene una llamada
   directa por script/curl (eso lo cubren la validación y el rate limiting).

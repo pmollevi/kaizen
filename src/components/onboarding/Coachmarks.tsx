@@ -7,7 +7,7 @@ interface PasoCoach {
 }
 
 const PASOS: PasoCoach[] = [
-  { targetId: "coach-registrar-dia", texto: "Aquí registras tu día. Es el corazón de Kaizen — todo lo demás se construye desde acá." },
+  { targetId: "coach-registrar-dia", texto: "Aquí registras tu día. Es el corazón de Origo — todo lo demás se construye desde acá." },
   { targetId: "coach-racha", texto: "Tu racha diaria: días seguidos cumpliendo todos tus hábitos activos. Se protege, nunca se rompe de golpe." },
   { targetId: "coach-nav-registro", texto: "Hábitos: el detalle y el progreso de cada uno que elegiste." },
   { targetId: "coach-nav-finanzas", texto: "Finanzas: control de gastos, completamente separado de tus hábitos." },

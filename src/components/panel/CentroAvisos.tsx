@@ -29,7 +29,7 @@ export function CentroAvisos({ irA }: { irA: (tab: string) => void }) {
   const idsVisibles = visibles.map((a) => a.id).join(",");
 
   useEffect(() => {
-    for (const a of visibles) notificarSiEnSegundoPlano("Kaizen", a.texto);
+    for (const a of visibles) notificarSiEnSegundoPlano("Origo", a.texto);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idsVisibles]);
 

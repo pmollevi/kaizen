@@ -14,7 +14,7 @@ function exportarCSV(gastos: { fecha: string; monto: number; categoriaId: string
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "kaizen-finanzas.csv";
+  a.download = "origo-finanzas.csv";
   a.click();
   URL.revokeObjectURL(url);
 }
