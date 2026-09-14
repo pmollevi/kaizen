@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { CalendarRange, Flame, Target } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { CalendarRange, Flame, ShieldCheck, Target } from "lucide-react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, ProgressBar, Stat, Badge, Button, EmptyState, Textarea, useCountUp } from "@/components/ui/Primitives";
 import { RadarChart } from "@/components/RadarChart";
@@ -8,10 +8,11 @@ import { iconoDeHabito } from "@/config/habitIcons";
 import { cumplimientoGlobalSemanal, cumplimientoSemanalArea } from "@/lib/formulas";
 import { rachaDiariaVigente } from "@/lib/achievements";
 import { COLOR_SECCION, colorPorNivel } from "@/lib/color";
-import { finSemana, hoyISO, inicioSemana, mesDe, formatoLargo, formatoMes } from "@/lib/dates";
+import { finSemana, hoyISO, inicioSemana, mesDe, sumarDias, formatoLargo, formatoMes } from "@/lib/dates";
 import { semanasPendientes } from "@/lib/cierre";
 import { Coachmarks } from "@/components/onboarding/Coachmarks";
 import { CentroAvisos } from "@/components/panel/CentroAvisos";
+import { SelectorDiasConDetalle } from "@/components/ui/Calendario";
 import { coachmarksYaVistos, marcarCoachmarksVistos } from "@/lib/coachmarks";
 import { getPerfilActivo } from "@/store/profiles";
 import { Trophy } from "lucide-react";
@@ -242,6 +243,106 @@ function BannerMetaPendiente() {
   );
 }
 
+/** Contenido que antes vivía en la pestaña "Recompensas" — ahora es la última sección del Panel. */
+function SeccionRachaYProtecciones() {
+  const state = useKaizenStore();
+  const canjear = useKaizenStore((s) => s.canjearRachaPorProteccion);
+  const [mensaje, setMensaje] = useState<string | null>(null);
+
+  const racha = rachaDiariaVigente(state);
+  const disponible = Math.max(0, racha - state.usuario.diasRachaCanjeados);
+  const { diasPorProteccion, proteccionesMaxAcumulables } = state.config.economia;
+  const puedeCanjear = disponible >= diasPorProteccion && state.usuario.protecciones < proteccionesMaxAcumulables;
+
+  const intentarCanje = () => {
+    const res = canjear();
+    setMensaje(res.ok ? "Canjeado: +1 protección" : res.motivo ?? "No se pudo canjear");
+    setTimeout(() => setMensaje(null), 3500);
+  };
+
+  const cierresRecientes = [...state.cierresSemanales].sort((a, b) => (a.semanaInicio < b.semanaInicio ? 1 : -1)).slice(0, 8);
+  const diasProtegidosRecientes = [...state.usuario.diasProtegidos].sort((a, b) => (a < b ? 1 : -1)).slice(0, 6);
+
+  return (
+    <div className="space-y-5">
+      <SectionTitle
+        title="Racha y protecciones"
+        subtitle="Tu racha diaria se cambia por protecciones: si un día se te pasa sin registrar, una protección lo cubre sola y tu racha sigue viva."
+        accent={COLOR_SECCION.recompensas}
+      />
+
+      <Card className="border-amber-500/25 bg-amber-500/[0.06]">
+        <div className="text-xs uppercase tracking-wider text-amber-400/90 font-semibold mb-2">Racha diaria actual</div>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Flame className={`w-8 h-8 sm:w-9 sm:h-9 text-amber-400 shrink-0 ${racha > 0 ? "animate-flicker" : ""}`} />
+          <div className="text-4xl sm:text-5xl font-bold tabular-nums text-base-100 leading-none">{racha}</div>
+        </div>
+        <div className="text-xs text-base-500 mt-2">días seguidos cumpliendo todos tus hábitos</div>
+      </Card>
+
+      {mensaje && <div className="text-sm px-4 py-2.5 rounded-lg bg-base-850 border border-base-700">{mensaje}</div>}
+
+      <Card className="border-gold-500/35 bg-gold-500/[0.08]">
+        <SectionTitle
+          title={state.config.textos.escudos}
+          accent={COLOR_SECCION.recompensas}
+          subtitle={`Cada ${diasPorProteccion} días de racha se cambian por 1 protección. Si falta un día sin registrar, se usa sola y tu racha no se rompe.`}
+        />
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-3">
+          <span className="text-sm text-base-300">
+            {state.usuario.protecciones} / {proteccionesMaxAcumulables} protecciones
+          </span>
+          <span className="text-sm text-base-500">
+            {disponible} / {diasPorProteccion} días hacia la próxima
+          </span>
+        </div>
+        <ProgressBar value={disponible / diasPorProteccion} color="#C5A85B" height="h-1.5" />
+        <Button className="mt-4" disabled={!puedeCanjear} onClick={intentarCanje}>
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4" /> Canjear racha por protección
+          </span>
+        </Button>
+        {diasProtegidosRecientes.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-base-700">
+            <div className="text-xs text-base-500 mb-1.5">Días cubiertos automáticamente por una protección:</div>
+            <div className="flex flex-wrap gap-1.5">
+              {diasProtegidosRecientes.map((f) => (
+                <Badge key={f} tone="yellow">
+                  {formatoLargo(f)}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </Card>
+
+      <Card>
+        <SectionTitle title="Cierres recientes" />
+        {cierresRecientes.length === 0 ? (
+          <EmptyState text="Todavía no hay semanas cerradas." />
+        ) : (
+          <ul className="divide-y divide-base-700">
+            {cierresRecientes.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2.5 text-sm">
+                <span className="text-base-300">
+                  {formatoLargo(c.semanaInicio)} – {formatoLargo(c.semanaFin)}
+                </span>
+                {c.protegida ? (
+                  <Badge tone="blue">semana protegida</Badge>
+                ) : (
+                  <span className="text-base-400">
+                    +{c.ppGanados} PP · {Math.round(c.cumplimientoGlobal * 100)}% cumplido
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </div>
+  );
+}
+
 export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
   const state = useKaizenStore();
   const { usuario, areas, config } = state;
@@ -261,8 +362,17 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
   const pendientes = semanasPendientes(state, inicio);
   const tituloDelUsuario = state.config.catalogoReconocimientos.find((c) => c.id === usuario.tituloActivo)?.nombre ?? null;
 
+  const ultimos7 = useMemo(() => {
+    const dias: string[] = [];
+    for (let i = 0; i < 7; i++) dias.push(sumarDias(hoy, -i));
+    return dias;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoy]);
+
   return (
     <div className="space-y-6">
+      <SelectorDiasConDetalle dias={ultimos7} fechaActiva={hoy} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Hola, {usuario.nombre || "de nuevo"}</h1>
@@ -333,6 +443,8 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
         <TarjetaGastosMensuales irA={irA} />
         <TarjetaMetaGrande />
       </div>
+
+      <SeccionRachaYProtecciones />
 
       {wizardAbierto && (
         <PlanMensualWizard

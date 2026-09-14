@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, Textarea, Button, Badge, ProgressBar, Stat, InfoTip, useCountUp } from "@/components/ui/Primitives";
-import { finSemana, formatoLargo, hoyISO, inicioSemana, sumarDias } from "@/lib/dates";
+import { finSemana, hoyISO, inicioSemana, sumarDias } from "@/lib/dates";
 import type { AreaId, Gasto } from "@/types";
 import { plantillaPorId } from "@/config/areaCatalog";
 import { iconoDeHabito } from "@/config/habitIcons";
@@ -9,6 +9,7 @@ import { cumplimientoSemanalArea, nivelDesdePP } from "@/lib/formulas";
 import { HITOS_RACHA, rachaDiariaVigente } from "@/lib/achievements";
 import { COLOR_SECCION, colorPorNivel } from "@/lib/color";
 import { celebrarHito } from "@/lib/notificaciones";
+import { SelectorDiasYCalendario } from "@/components/ui/Calendario";
 import { CheckCircle2, Flame, Minus, Plus, ShieldCheck, Trash2, Trophy } from "lucide-react";
 
 function valoresVacios(areas: { id: AreaId }[]): Record<AreaId, number> {
@@ -295,26 +296,8 @@ export function RegistroDiarioView({
         </div>
       </Card>
 
-      <div id="registro-form" className="flex items-center gap-2 overflow-x-auto pb-1 scroll-mt-4">
-        {ultimos7.map((d) => {
-          const tieneRegistro = state.registrosDiarios.some((r) => r.fecha === d);
-          const bloqueado = d < limiteAtras;
-          return (
-            <button
-              key={d}
-              disabled={bloqueado}
-              onClick={() => cambiarFecha(d)}
-              className={`px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap border transition-all disabled:opacity-30 ${
-                d === fecha
-                  ? "border-habitos-500/50 bg-habitos-500/10 text-habitos-300 scale-105"
-                  : "border-base-700 text-base-400 hover:text-base-100"
-              }`}
-            >
-              {d === hoy ? "Hoy" : formatoLargo(d).split(" de ")[0]}
-              {tieneRegistro && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 align-middle" />}
-            </button>
-          );
-        })}
+      <div id="registro-form" className="scroll-mt-4">
+        <SelectorDiasYCalendario dias={ultimos7} fechaActiva={fecha} alElegirDia={cambiarFecha} deshabilitarAntes={limiteAtras} />
       </div>
 
       {state.areas.length === 0 ? (

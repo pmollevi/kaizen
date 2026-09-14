@@ -66,6 +66,37 @@ export function GraficaCategorias({ datos }: { datos: { nombre: string; monto: n
   );
 }
 
+/** Distribución de gasto por categoría en gráfica de pastel, con leyenda de montos y porcentajes. */
+export function GraficaCategoriasPastel({ datos }: { datos: { nombre: string; monto: number }[] }) {
+  const total = datos.reduce((acc, d) => acc + d.monto, 0);
+  if (datos.length === 0 || total <= 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-4">
+      <div className="shrink-0">
+        <PieChart width={140} height={140}>
+          <Pie data={datos} dataKey="monto" nameKey="nombre" innerRadius={0} outerRadius={65} paddingAngle={1} stroke="none">
+            {datos.map((d, i) => (
+              <Cell key={d.nombre} fill={PALETA_CATEGORIAS[i % PALETA_CATEGORIAS.length]} />
+            ))}
+          </Pie>
+          <Tooltip contentStyle={ESTILO_TOOLTIP} formatter={(v, n) => [formatoMoneda(Number(v)), n]} />
+        </PieChart>
+      </div>
+      <div className="space-y-1.5 min-w-0 flex-1">
+        {datos.map((d, i) => (
+          <div key={d.nombre} className="flex items-center gap-2 text-sm">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: PALETA_CATEGORIAS[i % PALETA_CATEGORIAS.length] }} />
+            <span className="text-base-300 truncate">{d.nombre}</span>
+            <span className="text-base-500 shrink-0 ml-auto">
+              {formatoMoneda(d.monto)} · {Math.round((d.monto / total) * 100)}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Efectivo vs tarjeta: dona simple con los dos montos. */
 export function GraficaMetodoPago({ efectivo, tarjeta }: { efectivo: number; tarjeta: number }) {
   const total = efectivo + tarjeta;

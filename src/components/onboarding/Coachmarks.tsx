@@ -11,7 +11,6 @@ const PASOS: PasoCoach[] = [
   { targetId: "coach-racha", texto: "Tu racha diaria: días seguidos cumpliendo todos tus hábitos activos. Se protege, nunca se rompe de golpe." },
   { targetId: "coach-nav-registro", texto: "Hábitos: el detalle y el progreso de cada uno que elegiste." },
   { targetId: "coach-nav-finanzas", texto: "Finanzas: control de gastos, completamente separado de tus hábitos." },
-  { targetId: "coach-nav-recompensas", texto: "Recompensas: tu racha, tus protecciones y los logros que vas desbloqueando." },
   { targetId: "coach-fab-gasto", texto: "Registra un gasto en segundos desde cualquier pantalla con este botón." },
 ];
 

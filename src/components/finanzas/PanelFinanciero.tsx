@@ -1,8 +1,94 @@
-import React from "react";
+import React, { useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, Stat, ProgressBar, EmptyState } from "@/components/ui/Primitives";
+import { Card, SectionTitle, Stat, ProgressBar, EmptyState, Field, Input, Button } from "@/components/ui/Primitives";
+import { GraficaCategoriasPastel } from "@/components/finanzas/charts/FinanzasCharts";
 import { distribucionCategorias } from "@/lib/formulas";
-import { diasDelMes, formatoLargo, hoyISO, mesDe } from "@/lib/dates";
+import { diasDelMes, formatoMes, hoyISO, mesDe } from "@/lib/dates";
+import { Plus, Trash2 } from "lucide-react";
+
+function IngresoMensualInline() {
+  const state = useKaizenStore();
+  const setIngresoMensual = useKaizenStore((s) => s.setIngresoMensual);
+  const mesActual = mesDe(hoyISO());
+  const actual = state.finanzas.ingresosMensuales.find((i) => i.mes === mesActual)?.monto ?? 0;
+  const [editando, setEditando] = useState(false);
+  const [monto, setMonto] = useState(actual);
+
+  const guardar = () => {
+    setIngresoMensual(mesActual, monto);
+    setEditando(false);
+  };
+
+  if (editando) {
+    return (
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <Field label="Ingreso de este mes">
+            <Input
+              type="number"
+              min={0}
+              autoFocus
+              value={monto || ""}
+              onChange={(e) => setMonto(parseFloat(e.target.value) || 0)}
+              placeholder="0"
+            />
+          </Field>
+        </div>
+        <Button variant="secondary" onClick={guardar}>
+          Guardar
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={() => setEditando(true)} className="text-left w-full group">
+      <Stat label="Ingreso mensual" value={actual > 0 ? `$${actual.toLocaleString()}` : "—"} hint="Toca para editar" />
+    </button>
+  );
+}
+
+function CategoriasSection() {
+  const state = useKaizenStore();
+  const agregarCategoriaGasto = useKaizenStore((s) => s.agregarCategoriaGasto);
+  const eliminarCategoriaGasto = useKaizenStore((s) => s.eliminarCategoriaGasto);
+  const [nombre, setNombre] = useState("");
+
+  const agregar = () => {
+    if (!nombre.trim()) return;
+    agregarCategoriaGasto(nombre);
+    setNombre("");
+  };
+
+  return (
+    <Card>
+      <SectionTitle title="Categorías de gasto" />
+      <div className="flex flex-wrap gap-2 mb-4">
+        {state.finanzas.categorias.map((c) => (
+          <span key={c.id} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-base-850 border border-base-700 text-sm text-base-200">
+            {c.nombre}
+            <button onClick={() => eliminarCategoriaGasto(c.id)} className="text-base-500 hover:text-rose-400 p-0.5">
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+        {state.finanzas.categorias.length === 0 && <EmptyState text="Aún no hay categorías." />}
+      </div>
+      <div className="flex items-center gap-2">
+        <Input
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && agregar()}
+          placeholder="Nueva categoría"
+          className="max-w-xs"
+        />
+        <Button variant="secondary" onClick={agregar} className="inline-flex items-center gap-1.5">
+          <Plus className="w-4 h-4" /> Agregar
+        </Button>
+      </div>
+    </Card>
+  );
+}
 
 export function PanelFinancieroTab() {
   const state = useKaizenStore();
@@ -17,18 +103,8 @@ export function PanelFinancieroTab() {
   const totalEfectivo = gastosDelMes.filter((g) => g.metodo === "efectivo").reduce((acc, g) => acc + g.monto, 0);
   const totalTarjeta = gastosDelMes.filter((g) => g.metodo === "tarjeta").reduce((acc, g) => acc + g.monto, 0);
   const categorias = distribucionCategorias(finanzas.gastos, finanzas.categorias, desde, hasta);
-  const gastosRecientes = [...finanzas.gastos].sort((a, b) => (a.fecha < b.fecha ? 1 : -1)).slice(0, 8);
   const ingreso = finanzas.ingresosMensuales.find((i) => i.mes === mesActual)?.monto ?? 0;
   const pctIngreso = ingreso > 0 ? totalMes / ingreso : null;
-
-  if (gastosDelMes.length === 0) {
-    return (
-      <Card>
-        <SectionTitle title="Este mes" />
-        <EmptyState text="Registra tu primer gasto y aquí verás en qué se te va el dinero — usa el botón + de abajo." />
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-5">
@@ -38,6 +114,9 @@ export function PanelFinancieroTab() {
         <div className="grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-base-700">
           <Stat label="Efectivo" value={`$${totalEfectivo.toLocaleString()}`} />
           <Stat label="Tarjeta" value={`$${totalTarjeta.toLocaleString()}`} />
+        </div>
+        <div className="mt-5 pt-5 border-t border-base-700">
+          <IngresoMensualInline />
         </div>
         {pctIngreso !== null && (
           <div className="mt-5 pt-5 border-t border-base-700">
@@ -53,42 +132,15 @@ export function PanelFinancieroTab() {
       </Card>
 
       <Card>
-        <SectionTitle title="Gastos recientes" />
-        <ul className="divide-y divide-base-700">
-          {gastosRecientes.map((g) => (
-            <li key={g.id} className="flex items-center justify-between py-2.5 text-sm">
-              <div className="min-w-0">
-                <div className="font-medium text-base-200 truncate">{g.palabraClave}</div>
-                <div className="text-xs text-base-500">{formatoLargo(g.fecha)}</div>
-              </div>
-              <span className="font-medium text-base-100 shrink-0">${g.monto.toLocaleString()}</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      <Card>
-        <SectionTitle title="Por categoría" subtitle={mesActual} />
+        <SectionTitle title="Por categoría" subtitle={formatoMes(mesActual)} />
         {categorias.length === 0 ? (
-          <EmptyState text="Sin categorías con gasto este mes." />
+          <EmptyState text="Registra tu primer gasto y aquí verás en qué se te va el dinero — usa el botón + de abajo." />
         ) : (
-          <div className="space-y-3">
-            {categorias.map((c) => (
-              <div key={c.categoriaId}>
-                <div className="flex items-center justify-between text-sm mb-1.5">
-                  <span className="font-medium text-base-200">{c.nombre}</span>
-                  <span className="text-base-400">
-                    ${c.monto.toLocaleString()} · {Math.round(c.porcentaje * 100)}%
-                  </span>
-                </div>
-                <div className="w-full h-1 rounded-full bg-base-800 overflow-hidden">
-                  <div className="h-full bg-finanzas-500 rounded-full" style={{ width: `${c.porcentaje * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <GraficaCategoriasPastel datos={categorias} />
         )}
       </Card>
+
+      <CategoriasSection />
     </div>
   );
 }

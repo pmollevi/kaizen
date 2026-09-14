@@ -3,7 +3,6 @@ import {
   Activity,
   CalendarClock,
   Gauge,
-  Gift,
   LayoutDashboard,
   ListChecks,
   Medal,
@@ -24,7 +23,6 @@ import { RegistroDiarioView } from "@/components/registro/RegistroDiario";
 import { FinanzasView } from "@/components/finanzas/Finanzas";
 import { CierreSemanalView } from "@/components/cierre/CierreSemanal";
 import { TemporadaView } from "@/components/temporada/Temporada";
-import { RecompensasView } from "@/components/recompensas/Recompensas";
 import { ReconocimientosView } from "@/components/reconocimientos/Reconocimientos";
 import { HistorialView } from "@/components/historial/Historial";
 import { ConfiguracionView } from "@/components/config/Configuracion";
@@ -37,7 +35,7 @@ const ResumenMesView = lazy(() =>
   import("@/components/resumenmes/ResumenMes").then((m) => ({ default: m.ResumenMesView }))
 );
 
-type TabId = "panel" | "registro" | "finanzas" | "resumenMes" | "cierre" | "temporada" | "recompensas" | "reconocimientos" | "historial" | "config";
+type TabId = "panel" | "registro" | "finanzas" | "resumenMes" | "cierre" | "temporada" | "reconocimientos" | "historial" | "config";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "panel", label: "Panel", icon: LayoutDashboard },
@@ -46,15 +44,14 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "resumenMes", label: "Resumen", icon: PieChart },
   { id: "cierre", label: "Cierre semanal", icon: CalendarClock },
   { id: "temporada", label: "Temporada", icon: Gauge },
-  { id: "recompensas", label: "Recompensas", icon: Gift },
   { id: "reconocimientos", label: "Reconocimientos", icon: Medal },
   { id: "historial", label: "Historial", icon: Trophy },
   { id: "config", label: "Config.", icon: Settings },
 ];
 
-// Las 5 secciones principales viven siempre visibles (barra inferior en celular,
+// Las 4 secciones principales viven siempre visibles (barra inferior en celular,
 // sidebar en escritorio); el resto se accede desde el menú ☰ de arriba a la derecha.
-const TABS_PRINCIPALES: TabId[] = ["panel", "registro", "finanzas", "resumenMes", "recompensas"];
+const TABS_PRINCIPALES: TabId[] = ["panel", "registro", "finanzas", "resumenMes"];
 
 // Identidad de color por sección (ver DESIGN.md "Identidad de sección"): el
 // fondo y el acento de acción (botones) no cambian, solo el nav de cada una.
@@ -64,12 +61,10 @@ const ACENTO_TAB: Record<string, { pill: string; icon: string; iconInactivo?: st
   registro: { pill: "bg-habitos-500", icon: "text-habitos-400" },
   finanzas: { pill: "bg-finanzas-500", icon: "text-finanzas-400" },
   resumenMes: { pill: "bg-teal-500", icon: "text-teal-400" },
-  recompensas: { pill: "bg-gold-500", icon: "text-gold-400" },
 };
 const DATA_COACH_TAB: Partial<Record<TabId, string>> = {
   registro: "coach-nav-registro",
   finanzas: "coach-nav-finanzas",
-  recompensas: "coach-nav-recompensas",
 };
 
 function Logo() {
@@ -499,7 +494,6 @@ export default function App() {
           )}
           {tab === "cierre" && <CierreSemanalView />}
           {tab === "temporada" && <TemporadaView />}
-          {tab === "recompensas" && <RecompensasView />}
           {tab === "reconocimientos" && <ReconocimientosView />}
           {tab === "historial" && <HistorialView />}
           {tab === "config" && <ConfiguracionView />}

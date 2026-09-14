@@ -1,52 +1,16 @@
 import React, { Suspense, lazy, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, InputDiaDelMes, Button, Badge, EmptyState } from "@/components/ui/Primitives";
-import { hoyISO, formatoMes, mesDe } from "@/lib/dates";
 import { COLOR_SECCION } from "@/lib/color";
 import { distribucionCategorias } from "@/lib/formulas";
 import { Plus, Trash2, CreditCard } from "lucide-react";
 
 // La librería de gráficas solo se necesita aquí — separada en su propio chunk.
-const GraficaCategorias = lazy(() =>
-  import("@/components/finanzas/charts/FinanzasCharts").then((m) => ({ default: m.GraficaCategorias }))
+const GraficaCategoriasPastel = lazy(() =>
+  import("@/components/finanzas/charts/FinanzasCharts").then((m) => ({ default: m.GraficaCategoriasPastel }))
 );
 
 const MAX_TARJETAS = 3;
-
-function IngresoMensualSection() {
-  const state = useKaizenStore();
-  const setIngresoMensual = useKaizenStore((s) => s.setIngresoMensual);
-  const mesActual = mesDe(hoyISO());
-  const actual = state.finanzas.ingresosMensuales.find((i) => i.mes === mesActual)?.monto ?? 0;
-  const [monto, setMonto] = useState(actual);
-  const [guardado, setGuardado] = useState(false);
-
-  const guardar = () => {
-    setIngresoMensual(mesActual, monto);
-    setGuardado(true);
-    setTimeout(() => setGuardado(false), 1800);
-  };
-
-  return (
-    <Card className="border-finanzas-500/35 bg-finanzas-500/[0.08]">
-      <SectionTitle
-        title="Ingreso mensual"
-        accent={COLOR_SECCION.finanzas}
-        subtitle={`Para comparar gasto vs. ingreso de ${formatoMes(mesActual)}. Se reinicia cada mes, es opcional.`}
-      />
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
-          <Field label="Ingreso de este mes">
-            <Input type="number" min={0} value={monto || ""} onChange={(e) => setMonto(parseFloat(e.target.value) || 0)} placeholder="0" />
-          </Field>
-        </div>
-        <Button variant="secondary" onClick={guardar}>
-          {guardado ? "Guardado" : "Guardar"}
-        </Button>
-      </div>
-    </Card>
-  );
-}
 
 function FormTarjeta({ onCancelar }: { onCancelar: () => void }) {
   const agregarTarjeta = useKaizenStore((s) => s.agregarTarjeta);
@@ -84,7 +48,7 @@ function FormTarjeta({ onCancelar }: { onCancelar: () => void }) {
   );
 }
 
-function TarjetasSection() {
+export function TarjetasTab() {
   const state = useKaizenStore();
   const eliminarTarjeta = useKaizenStore((s) => s.eliminarTarjeta);
   const [formAbierto, setFormAbierto] = useState(false);
@@ -106,6 +70,7 @@ function TarjetasSection() {
       <div className="space-y-2.5">
         {state.finanzas.tarjetas.map((t) => {
           const gastosDeTarjeta = state.finanzas.gastos.filter((g) => g.tarjetaId === t.id);
+          const totalTarjeta = gastosDeTarjeta.reduce((acc, g) => acc + g.monto, 0);
           const categoriasDeTarjeta = distribucionCategorias(gastosDeTarjeta, state.finanzas.categorias, "0000-01-01", "9999-12-31");
           return (
             <div key={t.id} className="rounded-xl border border-finanzas-500/40 bg-finanzas-500/[0.08] px-4 py-3">
@@ -123,14 +88,19 @@ function TarjetasSection() {
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-              {categoriasDeTarjeta.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-finanzas-500/20">
-                  <div className="text-[11px] uppercase tracking-wide text-base-500 mb-2">Gastos por categoría en esta tarjeta</div>
-                  <Suspense fallback={<div className="text-xs text-base-500 py-2">Cargando gráfica…</div>}>
-                    <GraficaCategorias datos={categoriasDeTarjeta} />
-                  </Suspense>
+              <div className="mt-3 pt-3 border-t border-finanzas-500/20">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-[11px] uppercase tracking-wide text-base-500">Gastos por categoría en esta tarjeta</div>
+                  <div className="text-sm font-semibold text-base-100">${totalTarjeta.toLocaleString()}</div>
                 </div>
-              )}
+                {categoriasDeTarjeta.length === 0 ? (
+                  <EmptyState text="Sin gastos registrados con esta tarjeta." />
+                ) : (
+                  <Suspense fallback={<div className="text-xs text-base-500 py-2">Cargando gráfica…</div>}>
+                    <GraficaCategoriasPastel datos={categoriasDeTarjeta} />
+                  </Suspense>
+                )}
+              </div>
             </div>
           );
         })}
@@ -138,57 +108,5 @@ function TarjetasSection() {
         {formAbierto && <FormTarjeta onCancelar={() => setFormAbierto(false)} />}
       </div>
     </Card>
-  );
-}
-
-function CategoriasSection() {
-  const state = useKaizenStore();
-  const agregarCategoriaGasto = useKaizenStore((s) => s.agregarCategoriaGasto);
-  const eliminarCategoriaGasto = useKaizenStore((s) => s.eliminarCategoriaGasto);
-  const [nombre, setNombre] = useState("");
-
-  const agregar = () => {
-    if (!nombre.trim()) return;
-    agregarCategoriaGasto(nombre);
-    setNombre("");
-  };
-
-  return (
-    <Card>
-      <SectionTitle title="Categorías de gasto" />
-      <div className="flex flex-wrap gap-2 mb-4">
-        {state.finanzas.categorias.map((c) => (
-          <span key={c.id} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full bg-base-850 border border-base-700 text-sm text-base-200">
-            {c.nombre}
-            <button onClick={() => eliminarCategoriaGasto(c.id)} className="text-base-500 hover:text-rose-400 p-0.5">
-              <Trash2 className="w-3 h-3" />
-            </button>
-          </span>
-        ))}
-        {state.finanzas.categorias.length === 0 && <EmptyState text="Aún no hay categorías." />}
-      </div>
-      <div className="flex items-center gap-2">
-        <Input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && agregar()}
-          placeholder="Nueva categoría"
-          className="max-w-xs"
-        />
-        <Button variant="secondary" onClick={agregar} className="inline-flex items-center gap-1.5">
-          <Plus className="w-4 h-4" /> Agregar
-        </Button>
-      </div>
-    </Card>
-  );
-}
-
-export function TarjetasTab() {
-  return (
-    <div className="space-y-5">
-      <IngresoMensualSection />
-      <TarjetasSection />
-      <CategoriasSection />
-    </div>
   );
 }
