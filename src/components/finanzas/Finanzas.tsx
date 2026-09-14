@@ -24,12 +24,12 @@ export function FinanzasView() {
         subtitle="Control de gastos personal, independiente de tus hábitos."
         accent={COLOR_SECCION.finanzas}
       />
-      <div className="flex gap-1 border-b border-base-700">
+      <div className="flex gap-1 border-b border-base-700 overflow-x-auto no-scrollbar">
         {SUBTABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-3.5 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            className={`shrink-0 px-3.5 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
               tab === t.id ? "border-finanzas-500 text-finanzas-400" : "border-transparent text-base-400 hover:text-base-100"
             }`}
           >

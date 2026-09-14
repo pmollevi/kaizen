@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, Select, Button, Badge, EmptyState } from "@/components/ui/Primitives";
 import { hoyISO, formatoLargo } from "@/lib/dates";
+import { COLOR_SECCION } from "@/lib/color";
 import type { Gasto, MetodoPago } from "@/types";
 import { Repeat, Trash2 } from "lucide-react";
 
@@ -81,8 +82,8 @@ export function GastosTab() {
 
   return (
     <div className="space-y-5">
-      <Card>
-        <SectionTitle title="Registrar gasto" subtitle="Menos de 10 segundos." />
+      <Card className="border-finanzas-500/35 bg-finanzas-500/[0.08]">
+        <SectionTitle title="Registrar gasto" subtitle="Menos de 10 segundos." accent={COLOR_SECCION.finanzas} />
         {state.finanzas.categorias.length === 0 ? (
           <EmptyState text="Agrega una categoría de gasto en la pestaña Tarjetas antes de registrar gastos." />
         ) : (

@@ -28,7 +28,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaDiariaSugerida: 4,
     metaSemanalSugerida: 28,
     topeMetaSemanalSugerida: 42,
-    color: "#6B7A8F",
+    color: "#4D8DFF",
   },
   {
     id: "imperio",
@@ -41,7 +41,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaDiariaSugerida: 1.5,
     metaSemanalSugerida: 10,
     topeMetaSemanalSugerida: 16,
-    color: "#A97C50",
+    color: "#FFA229",
   },
   {
     id: "fuerza",
@@ -54,7 +54,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaDiariaSugerida: null,
     metaSemanalSugerida: 5,
     topeMetaSemanalSugerida: 5,
-    color: "#B5624A",
+    color: "#FF5C5C",
   },
   {
     id: "vitalidad",
@@ -67,7 +67,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaDiariaSugerida: 3,
     metaSemanalSugerida: 21,
     topeMetaSemanalSugerida: 21,
-    color: "#5E8C5A",
+    color: "#3DDC5A",
   },
   {
     id: "energia",
@@ -80,7 +80,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaDiariaSugerida: 7.5,
     metaSemanalSugerida: 52.5,
     topeMetaSemanalSugerida: 56,
-    color: "#7E6C9E",
+    color: "#9D6BFF",
   },
   {
     id: "sabiduria",
@@ -93,7 +93,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaDiariaSugerida: 15,
     metaSemanalSugerida: 105,
     topeMetaSemanalSugerida: 160,
-    color: "#4F7C7A",
+    color: "#2BD4C4",
   },
   {
     id: "serenidad",
@@ -106,7 +106,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaDiariaSugerida: 10,
     metaSemanalSugerida: 70,
     topeMetaSemanalSugerida: 140,
-    color: "#8FA084",
+    color: "#3DC7EF",
   },
   {
     id: "vinculos",
@@ -119,7 +119,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaDiariaSugerida: null,
     metaSemanalSugerida: 4,
     topeMetaSemanalSugerida: 7,
-    color: "#A9667A",
+    color: "#FF6FB8",
   },
   {
     id: "creatividad",
@@ -132,7 +132,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaDiariaSugerida: 20,
     metaSemanalSugerida: 140,
     topeMetaSemanalSugerida: 280,
-    color: "#A79BC0",
+    color: "#C77DFF",
   },
   {
     id: "gratitud",
@@ -145,7 +145,7 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     metaDiariaSugerida: null,
     metaSemanalSugerida: 5,
     topeMetaSemanalSugerida: 7,
-    color: "#C9AA5C",
+    color: "#FFCF33",
   },
 ];
 

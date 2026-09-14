@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { CATALOGO_AREAS, type PlantillaArea } from "@/config/areaCatalog";
 import { iconoDeHabito } from "@/config/habitIcons";
-import { Button, Field, Input, ScrollFade, useScrollFade } from "@/components/ui/Primitives";
+import { Button, Field, Input, InputDiaDelMes, ScrollFade, useScrollFade } from "@/components/ui/Primitives";
 import { SelectorHorizontal } from "@/components/ui/SelectorHorizontal";
 import { formatoMes, hoyISO, mesDe } from "@/lib/dates";
 import { generarId } from "@/lib/id";
@@ -159,7 +159,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
               <div className="space-y-4">
                 <div>
                   <div className="text-sm font-medium text-base-200 mb-1">
-                    {esPrimeraVez ? "¿Con qué 2 o 3 hábitos quieres empezar?" : "¿En qué hábitos quieres mejorar este mes?"}
+                    {esPrimeraVez ? "¿Con qué hábitos quieres empezar?" : "¿En qué hábitos quieres mejorar este mes?"}
                   </div>
                   <div className="text-xs text-base-500">
                     {esPrimeraVez
@@ -278,11 +278,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                 </Field>
 
                 <div>
-                  <div className="text-xs font-medium text-base-300 mb-1">Tarjetas de crédito (hasta {MAX_TARJETAS})</div>
-                  <div className="text-xs text-base-500 mb-2">
-                    Registrar una tarjeta te da un resumen automático de gasto cada vez que cierra su corte. La fecha
-                    de corte es el día del mes en que tu banco cierra el ciclo de esa tarjeta.
-                  </div>
+                  <div className="text-xs font-medium text-base-300 mb-2">Tarjetas de crédito (hasta {MAX_TARJETAS})</div>
                   {tarjetasNuevas.length > 0 && (
                     <div className="space-y-2 mb-2">
                       {tarjetasNuevas.map((t) => (
@@ -308,15 +304,12 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                   ) : formTarjetaAbierto ? (
                     <div className="rounded-lg border border-base-700 bg-base-850 p-3 space-y-2">
                       <div className="grid grid-cols-2 gap-2">
-                        <Input value={nombreTarjeta} onChange={(e) => setNombreTarjeta(e.target.value)} placeholder="Nombre" />
-                        <Input
-                          type="number"
-                          min={1}
-                          max={31}
-                          value={diaCorteTarjeta}
-                          onChange={(e) => setDiaCorteTarjeta(Math.min(31, Math.max(1, parseInt(e.target.value) || 1)))}
-                          placeholder="Día de corte"
-                        />
+                        <Field label="Nombre">
+                          <Input value={nombreTarjeta} onChange={(e) => setNombreTarjeta(e.target.value)} placeholder="Ej. Platino BBVA" />
+                        </Field>
+                        <Field label="Día de corte" hint="Aquí pones el día del mes en que corta tu tarjeta.">
+                          <InputDiaDelMes value={diaCorteTarjeta} onChange={setDiaCorteTarjeta} />
+                        </Field>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button variant="secondary" onClick={agregarTarjetaDraft}>

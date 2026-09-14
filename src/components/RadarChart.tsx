@@ -46,7 +46,7 @@ export function RadarChart({ puntos, size = 260 }: { puntos: RadarPoint[]; size?
             <line key={i} x1={centro} y1={centro} x2={c.x} y2={c.y} stroke="currentColor" className="text-base-700" strokeWidth={1} />
           );
         })}
-        <polygon points={pathPoligono} fill="#7B835C22" stroke="#7B835C" strokeWidth={1.5} className="transition-all duration-300" />
+        <polygon points={pathPoligono} fill="#2FA34733" stroke="#5BDA72" strokeWidth={1.5} className="transition-all duration-300" />
         {puntosPoligono.map((c, i) => (
           <circle key={i} cx={c.x} cy={c.y} r={3.5} fill={puntos[i].color} className="transition-all duration-300" />
         ))}

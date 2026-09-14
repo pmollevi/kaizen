@@ -27,6 +27,7 @@ import { RecompensasView } from "@/components/recompensas/Recompensas";
 import { ReconocimientosView } from "@/components/reconocimientos/Reconocimientos";
 import { HistorialView } from "@/components/historial/Historial";
 import { ConfiguracionView } from "@/components/config/Configuracion";
+import { sincronizarDatosRecordatorio } from "@/lib/push";
 
 type TabId = "panel" | "registro" | "finanzas" | "cierre" | "temporada" | "recompensas" | "reconocimientos" | "historial" | "config";
 
@@ -158,7 +159,6 @@ function PantallaCrearCuenta({
 }) {
   const reiniciar = useKaizenStore((s) => s.reiniciarConNombre);
   const [nombre, setNombre] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmar, setConfirmar] = useState("");
   const [error, setError] = useState("");
@@ -170,7 +170,7 @@ function PantallaCrearCuenta({
     if (password !== confirmar) return setError("Las contraseñas no coinciden.");
     setError("");
     setCargando(true);
-    const perfil = await crearPerfil(nombre.trim(), email, password);
+    const perfil = await crearPerfil(nombre.trim(), password);
     setCargando(false);
     setPerfilActivo(perfil.id);
     reiniciar(nombre.trim());
@@ -183,16 +183,14 @@ function PantallaCrearCuenta({
         <Logo />
         <div className="text-lg font-semibold tracking-tight">Crear cuenta</div>
         <div className="text-sm text-base-400 mt-1">
-          Protege tu progreso con una contraseña. Se guarda solo en este navegador, no hay recuperación por correo.
+          Protege tu progreso con una contraseña. Se guarda solo en este navegador — no hay recuperación si la
+          olvidas.
         </div>
       </div>
 
       <div className="space-y-3">
         <Field label="Nombre">
           <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="¿Cómo te llamas?" />
-        </Field>
-        <Field label="Correo (opcional)">
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@correo.com" />
         </Field>
         <Field label="Contraseña" hint="Mínimo 6 caracteres.">
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -236,7 +234,10 @@ function ProfileGate({ onEntrar }: { onEntrar: (esNuevo: boolean) => void }) {
           <PantallaCrearCuenta hayPerfiles={perfiles.length > 0} onEntrar={onEntrar} onIrALogin={() => setModo("login")} />
         )}
         <p className="text-xs text-base-500 mt-4 pt-4 border-t border-base-700">
-          Tus datos se guardan solo en este navegador. Exporta desde Configuración para respaldarlos.
+          Tus datos se guardan solo en este navegador. Exporta desde Configuración para respaldarlos. Si activas
+          notificaciones, tu suscripción push y lo mínimo necesario para avisarte (última fecha registrada, nombre y
+          día de corte de tus tarjetas) se guardan en un servidor solo para eso — el resto de tus hábitos y finanzas
+          nunca sale de este navegador.
         </p>
       </Card>
     </div>
@@ -308,11 +309,25 @@ export default function App() {
   const nombreSistema = useKaizenStore((s) => s.config.textos.nombreSistema);
   const tituloActivo = useKaizenStore((s) => s.config.catalogoReconocimientos.find((c) => c.id === s.usuario.tituloActivo)?.nombre ?? null);
   const procesarCierres = useKaizenStore((s) => s.procesarCierresMensualesPendientes);
+  const registrosDiarios = useKaizenStore((s) => s.registrosDiarios);
+  const tarjetas = useKaizenStore((s) => s.finanzas.tarjetas);
 
   useEffect(() => {
     if (!perfilId) return;
     procesarCierres();
   }, [perfilId]);
+
+  // Mantiene al Worker de avisos al día si el usuario ya activó notificaciones
+  // push — no hace nada si nunca las activó (ver lib/push).
+  useEffect(() => {
+    if (!perfilId) return;
+    const ultimoRegistro =
+      registrosDiarios.length > 0 ? [...registrosDiarios].sort((a, b) => (a.fecha < b.fecha ? 1 : -1))[0].fecha : null;
+    void sincronizarDatosRecordatorio(perfilId, {
+      ultimoRegistro,
+      tarjetas: tarjetas.map((t) => ({ nombre: t.nombre, diaCorte: t.diaCorte })),
+    });
+  }, [perfilId, registrosDiarios, tarjetas]);
 
   const perfilActual = useMemo(() => listarPerfiles().find((p) => p.id === perfilId), [perfilId]);
 

@@ -1,9 +1,80 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, Select, Button, Badge, StepperPorcentaje } from "@/components/ui/Primitives";
 import { generarId } from "@/lib/id";
 import type { AreaId, Bono, ReconocimientoCatalogo } from "@/types";
-import { Download, Upload, Plus, Trash2 } from "lucide-react";
+import { estadoPermisoNotificaciones, type EstadoPermiso } from "@/lib/notificaciones";
+import { activarAvisos, avisosActivosLocalmente, desactivarAvisos, soportaPush } from "@/lib/push";
+import { getPerfilActivo } from "@/store/profiles";
+import { Download, Upload, Plus, Trash2, Bell, BellOff } from "lucide-react";
+
+function NotificacionesSection() {
+  const state = useKaizenStore();
+  const perfilId = getPerfilActivo();
+  const [estado, setEstado] = useState<EstadoPermiso>("default");
+  const [activo, setActivo] = useState(false);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEstado(estadoPermisoNotificaciones());
+    if (perfilId) setActivo(avisosActivosLocalmente(perfilId));
+  }, [perfilId]);
+
+  if (!soportaPush() || estado === "no-soportado") return null;
+
+  const activar = async () => {
+    if (!perfilId) return;
+    setCargando(true);
+    setError(null);
+    const ultimoRegistro =
+      state.registrosDiarios.length > 0
+        ? [...state.registrosDiarios].sort((a, b) => (a.fecha < b.fecha ? 1 : -1))[0].fecha
+        : null;
+    const res = await activarAvisos(perfilId, {
+      ultimoRegistro,
+      tarjetas: state.finanzas.tarjetas.map((t) => ({ nombre: t.nombre, diaCorte: t.diaCorte })),
+    });
+    setCargando(false);
+    setEstado(estadoPermisoNotificaciones());
+    if (res.ok) setActivo(true);
+    else setError(res.motivo ?? "No se pudieron activar las notificaciones.");
+  };
+
+  const desactivar = async () => {
+    if (!perfilId) return;
+    setCargando(true);
+    await desactivarAvisos(perfilId);
+    setCargando(false);
+    setActivo(false);
+  };
+
+  return (
+    <Card>
+      <SectionTitle
+        title="Notificaciones"
+        subtitle="Avisos reales del sistema — racha en riesgo, corte de tarjeta próximo y festejo de hitos — aunque Kaizen esté cerrado. Al activarlas, tu suscripción push y lo mínimo necesario para avisarte se guardan en un servidor; el resto de tus datos sigue solo en este navegador."
+      />
+      {estado === "denied" ? (
+        <Badge tone="red">Bloqueadas en el navegador — actívalas desde su configuración de sitio.</Badge>
+      ) : activo ? (
+        <div className="flex items-center gap-3">
+          <Badge tone="green">Activadas</Badge>
+          <Button variant="ghost" disabled={cargando} onClick={desactivar} className="inline-flex items-center gap-1.5">
+            <BellOff className="w-4 h-4" /> Desactivar
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Button variant="secondary" disabled={cargando} onClick={activar} className="inline-flex items-center gap-1.5">
+            <Bell className="w-4 h-4" /> {cargando ? "Activando..." : "Activar notificaciones"}
+          </Button>
+          {error && <div className="text-xs text-rose-400">{error}</div>}
+        </div>
+      )}
+    </Card>
+  );
+}
 
 function IdentidadYAreas() {
   const state = useKaizenStore();
@@ -280,6 +351,8 @@ function DatosYMitigaciones() {
 
   return (
     <div className="space-y-5">
+      <NotificacionesSection />
+
       <Card>
         <SectionTitle title="Datos" subtitle="Exporta o importa el respaldo completo en JSON." />
         <div className="flex gap-3">

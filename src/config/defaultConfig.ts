@@ -123,7 +123,7 @@ export const CONFIG_DEFAULT: Config = {
     proteccionesMaxAcumulables: 3,
     umbralProteccionMensual: 0.85,
     ventanaProteccionHoras: 48,
-    diasPorProteccion: 7,
+    diasPorProteccion: 21, // 21 días de racha protegen una semana completa
     diasRegistroRetroactivo: 3,
   },
   bonos: [

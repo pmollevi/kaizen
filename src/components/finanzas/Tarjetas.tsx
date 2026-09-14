@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, Field, Input, Button, Badge, EmptyState } from "@/components/ui/Primitives";
+import { Card, SectionTitle, Field, Input, InputDiaDelMes, Button, Badge, EmptyState } from "@/components/ui/Primitives";
 import { ResumenesTarjeta } from "@/components/finanzas/ResumenTarjeta";
 import { hoyISO, formatoMes, mesDe } from "@/lib/dates";
+import { COLOR_SECCION } from "@/lib/color";
 import { Plus, Trash2, CreditCard } from "lucide-react";
 
 const MAX_TARJETAS = 3;
@@ -22,9 +23,10 @@ function IngresoMensualSection() {
   };
 
   return (
-    <Card>
+    <Card className="border-finanzas-500/35 bg-finanzas-500/[0.08]">
       <SectionTitle
         title="Ingreso mensual"
+        accent={COLOR_SECCION.finanzas}
         subtitle={`Para comparar gasto vs. ingreso de ${formatoMes(mesActual)}. Se reinicia cada mes, es opcional.`}
       />
       <div className="flex items-end gap-2">
@@ -62,8 +64,8 @@ function FormTarjeta({ onCancelar }: { onCancelar: () => void }) {
         <Field label="Nombre de la tarjeta">
           <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Platino BBVA" />
         </Field>
-        <Field label="Día de corte">
-          <Input type="number" min={1} max={31} value={diaCorte} onChange={(e) => setDiaCorte(Math.min(31, Math.max(1, parseInt(e.target.value) || 1)))} />
+        <Field label="Día de corte" hint="Aquí pones el día del mes en que corta tu tarjeta.">
+          <InputDiaDelMes value={diaCorte} onChange={setDiaCorte} />
         </Field>
       </div>
       {error && <Badge tone="red">{error}</Badge>}
@@ -83,10 +85,11 @@ function TarjetasSection() {
   const [formAbierto, setFormAbierto] = useState(false);
 
   return (
-    <Card>
+    <Card className="border-finanzas-500/35 bg-finanzas-500/[0.08]">
       <SectionTitle
         title="Tarjetas"
-        subtitle={`Hasta ${MAX_TARJETAS} tarjetas. Registrar una te da un resumen automático de gasto cada vez que cierra su corte — la fecha de corte es el día del mes en que tu banco cierra el ciclo de esa tarjeta.`}
+        accent={COLOR_SECCION.finanzas}
+        subtitle={`Hasta ${MAX_TARJETAS} tarjetas. Al cortar cada una, recibes su resumen de gasto automático.`}
         action={
           state.finanzas.tarjetas.length < MAX_TARJETAS && !formAbierto ? (
             <Button variant="ghost" onClick={() => setFormAbierto(true)} className="inline-flex items-center gap-1.5">
@@ -97,10 +100,10 @@ function TarjetasSection() {
       />
       <div className="space-y-2.5">
         {state.finanzas.tarjetas.map((t) => (
-          <div key={t.id} className="flex items-center justify-between rounded-xl border border-base-700 bg-base-850 px-4 py-3">
+          <div key={t.id} className="flex items-center justify-between rounded-xl border border-finanzas-500/40 bg-finanzas-500/[0.08] px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-base-800 flex items-center justify-center shrink-0">
-                <CreditCard className="w-4 h-4 text-base-300" />
+              <div className="w-9 h-9 rounded-lg bg-finanzas-500/15 flex items-center justify-center shrink-0">
+                <CreditCard className="w-4 h-4 text-finanzas-400" />
               </div>
               <div>
                 <div className="text-sm font-medium text-base-200">{t.nombre}</div>

@@ -11,6 +11,7 @@ import { COLOR_SECCION, colorPorNivel } from "@/lib/color";
 import { finSemana, hoyISO, inicioSemana, mesDe, formatoLargo, formatoMes } from "@/lib/dates";
 import { semanasPendientes } from "@/lib/cierre";
 import { Coachmarks } from "@/components/onboarding/Coachmarks";
+import { CentroAvisos } from "@/components/panel/CentroAvisos";
 import { coachmarksYaVistos, marcarCoachmarksVistos } from "@/lib/coachmarks";
 import { getPerfilActivo } from "@/store/profiles";
 import { Trophy } from "lucide-react";
@@ -30,9 +31,10 @@ function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
   const rachaMostrada = useCountUp(racha);
 
   return (
-    <Card className="lg:col-span-2">
+    <Card className="lg:col-span-2 border-habitos-500/35 bg-habitos-500/[0.08]">
       <SectionTitle
         title="Registro diario"
+        accent={COLOR_SECCION.habitos}
         subtitle={formatoLargo(hoy)}
         action={
           <Button onClick={() => irA("registro")} className="inline-flex items-center gap-1.5">
@@ -64,19 +66,20 @@ function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
           })}
         </div>
       )}
+      <div
+        data-coach="coach-racha"
+        className="flex items-center gap-3 sm:gap-4 mb-4 rounded-xl bg-amber-500/[0.08] border border-amber-500/25 px-4 py-3"
+      >
+        <Flame className={`w-8 h-8 sm:w-9 sm:h-9 text-amber-400 shrink-0 ${racha > 0 ? "animate-flicker" : ""}`} />
+        <div>
+          <div className="text-4xl sm:text-5xl font-bold tabular-nums text-base-100 leading-none">{rachaMostrada}</div>
+          <div className="text-xs uppercase tracking-wider text-amber-400/90 font-semibold mt-1">
+            {racha === 1 ? "día de racha" : "días de racha"}
+          </div>
+        </div>
+      </div>
       <div className="flex items-center gap-6">
         <Stat label="Esta semana" value={`${Math.round(cumplimientoGlobal * 100)}%`} hint="cumplimiento global" />
-        <div data-coach="coach-racha">
-          <Stat
-            size="lg"
-            label="Racha diaria"
-            value={
-              <span className="inline-flex items-center gap-1.5">
-                <Flame className={`w-6 h-6 text-amber-400 ${racha > 0 ? "animate-flicker" : ""}`} /> {rachaMostrada}
-              </span>
-            }
-          />
-        </div>
       </div>
     </Card>
   );
@@ -95,7 +98,7 @@ function TarjetaGastosMensuales({ irA }: { irA: (tab: string) => void }) {
   const pctIngreso = ingreso > 0 ? totalMes / ingreso : null;
 
   return (
-    <Card>
+    <Card className="border-finanzas-500/35 bg-finanzas-500/[0.08]">
       <SectionTitle
         title="Gastos del mes"
         accent={COLOR_SECCION.finanzas}
@@ -144,13 +147,13 @@ function TarjetaMetaGrande() {
   };
 
   return (
-    <Card>
-      <SectionTitle title="Meta grande del mes" subtitle={formatoMes(mesActual)} />
+    <Card className="border-gold-500/35 bg-gold-500/[0.08]">
+      <SectionTitle title="Meta grande del mes" accent={COLOR_SECCION.recompensas} subtitle={formatoMes(mesActual)} />
       {!editando && metaActual?.descripcion ? (
         <>
           <div className="flex items-start gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-kaizen-500/10 border border-kaizen-500/20 flex items-center justify-center shrink-0">
-              <Target className="w-4 h-4 text-kaizen-400" />
+            <div className="w-9 h-9 rounded-xl bg-gold-500/10 border border-gold-500/40 flex items-center justify-center shrink-0">
+              <Target className="w-4 h-4 text-gold-400" />
             </div>
             <p className="text-sm text-base-200 leading-relaxed">{metaActual.descripcion}</p>
           </div>
@@ -200,7 +203,7 @@ function SpotlightPrimerDia({ irA }: { irA: (tab: string) => void }) {
   const nombres = state.areas.map((a) => a.nombre).join(", ");
 
   return (
-    <Card className="border-kaizen-500/30 bg-kaizen-500/[0.05]">
+    <Card className="border-kaizen-500/40 bg-kaizen-500/[0.08]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-xs uppercase tracking-wider text-kaizen-400 font-medium mb-1">Da tu primer paso hoy</div>
@@ -225,7 +228,7 @@ function BannerMetaPendiente() {
   if (!pendiente) return null;
 
   return (
-    <Card className="border border-kaizen-500/20 bg-kaizen-500/[0.05]">
+    <Card className="border border-kaizen-500/40 bg-kaizen-500/[0.08]">
       <div className="text-sm text-base-200 mb-3">
         ¿Cumpliste tu meta de {formatoMes(pendiente.mes)}? <span className="text-base-300">"{pendiente.descripcion}"</span>
       </div>
@@ -282,10 +285,12 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
         </div>
       </div>
 
+      <CentroAvisos irA={irA} />
+
       {mesPlaneado && state.registrosDiarios.length === 0 && <SpotlightPrimerDia irA={irA} />}
 
       {!mesPlaneado && (
-        <Card className="border border-kaizen-500/20 bg-kaizen-500/[0.05]">
+        <Card className="border border-kaizen-500/40 bg-kaizen-500/[0.08]">
           <div className="flex items-center justify-between">
             <div className="text-sm text-base-200">
               Aún no planeas {formatoMes(mesDe(hoy))}: elige tus hábitos y ponles una meta.
@@ -296,7 +301,7 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
       )}
 
       {pendientes.length > 0 && (
-        <Card className="border border-gold-500/20 bg-gold-500/[0.05]">
+        <Card className="border border-gold-500/40 bg-gold-500/[0.08]">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gold-400">
               Tienes {pendientes.length} {pendientes.length === 1 ? "semana pendiente" : "semanas pendientes"} de cierre.
@@ -312,8 +317,8 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <TarjetaRegistroDiario irA={irA} />
-        <Card>
-          <SectionTitle title={config.textos.radar} />
+        <Card className="border-kaizen-500/35 bg-kaizen-500/[0.08]">
+          <SectionTitle title={config.textos.radar} accent={COLOR_SECCION.panel} />
           <RadarChart
             puntos={areas.map((a) => ({
               label: a.nombre,

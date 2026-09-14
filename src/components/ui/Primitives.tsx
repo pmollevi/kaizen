@@ -91,7 +91,7 @@ export function ProgressBar({
   return (
     <div className={`w-full ${height} rounded-full bg-base-800 overflow-hidden`}>
       <div
-        className={`h-full ${colorClass ?? "bg-kaizen-500"} transition-all duration-500 rounded-full`}
+        className={`h-full ${colorClass ?? "bg-kaizen-500"} transition-all duration-300 ease-out rounded-full`}
         style={{ width: `${pct}%`, backgroundColor: color }}
       />
     </div>
@@ -223,6 +223,45 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...rest}
       className={`${anchoBase(className)} ${CAMPO_BASE} placeholder:text-base-500 ${className}`}
+    />
+  );
+}
+
+/**
+ * Input numérico tipo "día del mes" (1-31: día de corte, etc.): mientras se
+ * escribe se deja el texto libre (permite borrar todo, escribir "20" sin que
+ * se pegue al dígito anterior); el mínimo/máximo solo se aplica al perder el
+ * foco. Un `value={Number(...) || min}` en cada tecla es lo que rompe esto —
+ * nunca se puede vaciar el campo porque el string vacío colapsa a `min`.
+ */
+export function InputDiaDelMes({
+  value,
+  onChange,
+  min = 1,
+  max = 31,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  min?: number;
+  max?: number;
+}) {
+  const [texto, setTexto] = useState(String(value));
+
+  useEffect(() => setTexto(String(value)), [value]);
+
+  return (
+    <Input
+      type="number"
+      inputMode="numeric"
+      min={min}
+      max={max}
+      value={texto}
+      onChange={(e) => setTexto(e.target.value)}
+      onBlur={() => {
+        const n = Math.min(max, Math.max(min, parseInt(texto, 10) || min));
+        setTexto(String(n));
+        if (n !== value) onChange(n);
+      }}
     />
   );
 }

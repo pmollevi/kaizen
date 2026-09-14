@@ -14,7 +14,7 @@ export interface AreaConfig {
   metaSemanalBase: number;
   topeMetaSemanal: number; // tope máximo tras progresión por etapas
   peso: number; // 0-1, deben sumar 1 entre todas las áreas activas
-  color: string; // color hex, ej. "#6B7A8F"
+  color: string; // color hex, ej. "#4D8DFF"
   nivel: number;
   semanasConsecutivas: number; // contador hacia el siguiente nivel de área
 }

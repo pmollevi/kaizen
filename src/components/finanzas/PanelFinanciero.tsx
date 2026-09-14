@@ -32,8 +32,8 @@ export function PanelFinancieroTab() {
 
   return (
     <div className="space-y-5">
-      <Card>
-        <div className="text-xs uppercase tracking-wider text-base-500 font-medium mb-1">Total gastado</div>
+      <Card className="border-finanzas-500/35 bg-finanzas-500/[0.08]">
+        <div className="text-xs uppercase tracking-wider text-finanzas-400 font-medium mb-1">Total gastado</div>
         <div className="text-4xl font-semibold tracking-tight text-base-100">${totalMes.toLocaleString()}</div>
         <div className="grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-base-700">
           <Stat label="Efectivo" value={`$${totalEfectivo.toLocaleString()}`} />

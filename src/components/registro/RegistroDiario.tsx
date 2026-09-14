@@ -8,6 +8,7 @@ import { iconoDeHabito } from "@/config/habitIcons";
 import { cumplimientoSemanalArea, nivelDesdePP } from "@/lib/formulas";
 import { HITOS_RACHA, rachaDiariaVigente } from "@/lib/achievements";
 import { COLOR_SECCION, colorPorNivel } from "@/lib/color";
+import { celebrarHito } from "@/lib/notificaciones";
 import { CheckCircle2, Flame, Minus, Plus, ShieldCheck, Trash2, Trophy } from "lucide-react";
 
 function valoresVacios(areas: { id: AreaId }[]): Record<AreaId, number> {
@@ -58,8 +59,8 @@ function HabitoCard({
     <div
       className={`rounded-2xl p-4 border transition-all duration-300 ${flash ? "animate-tap" : ""}`}
       style={{
-        borderColor: contestado ? `${color}66` : "rgba(255,255,255,0.06)",
-        background: contestado ? `${color}14` : "rgba(255,255,255,0.02)",
+        borderColor: contestado ? `${color}88` : `${color}4a`,
+        background: contestado ? `${color}26` : `${color}16`,
       }}
     >
       <div className="flex items-center gap-2.5 mb-3">
@@ -171,6 +172,7 @@ export function RegistroDiarioView() {
     const hito = HITOS_RACHA.find((h) => !antes.has(h.id) && despues.some((r) => r.id === h.id));
     if (hito) {
       setHitoCelebrado(hito);
+      celebrarHito(hito.titulo, `Racha de ${hito.dias} días — nuevo título activo.`);
       setTimeout(() => setHitoCelebrado(null), 3400);
     } else {
       setConfirmacion(FRASES_EXITO[Math.floor(Math.random() * FRASES_EXITO.length)]);
@@ -208,9 +210,21 @@ export function RegistroDiarioView() {
     <div className="space-y-6 relative">
       <SectionTitle title="Hábitos" subtitle="Menos de 5 minutos. Sin números de progreso a la vista." accent={COLOR_SECCION.habitos} />
 
-      <Card>
-        <SectionTitle title="Progreso" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+      <Card className="border-habitos-500/35 bg-habitos-500/[0.08]">
+        <SectionTitle title="Progreso" accent={COLOR_SECCION.habitos} />
+        <div className="flex items-center gap-3 sm:gap-4 mb-5 rounded-xl bg-amber-500/[0.08] border border-amber-500/25 px-4 py-3">
+          <Flame className={`w-8 h-8 sm:w-9 sm:h-9 text-amber-400 shrink-0 ${racha > 0 ? "animate-flicker" : ""}`} />
+          <div>
+            <div className="text-4xl sm:text-5xl font-bold tabular-nums text-base-100 leading-none">{rachaMostrada}</div>
+            <div className="text-xs uppercase tracking-wider text-amber-400/90 font-semibold mt-1">
+              {racha === 1 ? "día de racha" : "días de racha"}
+            </div>
+            {racha === 0 && state.registrosDiarios.length > 0 && (
+              <div className="text-xs text-base-500 mt-1">Se pausó, no se borró. Hoy es buen día para reiniciarla.</div>
+            )}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
           <Stat label="Nivel global" value={nivel.nivel} hint={`${Math.round(nivel.progresoPct * 100)}% al siguiente nivel`} />
           <Stat
             label={
@@ -219,20 +233,6 @@ export function RegistroDiarioView() {
               </span>
             }
             value={ppMostrados.toLocaleString()}
-          />
-          <Stat
-            size="lg"
-            label="Racha diaria"
-            value={
-              <span className="inline-flex items-center gap-1.5">
-                <Flame className={`w-6 h-6 text-amber-400 ${racha > 0 ? "animate-flicker" : ""}`} /> {rachaMostrada}
-              </span>
-            }
-            hint={
-              racha === 0 && state.registrosDiarios.length > 0
-                ? "Se pausó, no se borró. Hoy es buen día para reiniciarla."
-                : undefined
-            }
           />
           <Stat
             label={

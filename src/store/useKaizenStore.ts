@@ -450,6 +450,13 @@ export const useKaizenStore = create<KaizenStore>()(
       // (usuario, finanzas o config) no debe perderlo por un reemplazo superficial.
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<KaizenState>;
+        // Perfiles creados antes de subir el umbral de protecciones de 7 a 21 días
+        // quedaron con 7 guardado en su propio localStorage — un default nuevo en
+        // el código nunca los alcanza porque el valor persistido siempre gana. Si
+        // nunca lo personalizaron (sigue exactamente en el valor viejo), adoptan
+        // el nuevo umbral.
+        const economiaPersistida = p.config?.economia;
+        const diasPorProteccion = economiaPersistida?.diasPorProteccion === 7 ? 21 : economiaPersistida?.diasPorProteccion;
         return {
           ...current,
           ...p,
@@ -458,7 +465,11 @@ export const useKaizenStore = create<KaizenStore>()(
           config: {
             ...current.config,
             ...(p.config ?? {}),
-            economia: { ...current.config.economia, ...(p.config?.economia ?? {}) },
+            economia: {
+              ...current.config.economia,
+              ...(p.config?.economia ?? {}),
+              ...(diasPorProteccion !== undefined ? { diasPorProteccion } : {}),
+            },
             textos: { ...current.config.textos, ...(p.config?.textos ?? {}) },
           },
         };

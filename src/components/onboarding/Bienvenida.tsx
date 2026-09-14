@@ -22,7 +22,7 @@ export function BienvenidaFlow({ onFinalizar }: { onFinalizar: () => void }) {
             <div className="text-lg font-semibold tracking-tight">Bienvenido a Kaizen</div>
             <p className="text-sm text-base-400 mt-2 leading-relaxed">
               改善 — kaizen: mejora continua. No una transformación de la noche a la mañana, sino un 1% cada día. Aquí
-              ese 1% se ve, en rachas, niveles y logros. Nunca en dinero.
+              ese 1% se ve, en rachas, niveles y logros.
             </p>
             <Button className="w-full mt-6" onClick={() => setPantalla(2)}>
               Continuar
@@ -32,7 +32,7 @@ export function BienvenidaFlow({ onFinalizar }: { onFinalizar: () => void }) {
           <>
             <div className="text-lg font-semibold tracking-tight mb-4">¿Hasta dónde puedes llegar?</div>
             <div className="space-y-3 text-sm text-base-300 leading-relaxed">
-              <p>Elige 2 o 3 hábitos para sostener. Cúmplelos hoy, mañana, y al día siguiente.</p>
+              <p>Elige los hábitos que quieras mejorar. Cúmplelos hoy, mañana, y al día siguiente.</p>
               <p className="text-base font-medium text-base-100">
                 Cada racha que mantienes es la prueba de lo que eres capaz de hacer.
               </p>

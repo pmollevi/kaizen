@@ -1,6 +1,6 @@
-// "Temperatura" de color: los acentos de categoría empiezan apagados y ganan
-// intensidad conforme el hábito sube de nivel — nunca cambia fondo/tipografía,
-// solo este acento puntual (ver DESIGN.md "Datos (categorías de hábito)").
+// "Temperatura" de color: los acentos de categoría ya nacen vivos y ganan un
+// poco más de intensidad conforme el hábito sube de nivel — nunca cambia
+// fondo/tipografía, solo este acento puntual (ver DESIGN.md "Datos").
 
 function hexARgb(hex: string): [number, number, number] {
   const limpio = hex.replace("#", "");
@@ -27,7 +27,7 @@ export function factorMaestria(nivel: number, tope = TOPE_NIVEL): number {
  */
 export function colorPorNivel(colorBase: string, nivel: number, tope = TOPE_NIVEL): string {
   const factor = factorMaestria(nivel, tope);
-  const intensidad = 0.3 + 0.7 * factor; // nunca 100% gris, siempre reconocible como esa categoría
+  const intensidad = 0.78 + 0.22 * factor; // vivo desde el nivel 1 (estilo Duolingo); el nivel tope solo lo remata
   const [r1, g1, b1] = hexARgb(GRIS_FRIO);
   const [r2, g2, b2] = hexARgb(colorBase);
   return rgbAHex(r1 + (r2 - r1) * intensidad, g1 + (g2 - g1) * intensidad, b1 + (b2 - b1) * intensidad);
@@ -39,8 +39,8 @@ export function colorPorNivel(colorBase: string, nivel: number, tope = TOPE_NIVE
  * la tipografía y el acento de acción (verde Kaizen) no cambian por esto.
  */
 export const COLOR_SECCION = {
-  panel: "#7B835C",
-  habitos: "#BD7A52",
-  finanzas: "#4B8078",
-  recompensas: "#C5A85B",
+  panel: "#5BDA72",
+  habitos: "#FF9600",
+  finanzas: "#4FC3F7",
+  recompensas: "#FFC800",
 } as const;

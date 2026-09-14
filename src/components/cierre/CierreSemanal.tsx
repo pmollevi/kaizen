@@ -21,7 +21,7 @@ function FormularioCierre({ inicio, onCerrado }: { inicio: string; onCerrado: ()
   const toggleBono = (id: string) => setBonosIds((b) => (b.includes(id) ? b.filter((x) => x !== id) : [...b, id]));
 
   return (
-    <Card className="border-kaizen-500/20">
+    <Card className="border-kaizen-500/40">
       <SectionTitle title={`Cerrar semana`} subtitle={`${formatoLargo(inicio)} – ${formatoLargo(fin)}`} />
       <div className="mb-4">
         <div className="text-xs uppercase tracking-wide text-base-400 mb-2">Bonos por resultados reales</div>
@@ -68,7 +68,7 @@ function ResultadoCierre({ id }: { id: string }) {
     <Card className="border-emerald-900 bg-emerald-950/20">
       <SectionTitle title="Semana cerrada" subtitle={`${formatoLargo(cierre.semanaInicio)} – ${formatoLargo(cierre.semanaFin)}`} />
       {cierre.protegida ? (
-        <div className="flex items-center gap-2.5 rounded-xl border border-gold-500/40 bg-gold-500/[0.06] px-4 py-3 animate-pop">
+        <div className="flex items-center gap-2.5 rounded-xl border border-gold-500/40 bg-gold-500/[0.09] px-4 py-3 animate-pop">
           <ShieldCheck className="w-5 h-5 text-gold-400 shrink-0" />
           <span className="text-sm text-base-200">
             Tu racha de <span className="font-semibold text-gold-400">{rachaDiariaVigente(state)} días</span> se salvó ✓ — se usó una

@@ -12,6 +12,7 @@ const PASOS: PasoCoach[] = [
   { targetId: "coach-nav-registro", texto: "Hábitos: el detalle y el progreso de cada uno que elegiste." },
   { targetId: "coach-nav-finanzas", texto: "Finanzas: control de gastos, completamente separado de tus hábitos." },
   { targetId: "coach-nav-recompensas", texto: "Recompensas: tu racha, tus protecciones y los logros que vas desbloqueando." },
+  { targetId: "coach-fab-gasto", texto: "Registra un gasto en segundos desde cualquier pantalla con este botón." },
 ];
 
 /** Primer elemento con ese data-coach que esté realmente visible (evita apuntar al nav oculto por el breakpoint). */
@@ -82,7 +83,8 @@ export function Coachmarks({ onTerminar }: { onTerminar: () => void }) {
         }}
       />
       <div
-        className="fixed w-[260px] rounded-xl border border-base-700 bg-base-900 p-4 shadow-soft animate-pop"
+        key={paso}
+        className="fixed w-[260px] max-w-[calc(100vw-20px)] rounded-xl border border-base-700 bg-base-900 p-4 shadow-soft animate-pop"
         style={{ top: arriba ? undefined : top, bottom: arriba ? window.innerHeight - top : undefined, left }}
       >
         <div className="text-[11px] uppercase tracking-wider text-base-500 font-medium mb-1.5">

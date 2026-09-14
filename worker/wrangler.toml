@@ -1,0 +1,22 @@
+name = "kaizen-push"
+main = "src/index.ts"
+compatibility_date = "2026-09-13"
+workers_dev = true
+preview_urls = false
+
+# Corre dos veces al dia (01:00 y 13:00 UTC) a revisar rachas en riesgo y
+# cortes de tarjeta proximos. Ver README.md de esta carpeta: al no conocer la
+# zona horaria del usuario, estos horarios son un promedio razonable, no una
+# hora local exacta.
+[triggers]
+crons = ["0 1 * * *", "0 13 * * *"]
+
+# id se llena con el que devuelve `wrangler kv namespace create KAIZEN_PUSH_KV`
+[[kv_namespaces]]
+binding = "KAIZEN_PUSH_KV"
+id = "56b3828b8c9645209bb8fe488e1ffb56"
+
+[vars]
+VAPID_PUBLIC_RAW = "BCQxzQiQ6nIBsprzmUkbul-_PB_3prSg5KubO033PgcW1TR0w5tTkdIrpIrSR8Dsu6g5llfsZ5I8IwIIKQF6yfI"
+VAPID_SUBJECT = "mailto:pablomollevi2007@gmail.com"
+ALLOWED_ORIGIN = "https://pmollevi.github.io"

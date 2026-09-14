@@ -19,7 +19,7 @@ function formatear(v: number): string {
 
 // Regla horizontal: el usuario arrastra/hace scroll para ajustar el valor.
 // Las marcas se desplazan bajo un indicador fijo al centro, en vez de escribir un número.
-export function SelectorHorizontal({ value, onChange, min, max, step, unidad, color = "#7B835C" }: Props) {
+export function SelectorHorizontal({ value, onChange, min, max, step, unidad, color = "#5BDA72" }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [anchoContenedor, setAnchoContenedor] = useState(280);
   const [editando, setEditando] = useState(false);

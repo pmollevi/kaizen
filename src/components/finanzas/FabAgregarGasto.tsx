@@ -75,9 +75,10 @@ export function FabAgregarGasto() {
       <button
         onClick={() => setAbierto(true)}
         aria-label="Agregar gasto rápido"
-        className="fixed z-40 right-4 md:right-6 bottom-24 md:bottom-6 w-14 h-14 rounded-full bg-finanzas-500 hover:bg-finanzas-600 active:scale-95 transition-all flex items-center justify-center text-base-100 shadow-soft"
+        data-coach="coach-fab-gasto"
+        className="fixed z-40 right-4 md:right-6 bottom-24 md:bottom-6 w-14 h-14 rounded-full bg-finanzas-400 hover:bg-finanzas-300 active:scale-95 transition-all flex items-center justify-center text-base-950 shadow-soft"
       >
-        <Plus className="w-6 h-6" />
+        <Plus className="w-6 h-6" strokeWidth={2.5} />
       </button>
 
       {abierto && (
@@ -131,7 +132,7 @@ export function FabAgregarGasto() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setMetodo("efectivo")}
-                    className={`h-10 rounded-xl text-sm font-medium border transition-colors ${
+                    className={`h-10 rounded-xl text-sm font-medium border transition-all active:scale-95 ${
                       metodo === "efectivo" ? "border-finanzas-500/40 bg-finanzas-500/10 text-finanzas-400" : "border-base-700 text-base-400"
                     }`}
                   >
@@ -140,7 +141,7 @@ export function FabAgregarGasto() {
                   <button
                     onClick={() => setMetodo("tarjeta")}
                     disabled={state.finanzas.tarjetas.length === 0}
-                    className={`h-10 rounded-xl text-sm font-medium border transition-colors disabled:opacity-40 ${
+                    className={`h-10 rounded-xl text-sm font-medium border transition-all active:scale-95 disabled:opacity-40 disabled:active:scale-100 ${
                       metodo === "tarjeta" ? "border-finanzas-500/40 bg-finanzas-500/10 text-finanzas-400" : "border-base-700 text-base-400"
                     }`}
                   >

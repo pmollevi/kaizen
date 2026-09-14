@@ -8,7 +8,7 @@ html {
 
 body {
   @apply bg-base-950 text-base-100 antialiased;
-  background-image: radial-gradient(1200px 700px at 50% -10%, rgba(123, 131, 92, 0.05), transparent 60%);
+  background-image: radial-gradient(1200px 700px at 50% -10%, rgba(47, 163, 71, 0.06), transparent 60%);
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
@@ -31,7 +31,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 ::selection {
-  background: rgba(123, 131, 92, 0.35);
+  background: rgba(47, 163, 71, 0.35);
 }
 
 .no-scrollbar {

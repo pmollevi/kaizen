@@ -5,3 +5,5 @@ dist
 .env
 _design-skills
 *.zip
+.wrangler
+.dev.vars

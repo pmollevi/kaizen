@@ -18,44 +18,47 @@ export default {
           200: "#C7C9BE",
           100: "#F2F1EC", // texto principal
         },
+        // Paleta viva estilo Duolingo: colores saturados sobre fondo oscuro, no
+        // pasteles ni acentos apagados — ver DESIGN.md "Colors".
         kaizen: {
-          200: "#D8DAC7",
-          300: "#B7BC9C",
-          400: "#9BA37C",
-          500: "#7B835C",
-          600: "#636B47",
+          200: "#BFF0C8",
+          300: "#8FE6A0",
+          400: "#5BDA72",
+          500: "#2FA347", // relleno de botón: verde vivo pero con suficiente cuerpo para el texto claro encima
+          600: "#22832F",
         },
         gold: {
-          400: "#D4BC7C",
-          500: "#C5A85B",
-          600: "#A98B44",
+          300: "#FFE685",
+          400: "#FFD84D",
+          500: "#FFC800",
+          600: "#D9A800",
         },
         // Identidad de sección (Panel = kaizen, Recompensas = gold ya existentes):
         // Hábitos y Finanzas ganan su propio acento para que el color diga en
         // qué parte de la app estás, sin tocar el fondo/tipografía de base.
         habitos: {
-          300: "#E0BFA4",
-          400: "#CE9B72",
-          500: "#BD7A52",
-          600: "#96603F",
+          300: "#FFC773",
+          400: "#FFA733",
+          500: "#FF9600",
+          600: "#D97D00",
         },
         finanzas: {
-          300: "#A9C9C3",
-          400: "#78A69D",
-          500: "#4B8078",
-          600: "#3A6660",
+          300: "#8FDBFB",
+          400: "#4FC3F7",
+          500: "#0D8FCC", // relleno del FAB: azul vivo pero con cuerpo suficiente para el texto claro encima
+          600: "#0A6FA0",
         },
         area: {
-          intelecto: "#6B7A8F",
-          imperio: "#A97C50",
-          fuerza: "#B5624A",
-          vitalidad: "#5E8C5A",
-          energia: "#7E6C9E",
-          sabiduria: "#4F7C7A",
-          serenidad: "#8FA084",
-          vinculos: "#A9667A",
-          creatividad: "#A79BC0",
-          gratitud: "#C9AA5C",
+          intelecto: "#4D8DFF",
+          imperio: "#FFA229",
+          fuerza: "#FF5C5C",
+          vitalidad: "#3DDC5A",
+          energia: "#9D6BFF",
+          sabiduria: "#2BD4C4",
+          serenidad: "#3DC7EF",
+          vinculos: "#FF6FB8",
+          creatividad: "#C77DFF",
+          gratitud: "#FFCF33",
         },
       },
       fontFamily: {

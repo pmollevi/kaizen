@@ -35,24 +35,21 @@ export function RecompensasView() {
         accent={COLOR_SECCION.recompensas}
       />
 
-      <Card>
-        <Stat
-          label="Racha diaria actual"
-          value={
-            <span className="inline-flex items-center gap-1.5">
-              <Flame className={`w-5 h-5 text-amber-400 ${racha > 0 ? "animate-flicker" : ""}`} />
-              {racha} {racha === 1 ? "día" : "días"}
-            </span>
-          }
-          hint="días seguidos cumpliendo todos tus hábitos"
-        />
+      <Card className="border-amber-500/25 bg-amber-500/[0.06]">
+        <div className="text-xs uppercase tracking-wider text-amber-400/90 font-semibold mb-2">Racha diaria actual</div>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Flame className={`w-8 h-8 sm:w-9 sm:h-9 text-amber-400 shrink-0 ${racha > 0 ? "animate-flicker" : ""}`} />
+          <div className="text-4xl sm:text-5xl font-bold tabular-nums text-base-100 leading-none">{racha}</div>
+        </div>
+        <div className="text-xs text-base-500 mt-2">días seguidos cumpliendo todos tus hábitos</div>
       </Card>
 
       {mensaje && <div className="text-sm px-4 py-2.5 rounded-lg bg-base-850 border border-base-700">{mensaje}</div>}
 
-      <Card>
+      <Card className="border-gold-500/35 bg-gold-500/[0.08]">
         <SectionTitle
           title={state.config.textos.escudos}
+          accent={COLOR_SECCION.recompensas}
           subtitle={`Cada ${diasPorProteccion} días de racha se cambian por 1 protección. Cubren una semana mala sin romper tu historial.`}
         />
         <div className="flex items-center justify-between mb-3">
