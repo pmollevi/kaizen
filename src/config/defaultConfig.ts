@@ -50,6 +50,7 @@ export const USUARIO_DEFAULT: Usuario = {
   ppTotales: 0,
   protecciones: 0,
   diasRachaCanjeados: 0,
+  diasProtegidos: [],
   tituloActivo: null,
 };
 

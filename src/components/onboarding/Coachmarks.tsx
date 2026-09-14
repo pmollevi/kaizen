@@ -51,6 +51,13 @@ export function Coachmarks({ onTerminar }: { onTerminar: () => void }) {
   const step = PASOS[paso];
   const rect = useRectDeCoach(step.targetId);
 
+  // Lleva la pantalla al elemento de este paso — en mobile, sin esto, el
+  // usuario tiene que buscar manualmente a qué apunta cada burbuja.
+  useEffect(() => {
+    const el = elementoVisible(step.targetId);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [step.targetId]);
+
   // Si el objetivo de este paso no está en pantalla, no se traba: avanza solo.
   useEffect(() => {
     if (rect) return;

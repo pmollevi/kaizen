@@ -1,5 +1,5 @@
 import type { KaizenState } from "@/types";
-import { diasEntre, hoyISO, mesDe } from "@/lib/dates";
+import { diasEntre, hoyISO, mesDe, sumarDias } from "@/lib/dates";
 
 /**
  * Hitos de racha diaria: cada uno es a la vez un reconocimiento (ver
@@ -32,17 +32,32 @@ export function evaluarReconocimientos(state: KaizenState): string[] {
   return nuevos;
 }
 
-/** Días seguidos (contando hoy/ayer) con todos los hábitos activos cumplidos (valor > 0). */
+/** ¿Ese día se registraron todos los hábitos activos (valor > 0)? */
+export function esDiaCompleto(state: KaizenState, fecha: string): boolean {
+  if (state.areas.length === 0) return false;
+  const r = state.registrosDiarios.find((x) => x.fecha === fecha);
+  if (!r) return false;
+  return state.areas.every((a) => (r.valores[a.id] ?? 0) > 0);
+}
+
+/**
+ * Días seguidos (contando hoy/ayer) con todos los hábitos activos cumplidos.
+ * Un día sin registrar rompe la racha, salvo que esté en `usuario.diasProtegidos`
+ * (una protección ya lo cubrió automáticamente — ver procesarProteccionDiariaAutomatica
+ * en el store). A diferencia de la versión anterior, esto sí detecta huecos reales
+ * de calendario entre registros, no solo la antigüedad del más reciente.
+ */
 export function rachaDiariaVigente(state: KaizenState): number {
   if (state.areas.length === 0) return 0;
-  const registros = [...state.registrosDiarios].sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
-  if (registros.length === 0) return 0;
-  if (diasEntre(registros[0].fecha, hoyISO()) > 1) return 0;
+  const protegidos = new Set(state.usuario.diasProtegidos);
   let racha = 0;
-  for (const r of registros) {
-    const completo = state.areas.every((a) => (r.valores[a.id] ?? 0) > 0);
-    if (completo) racha += 1;
-    else break;
+  let fecha = hoyISO();
+  // Hoy puede seguir sin registrar (el día aún no termina): eso no cuenta ni
+  // rompe nada todavía, se evalúa a partir de ayer.
+  if (!esDiaCompleto(state, fecha)) fecha = sumarDias(fecha, -1);
+  while (esDiaCompleto(state, fecha) || protegidos.has(fecha)) {
+    racha += 1;
+    fecha = sumarDias(fecha, -1);
   }
   return racha;
 }

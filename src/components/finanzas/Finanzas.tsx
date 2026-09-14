@@ -1,10 +1,15 @@
-import React, { useState } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { SectionTitle } from "@/components/ui/Primitives";
 import { TarjetasTab } from "@/components/finanzas/Tarjetas";
 import { GastosTab } from "@/components/finanzas/Gastos";
 import { PanelFinancieroTab } from "@/components/finanzas/PanelFinanciero";
-import { ResumenMensualTab } from "@/components/finanzas/ResumenMensual";
 import { COLOR_SECCION } from "@/lib/color";
+
+// La librería de gráficas solo se necesita en esta pestaña — separada en su
+// propio chunk para no engordar la carga inicial de toda la app.
+const ResumenMensualTab = lazy(() =>
+  import("@/components/finanzas/ResumenMensual").then((m) => ({ default: m.ResumenMensualTab }))
+);
 
 type SubTab = "resumen" | "gastos" | "tarjetas" | "mensual";
 
@@ -40,7 +45,11 @@ export function FinanzasView() {
       {tab === "resumen" && <PanelFinancieroTab />}
       {tab === "gastos" && <GastosTab />}
       {tab === "tarjetas" && <TarjetasTab />}
-      {tab === "mensual" && <ResumenMensualTab />}
+      {tab === "mensual" && (
+        <Suspense fallback={<div className="text-sm text-base-500 py-8 text-center">Cargando gráficas…</div>}>
+          <ResumenMensualTab />
+        </Suspense>
+      )}
     </div>
   );
 }

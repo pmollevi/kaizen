@@ -155,7 +155,7 @@ function TarjetaMetaGrande() {
             <div className="w-9 h-9 rounded-xl bg-gold-500/10 border border-gold-500/40 flex items-center justify-center shrink-0">
               <Target className="w-4 h-4 text-gold-400" />
             </div>
-            <p className="text-sm text-base-200 leading-relaxed">{metaActual.descripcion}</p>
+            <p className="text-sm text-base-200 leading-relaxed min-w-0 flex-1 break-words">{metaActual.descripcion}</p>
           </div>
           <div className="flex items-center justify-between mt-4">
             <Badge tone="blue">En curso</Badge>

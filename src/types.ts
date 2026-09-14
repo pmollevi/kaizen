@@ -242,6 +242,7 @@ export interface Usuario {
   ppTotales: number;
   protecciones: number;
   diasRachaCanjeados: number; // ledger: días de racha ya cambiados por protecciones
+  diasProtegidos: string[]; // fechas (ISO) de días sin registrar que ya consumieron una protección automática — la racha diaria los cuenta como cumplidos
   tituloActivo: string | null;
 }
 

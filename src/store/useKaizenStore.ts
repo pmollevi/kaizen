@@ -21,7 +21,7 @@ import {
   resumenesTarjetaPendientes,
   semanasPendientes,
 } from "@/lib/cierre";
-import { HITOS_RACHA, evaluarReconocimientos, rachaDiariaVigente } from "@/lib/achievements";
+import { HITOS_RACHA, esDiaCompleto, evaluarReconocimientos, rachaDiariaVigente } from "@/lib/achievements";
 
 const MAX_TARJETAS = 3;
 
@@ -62,6 +62,7 @@ interface Acciones {
 
   cerrarSemana: (inicio: string, bonosIds: string[], proteger: boolean) => void;
   procesarCierresMensualesPendientes: () => void;
+  procesarProteccionDiariaAutomatica: () => void;
 
   canjearRachaPorProteccion: () => { ok: boolean; motivo?: string };
 
@@ -247,6 +248,56 @@ export const useKaizenStore = create<KaizenStore>()(
             },
           }));
         }
+      },
+
+      /**
+       * Corre en cada carga de la app (ver App.tsx): busca días de calendario ya
+       * pasados (antes de ayer hacia atrás) que quedaron sin registrar y aún no
+       * fueron resueltos, y si hay protecciones disponibles las consume
+       * automáticamente día por día (de más antiguo a más reciente dentro del
+       * hueco) para que la racha no se rompa — exactamente como pedía el punto 8:
+       * usar una protección no resta racha, solo reinicia el contador hacia la
+       * siguiente (diasRachaCanjeados = racha actual, o sea disponible vuelve a 0).
+       * Si no alcanzan las protecciones para cubrir todo el hueco, los días que
+       * quedan sin cubrir simplemente dejan que rachaDiariaVigente refleje el
+       * corte ahí — no se inventa cobertura parcial.
+       */
+      procesarProteccionDiariaAutomatica: () => {
+        const s = get();
+        if (s.areas.length === 0) return;
+        const protegidos = new Set(s.usuario.diasProtegidos);
+        const huecos: string[] = [];
+        let fecha = sumarDias(hoyISO(), -1); // desde ayer hacia atrás
+        let pasos = 0;
+        while (pasos < 60) {
+          if (esDiaCompleto(s, fecha) || protegidos.has(fecha)) break;
+          huecos.unshift(fecha);
+          fecha = sumarDias(fecha, -1);
+          pasos++;
+        }
+        if (huecos.length === 0) return;
+
+        let protecciones = s.usuario.protecciones;
+        const nuevosProtegidos: string[] = [];
+        for (const dia of huecos) {
+          if (protecciones <= 0) break;
+          protecciones -= 1;
+          nuevosProtegidos.push(dia);
+        }
+        if (nuevosProtegidos.length === 0) return;
+
+        set((st) => {
+          const diasProtegidos = [...st.usuario.diasProtegidos, ...nuevosProtegidos];
+          const racha = rachaDiariaVigente({ ...st, usuario: { ...st.usuario, diasProtegidos } });
+          return {
+            usuario: {
+              ...st.usuario,
+              protecciones,
+              diasProtegidos,
+              diasRachaCanjeados: racha,
+            },
+          };
+        });
       },
 
       canjearRachaPorProteccion: () => {

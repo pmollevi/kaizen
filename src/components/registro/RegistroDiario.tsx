@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, Textarea, Button, Badge, ProgressBar, Stat, InfoTip, useCountUp } from "@/components/ui/Primitives";
 import { finSemana, formatoLargo, hoyISO, inicioSemana, sumarDias } from "@/lib/dates";
@@ -63,7 +63,7 @@ function HabitoCard({
         background: contestado ? `${color}26` : `${color}16`,
       }}
     >
-      <div className="flex items-center gap-2.5 mb-3">
+      <div className="flex items-start gap-2.5 mb-3">
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: `${color}26` }}
@@ -72,9 +72,11 @@ function HabitoCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-base-100 truncate">{area.nombre}</div>
-          <div className="text-xs text-base-500 truncate">{plantilla?.descripcion ?? area.metrica}</div>
+          <div className="text-sm text-base-400 leading-snug mt-0.5 whitespace-pre-line break-words">
+            {plantilla?.descripcion ?? area.metrica}
+          </div>
         </div>
-        {contestado && <CheckCircle2 className="w-4 h-4 shrink-0 animate-pop" style={{ color }} />}
+        {contestado && <CheckCircle2 className="w-4 h-4 shrink-0 animate-pop mt-0.5" style={{ color }} />}
       </div>
 
       {tipo === "binaria" && (
@@ -206,6 +208,16 @@ export function RegistroDiarioView() {
   const rachaMostrada = useCountUp(racha);
   const ppMostrados = useCountUp(state.usuario.ppTotales);
 
+  // Al entrar a Hábitos (desde "Registrar el día" o el nav), lleva directo al
+  // selector de día + tarjetas de registro en vez de dejar al usuario en las
+  // estadísticas de arriba y tener que buscar el formulario con scroll manual.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      document.getElementById("registro-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div className="space-y-6 relative">
       <SectionTitle title="Hábitos" subtitle="Menos de 5 minutos. Sin números de progreso a la vista." accent={COLOR_SECCION.habitos} />
@@ -275,7 +287,7 @@ export function RegistroDiarioView() {
         </div>
       </Card>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div id="registro-form" className="flex items-center gap-2 overflow-x-auto pb-1 scroll-mt-4">
         {ultimos7.map((d) => {
           const tieneRegistro = state.registrosDiarios.some((r) => r.fecha === d);
           const bloqueado = d < limiteAtras;
@@ -355,7 +367,7 @@ export function RegistroDiarioView() {
                 onChange={(e) => setMontoGasto(e.target.value)}
               />
               <select
-                className="bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm"
+                className="bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-base sm:text-sm"
                 value={categoriaGasto}
                 onChange={(e) => setCategoriaGasto(e.target.value)}
               >

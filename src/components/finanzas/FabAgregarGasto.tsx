@@ -4,6 +4,7 @@ import { Button, Field, Input, Select, Badge } from "@/components/ui/Primitives"
 import { hoyISO } from "@/lib/dates";
 import type { MetodoPago } from "@/types";
 import { OrigoMark } from "@/components/ui/OrigoMark";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 import { Plus, X } from "lucide-react";
 
 // El teclado móvil reduce el visualViewport sin encoger el layout viewport (100vh):
@@ -29,6 +30,7 @@ export function FabAgregarGasto() {
   const [palabraClave, setPalabraClave] = useState("");
   const [metodo, setMetodo] = useState<MetodoPago>("efectivo");
   const [tarjetaId, setTarjetaId] = useState("");
+  useBodyScrollLock(abierto);
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const alturaVisible = useAlturaVisible();

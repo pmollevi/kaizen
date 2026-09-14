@@ -247,7 +247,7 @@ function Bonos() {
       <div className="space-y-2">
         {state.config.bonos.map((b) => (
           <div key={b.id} className="flex items-center gap-2">
-            <Input className="flex-1" value={b.nombre} onChange={(e) => actualizar(b.id, { nombre: e.target.value })} />
+            <Input className="flex-1 min-w-0" value={b.nombre} onChange={(e) => actualizar(b.id, { nombre: e.target.value })} />
             <Input className="w-24" type="number" value={b.valorPP} onChange={(e) => actualizar(b.id, { valorPP: parseInt(e.target.value) || 0 })} />
             <span className="text-xs text-base-500">PP</span>
             <button onClick={() => setBonos(state.config.bonos.filter((x) => x.id !== b.id))} className="text-base-500 hover:text-rose-400">

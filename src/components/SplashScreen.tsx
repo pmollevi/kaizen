@@ -11,7 +11,7 @@ export function SplashScreen({ saliendo }: { saliendo: boolean }) {
       <img
         src="/splash-logo.png"
         alt="Origo — start where you are"
-        className="w-48 sm:w-56 animate-pop"
+        className="w-72 sm:w-80 animate-pop"
       />
     </div>
   );

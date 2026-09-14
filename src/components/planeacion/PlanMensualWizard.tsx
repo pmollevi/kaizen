@@ -6,6 +6,7 @@ import { Button, Field, Input, InputDiaDelMes, ScrollFade, useScrollFade } from 
 import { SelectorHorizontal } from "@/components/ui/SelectorHorizontal";
 import { formatoMes, hoyISO, mesDe } from "@/lib/dates";
 import { generarId } from "@/lib/id";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 import { X, Check, Plus, Trash2 } from "lucide-react";
 
 const MAX_TARJETAS = 3;
@@ -139,6 +140,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
   };
 
   const { ref: scrollRef, arribaOculto, abajoOculto, onScroll } = useScrollFade<HTMLDivElement>();
+  useBodyScrollLock(true);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
@@ -250,7 +252,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                         value={metaGrande}
                         onChange={(e) => setMetaGrande(e.target.value)}
                         placeholder="Ej. Entrenar 4 veces por semana y leer 100 páginas"
-                        className="w-full bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:border-kaizen-400 focus:ring-2 focus:ring-kaizen-400/40"
+                        className="w-full bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-base sm:text-sm text-base-100 placeholder:text-base-500 focus:outline-none focus:border-kaizen-400 focus:ring-2 focus:ring-kaizen-400/40"
                       />
                       <div className="text-xs text-base-500 mt-1">Al cerrar el mes te preguntamos si la cumpliste o no.</div>
                     </div>

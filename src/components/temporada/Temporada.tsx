@@ -178,8 +178,13 @@ export function TemporadaView() {
         {t.retoFinal.completado ? (
           <Badge tone="green">Superado el {t.retoFinal.fechaCompletado && formatoLargo(t.retoFinal.fechaCompletado)}</Badge>
         ) : (
-          <div className="flex items-center gap-2">
-            <Input value={retoTexto} onChange={(e) => setRetoTexto(e.target.value)} placeholder="Describe el reto final" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              className="flex-1 min-w-[140px]"
+              value={retoTexto}
+              onChange={(e) => setRetoTexto(e.target.value)}
+              placeholder="Describe el reto final"
+            />
             <Button variant="secondary" onClick={() => setRetoFinal(retoTexto)}>
               Guardar
             </Button>
@@ -211,6 +216,11 @@ export function TemporadaView() {
           </div>
         )}
       </Card>
+
+      {/* Espaciador: evita que "Nuevo desafío" quede tapado por el FAB flotante
+          de gasto rapido cuando esta es la ultima tarjeta y la pantalla es corta
+          (p. ej. cuenta recien creada, sin evento ni desafios todavia). */}
+      <div aria-hidden className="h-14 sm:h-0" />
 
       <Card>
         <SectionTitle title={state.config.textos.misiones} action={

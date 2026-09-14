@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 /**
  * Para contenido scrolleable dentro de un contenedor de altura fija (modales,
@@ -214,8 +215,11 @@ function anchoBase(className: string): string {
   return TIENE_ANCHO_PROPIO.test(className) ? "" : "w-full";
 }
 
+// text-base (16px) en mobile evita que Safari/Chrome hagan zoom automatico al
+// enfocar el campo; desde sm (>=640px, ya no hay ese comportamiento) vuelve a
+// text-sm para no romper la escala tipografica del resto del sistema.
 const CAMPO_BASE =
-  "bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-sm text-base-100 transition-colors focus:outline-none focus:border-kaizen-400 focus:bg-base-800 focus:ring-2 focus:ring-kaizen-400/40";
+  "bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-base sm:text-sm text-base-100 transition-colors focus:outline-none focus:border-kaizen-400 focus:bg-base-800 focus:ring-2 focus:ring-kaizen-400/40";
 
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const { className = "", ...rest } = props;
@@ -309,6 +313,7 @@ export function Modal({
   title: string;
   children: React.ReactNode;
 }) {
+  useBodyScrollLock(open);
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>

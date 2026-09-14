@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, EmptyState } from "@/components/ui/Primitives";
+import { Card, SectionTitle, EmptyState, Stat } from "@/components/ui/Primitives";
 import { formatoLargo } from "@/lib/dates";
+import { GraficaCategorias } from "@/components/finanzas/charts/FinanzasCharts";
 
 export function ResumenesTarjeta() {
   const state = useKaizenStore();
@@ -37,20 +38,15 @@ export function ResumenesTarjeta() {
                   <div className="text-lg font-semibold text-base-100">${r.totalGastado.toLocaleString()}</div>
                 </button>
                 {abiertoAhora && (
-                  <div className="px-4 pb-4 space-y-3">
-                    <div className="text-xs uppercase tracking-wider text-base-500">
-                      {r.numeroGastos} {r.numeroGastos === 1 ? "gasto" : "gastos"}
+                  <div className="px-4 pb-4 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <Stat label="Gastos" value={String(r.numeroGastos)} />
+                      <Stat label="Total del corte" value={`$${r.totalGastado.toLocaleString()}`} />
                     </div>
                     {r.categorias.length > 0 && (
-                      <div className="space-y-1.5">
-                        {r.categorias.map((c) => (
-                          <div key={c.categoriaId} className="flex items-center justify-between text-sm">
-                            <span className="text-base-300">{c.nombre}</span>
-                            <span className="text-base-400">
-                              ${c.monto.toLocaleString()} · {Math.round(c.porcentaje * 100)}%
-                            </span>
-                          </div>
-                        ))}
+                      <div className="pt-3 border-t border-base-700">
+                        <div className="text-xs uppercase tracking-wide text-base-400 mb-2">Por categoría</div>
+                        <GraficaCategorias datos={r.categorias} />
                       </div>
                     )}
                   </div>

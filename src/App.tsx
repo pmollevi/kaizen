@@ -29,6 +29,7 @@ import { HistorialView } from "@/components/historial/Historial";
 import { ConfiguracionView } from "@/components/config/Configuracion";
 import { sincronizarDatosRecordatorio } from "@/lib/push";
 import { SplashScreen } from "@/components/SplashScreen";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 
 type TabId = "panel" | "registro" | "finanzas" | "cierre" | "temporada" | "recompensas" | "reconocimientos" | "historial" | "config";
 
@@ -258,6 +259,7 @@ function MenuOpciones({
   onCambiarPerfil: () => void;
 }) {
   const otras = TABS.filter((t) => !TABS_PRINCIPALES.includes(t.id));
+  useBodyScrollLock(true);
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center md:items-start md:justify-end md:pt-16 md:pr-6"
@@ -320,12 +322,14 @@ export default function App() {
   const nombreSistema = useKaizenStore((s) => s.config.textos.nombreSistema);
   const tituloActivo = useKaizenStore((s) => s.config.catalogoReconocimientos.find((c) => c.id === s.usuario.tituloActivo)?.nombre ?? null);
   const procesarCierres = useKaizenStore((s) => s.procesarCierresMensualesPendientes);
+  const procesarProteccionDiaria = useKaizenStore((s) => s.procesarProteccionDiariaAutomatica);
   const registrosDiarios = useKaizenStore((s) => s.registrosDiarios);
   const tarjetas = useKaizenStore((s) => s.finanzas.tarjetas);
 
   useEffect(() => {
     if (!perfilId) return;
     procesarCierres();
+    procesarProteccionDiaria();
   }, [perfilId]);
 
   // Mantiene al Worker de avisos al día si el usuario ya activó notificaciones
@@ -384,8 +388,8 @@ export default function App() {
     <>
       {splashVisible && <SplashScreen saliendo={splashSaliendo} />}
       <div className="min-h-screen text-base-100 flex">
-      {/* Sidebar de escritorio */}
-      <aside className="hidden md:flex w-56 shrink-0 border-r border-base-700 flex-col bg-base-900">
+      {/* Sidebar de escritorio: sticky para que no se desplace con el scroll de la pagina cuando el contenido es mas alto que la pantalla. */}
+      <aside className="hidden md:flex w-56 shrink-0 border-r border-base-700 flex-col bg-base-900 sticky top-0 h-screen overflow-y-auto">
         <div className="px-4 py-5 flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-base-850 border border-base-700 flex items-center justify-center">
             <OrigoMark size={16} />
@@ -428,7 +432,10 @@ export default function App() {
       </aside>
 
       {/* Barra superior de celular */}
-      <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4 h-14 bg-base-900/95 border-b border-base-700">
+      <header
+        className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4 h-14 bg-base-900/95 border-b border-base-700"
+        style={{ transform: "translateZ(0)" }}
+      >
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-base-850 border border-base-700 flex items-center justify-center">
             <OrigoMark size={13} />
@@ -463,8 +470,13 @@ export default function App() {
         </div>
       </main>
 
-      {/* Barra inferior de celular: mismas 4 secciones principales que el sidebar de escritorio. */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch bg-base-900 border-t border-base-700 pb-[env(safe-area-inset-bottom)]">
+      {/* Barra inferior de celular: mismas 4 secciones principales que el sidebar de escritorio.
+          translateZ(0) fuerza su propia capa de composicion — sin esto, en iOS Safari el
+          elemento fixed puede "saltar" o desaparecer un instante durante el scroll con inercia. */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch bg-base-900 border-t border-base-700 pb-[env(safe-area-inset-bottom)]"
+        style={{ transform: "translateZ(0)" }}
+      >
         {TABS_PRINCIPALES.map((id) => {
           const t = TABS.find((x) => x.id === id)!;
           const Icon = t.icon;

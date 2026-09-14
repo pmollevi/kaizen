@@ -27,11 +27,13 @@ export function RecompensasView() {
     .sort((a, b) => (a.semanaInicio < b.semanaInicio ? 1 : -1))
     .slice(0, 8);
 
+  const diasProtegidosRecientes = [...state.usuario.diasProtegidos].sort((a, b) => (a < b ? 1 : -1)).slice(0, 6);
+
   return (
     <div className="space-y-5">
       <SectionTitle
         title="Racha y protecciones"
-        subtitle="Tu racha diaria se cambia por protecciones que cubren una semana mala sin romper tu historial."
+        subtitle="Tu racha diaria se cambia por protecciones: si un día se te pasa sin registrar, una protección lo cubre sola y tu racha sigue viva."
         accent={COLOR_SECCION.recompensas}
       />
 
@@ -50,9 +52,9 @@ export function RecompensasView() {
         <SectionTitle
           title={state.config.textos.escudos}
           accent={COLOR_SECCION.recompensas}
-          subtitle={`Cada ${diasPorProteccion} días de racha se cambian por 1 protección. Cubren una semana mala sin romper tu historial.`}
+          subtitle={`Cada ${diasPorProteccion} días de racha se cambian por 1 protección. Si falta un día sin registrar, se usa sola y tu racha no se rompe.`}
         />
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-3">
           <span className="text-sm text-base-300">
             {state.usuario.protecciones} / {proteccionesMaxAcumulables} protecciones
           </span>
@@ -66,6 +68,18 @@ export function RecompensasView() {
             <ShieldCheck className="w-4 h-4" /> Canjear racha por protección
           </span>
         </Button>
+        {diasProtegidosRecientes.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-base-700">
+            <div className="text-xs text-base-500 mb-1.5">Días cubiertos automáticamente por una protección:</div>
+            <div className="flex flex-wrap gap-1.5">
+              {diasProtegidosRecientes.map((f) => (
+                <Badge key={f} tone="yellow">
+                  {formatoLargo(f)}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
 
       <Card>
@@ -75,7 +89,7 @@ export function RecompensasView() {
         ) : (
           <ul className="divide-y divide-base-700">
             {cierresRecientes.map((c) => (
-              <li key={c.id} className="flex items-center justify-between py-2.5 text-sm">
+              <li key={c.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2.5 text-sm">
                 <span className="text-base-300">
                   {formatoLargo(c.semanaInicio)} – {formatoLargo(c.semanaFin)}
                 </span>

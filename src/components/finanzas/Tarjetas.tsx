@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, InputDiaDelMes, Button, Badge, EmptyState } from "@/components/ui/Primitives";
-import { ResumenesTarjeta } from "@/components/finanzas/ResumenTarjeta";
 import { hoyISO, formatoMes, mesDe } from "@/lib/dates";
 import { COLOR_SECCION } from "@/lib/color";
 import { Plus, Trash2, CreditCard } from "lucide-react";
+
+// La librería de gráficas solo se necesita aquí — separada en su propio chunk.
+const ResumenesTarjeta = lazy(() =>
+  import("@/components/finanzas/ResumenTarjeta").then((m) => ({ default: m.ResumenesTarjeta }))
+);
 
 const MAX_TARJETAS = 3;
 
@@ -170,7 +174,9 @@ export function TarjetasTab() {
       <IngresoMensualSection />
       <TarjetasSection />
       <CategoriasSection />
-      <ResumenesTarjeta />
+      <Suspense fallback={<div className="text-sm text-base-500 py-8 text-center">Cargando gráficas…</div>}>
+        <ResumenesTarjeta />
+      </Suspense>
     </div>
   );
 }
