@@ -16,10 +16,10 @@ async function mostrar(titulo: string, cuerpo: string): Promise<void> {
   try {
     if ("serviceWorker" in navigator) {
       const registro = await navigator.serviceWorker.ready;
-      await registro.showNotification(titulo, { body: cuerpo, icon: "/icons/icon-192.png" });
+      await registro.showNotification(titulo, { body: cuerpo, icon: "icons/icon-192.png" });
       return;
     }
-    new Notification(titulo, { body: cuerpo, icon: "/icons/icon-192.png" });
+    new Notification(titulo, { body: cuerpo, icon: "icons/icon-192.png" });
   } catch {
     // el banner dentro de la app sigue funcionando igual
   }

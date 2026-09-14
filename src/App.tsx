@@ -329,6 +329,16 @@ export default function App() {
     });
   }, [perfilId, registrosDiarios, tarjetas]);
 
+  // Al tocar una notificación push, el service worker manda a qué pestaña ir (ver public/sw.js).
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const alMensaje = (e: MessageEvent) => {
+      if (e.data?.tipo === "kaizen:ir" && typeof e.data.ir === "string") setTab(e.data.ir as TabId);
+    };
+    navigator.serviceWorker.addEventListener("message", alMensaje);
+    return () => navigator.serviceWorker.removeEventListener("message", alMensaje);
+  }, []);
+
   const perfilActual = useMemo(() => listarPerfiles().find((p) => p.id === perfilId), [perfilId]);
 
   if (!perfilId) {

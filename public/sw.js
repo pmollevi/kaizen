@@ -23,8 +23,10 @@ self.addEventListener("push", (event) => {
   const titulo = datos.title || "Kaizen";
   const opciones = {
     body: datos.body || "",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
+    // Rutas relativas al scope del service worker, no a la raiz del dominio
+    // (la app puede vivir en una subruta, ej. GitHub Pages).
+    icon: "icons/icon-192.png",
+    badge: "icons/icon-192.png",
     data: { ir: datos.ir || "panel" },
     tag: datos.tag || undefined,
   };
@@ -42,7 +44,7 @@ self.addEventListener("notificationclick", (event) => {
           return cliente.focus();
         }
       }
-      return self.clients.openWindow("/");
+      return self.clients.openWindow(self.registration.scope);
     })
   );
 });

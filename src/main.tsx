@@ -9,7 +9,9 @@ import "@/index.css";
 // usuario desde Configuración.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
+    // Ruta relativa a propósito: la app puede vivir en la raíz del dominio o
+    // en una subruta (ej. GitHub Pages, /kaizen/) y "/sw.js" solo funciona en la raíz.
+    navigator.serviceWorker.register("./sw.js").catch(() => {
       // instalación/push no disponibles en este navegador: el resto de la app sigue funcionando igual
     });
   });
