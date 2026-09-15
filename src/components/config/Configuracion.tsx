@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, Select, Button, Badge, StepperPorcentaje } from "@/components/ui/Primitives";
+import { AlimentacionModoForm } from "@/components/planeacion/AlimentacionModoForm";
 import { generarId } from "@/lib/id";
 import type { AreaId, Bono, ReconocimientoCatalogo } from "@/types";
 import { estadoPermisoNotificaciones, type EstadoPermiso } from "@/lib/notificaciones";
@@ -155,6 +156,32 @@ function IdentidadYAreas() {
           Guardar pesos
         </Button>
       </Card>
+
+      {(() => {
+        const areaVitalidad = state.areas.find((a) => a.id === "vitalidad");
+        if (!areaVitalidad) return null;
+        const alimentacion = areaVitalidad.alimentacion ?? { modo: "dieta" as const };
+        return (
+          <Card>
+            <SectionTitle
+              title="Alimentación"
+              subtitle="Cambia cómo llevas este hábito. La elección se guarda de inmediato y aplica desde hoy."
+            />
+            <AlimentacionModoForm
+              alimentacion={alimentacion}
+              metaDiariaActual={areaVitalidad.metaDiaria}
+              onChange={(nuevo) => actualizarAreaConfig("vitalidad", { alimentacion: nuevo })}
+              onMetaKcal={(kcal) =>
+                actualizarAreaConfig("vitalidad", {
+                  alimentacion: { ...alimentacion, modo: "calorias" },
+                  metaDiaria: kcal,
+                  metaSemanalBase: Math.round(kcal * 7),
+                })
+              }
+            />
+          </Card>
+        );
+      })()}
     </div>
   );
 }

@@ -7,9 +7,12 @@ import React from "react";
 
 export type OriMode = "habito" | "finanzas";
 export type OriState = "reposo" | "celebrando" | "enojado" | "protegido";
-export type OriSize = "sm" | "lg";
+export type OriSize = "sm" | "md" | "lg";
 
-const TAMANO_PX: Record<OriSize, number> = { sm: 46, lg: 150 };
+// "md" es para momentos puntuales (ej. bienvenida) que quieren más presencia
+// que el compañero de racha pero sin el peso de la pantalla de celebración
+// (glow + chispas siguen reservados a "lg").
+const TAMANO_PX: Record<OriSize, number> = { sm: 46, md: 92, lg: 150 };
 
 // Gap del aro en reposo/protegido: un arco casi completo con un pequeño corte
 // (352/440 de circunferencia visible). Enojado usa un patrón de 3 segmentos
@@ -26,14 +29,19 @@ const RING_GRADIENTE: Record<OriMode, Record<OriState, string>> = {
   },
   finanzas: {
     reposo: "ori-ringGradFin",
-    protegido: "ori-ringGradFin",
+    // "hay que pagar" usa su propio amarillo — no el gris-azulado de "todo va
+    // bien" — para distinguirse a simple vista de los otros estados de finanzas.
+    protegido: "ori-ringGradPay",
     enojado: "ori-ringGradWarn",
     celebrando: "ori-ringGradBright",
   },
 };
 
-// Pupilas del rostro "contento" (reposo/protegido): verde en hábitos, azul en finanzas.
-const PUPILA_CONTENTO: Record<OriMode, string> = { habito: "#c7d795", finanzas: "#a9c4cf" };
+// Pupilas del rostro "contento" en reposo: verde en hábitos, azul en finanzas.
+const PUPILA_REPOSO: Record<OriMode, string> = { habito: "#c7d795", finanzas: "#a9c4cf" };
+// Pupilas del rostro "contento" con insignia (protegido): verde (escudo) en
+// hábitos, amarillo (chip de tarjeta / "hay que pagar") en finanzas.
+const PUPILA_PROTEGIDO: Record<OriMode, string> = { habito: "#c7d795", finanzas: "#f7e08c" };
 // Rostro "preocupado" (enojado): más apagado en hábitos, más vivo/alerta en finanzas.
 const CARA_PREOCUPADO: Record<OriMode, { sclera: string; pupila: string }> = {
   habito: { sclera: "#dcd9c8", pupila: "#8f9180" },
@@ -69,6 +77,11 @@ export function OriDefs() {
           <stop offset="0%" stopColor="#e3a878" />
           <stop offset="55%" stopColor="#c08653" />
           <stop offset="100%" stopColor="#7a4f2e" />
+        </linearGradient>
+        <linearGradient id="ori-ringGradPay" x1="10%" y1="0%" x2="90%" y2="100%">
+          <stop offset="0%" stopColor="#f7e08c" />
+          <stop offset="55%" stopColor="#e0bd3f" />
+          <stop offset="100%" stopColor="#96731f" />
         </linearGradient>
         <filter id="ori-softGlow" x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="5" result="blur" />
@@ -169,9 +182,9 @@ function InsigniaEscudo() {
 function InsigniaTarjeta() {
   return (
     <>
-      <rect x={130} y={38} width={40} height={34} rx={11} fill="#1c1f13" stroke="#e3a878" strokeWidth={1.4} />
-      <rect x={137} y={47} width={26} height={17} rx={2.5} fill="none" stroke="#e3a878" strokeWidth={2} />
-      <rect x={137} y={51} width={26} height={4} fill="#e3a878" />
+      <rect x={130} y={38} width={40} height={34} rx={11} fill="#1c1f13" stroke="#e0bd3f" strokeWidth={1.4} />
+      <rect x={137} y={47} width={26} height={17} rx={2.5} fill="none" stroke="#e0bd3f" strokeWidth={2} />
+      <rect x={137} y={51} width={26} height={4} fill="#e0bd3f" />
     </>
   );
 }
@@ -181,7 +194,7 @@ export interface OriIconProps {
   mode: OriMode;
   /** Decide la cara, el cierre del aro y (en finanzas) si se dibuja el chip de tarjeta. */
   state: OriState;
-  /** "sm" = compañero junto a la racha (~46px). "lg" = momento de celebración (~150px, con glow). */
+  /** "sm" = compañero junto a la racha (~46px). "md" = momento puntual, ej. bienvenida (~92px). "lg" = celebración (~150px, con glow y chispas). */
   size?: OriSize;
   className?: string;
   /** Texto accesible; por defecto describe mode+state. */
@@ -218,14 +231,14 @@ export function OriIcon({ mode, state, size = "sm", className = "", title }: Ori
     cuerpoClase = ""; // sin flotación: la insignia es la que llama la atención
     contenido = (
       <>
-        <CaraConInsignia pupila={PUPILA_CONTENTO[mode]} />
+        <CaraConInsignia pupila={PUPILA_PROTEGIDO[mode]} />
         {mode === "habito" ? <InsigniaEscudo /> : <InsigniaTarjeta />}
       </>
     );
   } else {
     ringProps = { ...RING_GAP, transform: "rotate(-90 100 100)" };
     cuerpoClase = "motion-safe:animate-ori-float";
-    contenido = <CaraIdle pupila={PUPILA_CONTENTO[mode]} />;
+    contenido = <CaraIdle pupila={PUPILA_REPOSO[mode]} />;
   }
 
   return (

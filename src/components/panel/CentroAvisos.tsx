@@ -5,6 +5,7 @@ import { calcularAvisos, marcarDescartado, obtenerDescartados, type Aviso } from
 import { notificarSiEnSegundoPlano } from "@/lib/notificaciones";
 import { getPerfilActivo } from "@/store/profiles";
 import { X, Flame, CreditCard } from "lucide-react";
+import { OriIcon } from "@/components/ui/OriIcon";
 
 const ESTILO_TONO: Record<Aviso["tono"], string> = {
   urgente: "border-amber-500/30 bg-amber-500/[0.06]",
@@ -50,7 +51,11 @@ export function CentroAvisos({ irA }: { irA: (tab: string) => void }) {
             className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border px-4 py-3 animate-pop ${ESTILO_TONO[a.tono]}`}
           >
             <div className="flex items-start gap-2.5 min-w-0">
-              <Icono className="w-4 h-4 shrink-0 text-base-300 mt-0.5" />
+              {a.id.startsWith("corte-") ? (
+                <OriIcon mode="finanzas" state="protegido" size="sm" className="shrink-0 -my-2" title="Hay que pagar: corte próximo" />
+              ) : (
+                <Icono className="w-4 h-4 shrink-0 text-base-300 mt-0.5" />
+              )}
               <span className="text-sm text-base-200">{a.texto}</span>
             </div>
             <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">

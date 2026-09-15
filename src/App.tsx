@@ -83,7 +83,6 @@ function PantallaLogin({
   onEntrar: (esNuevo: boolean) => void;
   onIrACrear: () => void;
 }) {
-  const reiniciar = useKaizenStore((s) => s.reiniciarConNombre);
   const [nombre, setNombre] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -108,8 +107,12 @@ function PantallaLogin({
       return;
     }
     setPerfilActivo(perfil.id);
-    reiniciar(perfil.nombre);
-    useKaizenStore.persist.rehydrate();
+    // OJO: nunca llamar reiniciarConNombre aquí — reemplaza el estado en
+    // memoria por uno en blanco y, como el middleware persist escribe en
+    // cada `set()`, eso sobreescribía kaizen:datos:<perfil.id> con datos
+    // vacíos antes de que rehydrate() alcanzara a cargar los reales. Un
+    // perfil existente solo necesita rehidratarse desde su propio storage.
+    await useKaizenStore.persist.rehydrate();
     onEntrar(false);
   };
 

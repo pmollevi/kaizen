@@ -140,7 +140,7 @@ export default {
         "fade-up": "fade-up 0.25s ease-out",
         wiggle: "wiggle 0.4s ease-in-out",
         confetti: "confetti-fall 0.9s ease-in forwards",
-        "toast-fill": "toast-fill 3.2s cubic-bezier(0.16,1,0.3,1) forwards",
+        "toast-fill": "toast-fill 4.5s cubic-bezier(0.16,1,0.3,1) forwards",
         tap: "tap 0.12s ease-out",
         flicker: "flicker 1.8s ease-in-out infinite",
         "radar-in": "radar-in 0.45s cubic-bezier(0.16,1,0.3,1)",

@@ -216,6 +216,7 @@ export function estadoInicial(nombreUsuario: string): KaizenState {
     usuario: { ...USUARIO_DEFAULT, nombre: nombreUsuario },
     areas: AREAS_DEFAULT.map((a) => ({ ...a })),
     registrosDiarios: [],
+    comidas: [],
     finanzas: {
       ...FINANZAS_DEFAULT,
       categorias: FINANZAS_DEFAULT.categorias.map((c) => ({ ...c })),

@@ -7,6 +7,8 @@ import { SelectorHorizontal } from "@/components/ui/SelectorHorizontal";
 import { formatoMes, hoyISO, mesDe } from "@/lib/dates";
 import { generarId } from "@/lib/id";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
+import { AlimentacionModoForm } from "@/components/planeacion/AlimentacionModoForm";
+import type { ConfigAlimentacion } from "@/types";
 import { X, Check, Plus, Trash2 } from "lucide-react";
 
 const MAX_TARJETAS = 3;
@@ -15,7 +17,7 @@ const MAX_TARJETAS = 3;
 // y la semanal se calcula sola. Para hábitos que ya son un conteo semanal
 // (días entrenados, veces con amigos) el número que pone ya es la meta semanal.
 function esMetaDiaria(tipo: PlantillaArea["tipoMeta"]): boolean {
-  return tipo === "horas" || tipo === "minutos" || tipo === "paginas" || tipo === "conteo3";
+  return tipo === "horas" || tipo === "minutos" || tipo === "paginas";
 }
 
 function metaSemanalDesdeValor(c: PlantillaArea, valor: number): number {
@@ -35,7 +37,6 @@ function valorInicial(c: PlantillaArea, existente: { metaDiaria: number | null; 
 // propósito — cubre a quien lee/entrena/trabaja muy por encima del promedio;
 // quien tenga una meta todavía mayor puede tocar el número y escribirla.
 function rangoParaTipo(c: PlantillaArea): { min: number; max: number; step: number } {
-  if (c.tipoMeta === "conteo3") return { min: 0, max: 3, step: 1 };
   if (c.tipoMeta === "binaria") return { min: 0, max: 7, step: 1 };
   if (c.tipoMeta === "veces") return { min: 0, max: 14, step: 1 };
   if (c.tipoMeta === "horas") return { min: 0, max: 16, step: 0.5 };
@@ -65,6 +66,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
   const setMetaMensual = useKaizenStore((s) => s.setMetaMensual);
   const setIngresoMensual = useKaizenStore((s) => s.setIngresoMensual);
   const agregarTarjeta = useKaizenStore((s) => s.agregarTarjeta);
+  const actualizarAreaConfig = useKaizenStore((s) => s.actualizarAreaConfig);
 
   const esPrimeraVez = state.planesMensuales.length === 0;
   const [mes] = useState(mesDe(hoyISO()));
@@ -79,12 +81,25 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
   const idsActivosIniciales = esPrimeraVez ? [] : state.areas.map((a) => a.id);
   const [seleccionados, setSeleccionados] = useState<string[]>(idsActivosIniciales);
 
+  // Modo de Alimentación (dieta/calorías) — se configura aquí, antes de la
+  // meta, y solo aplica al hábito "vitalidad". Ver AlimentacionModoForm.
+  const areaVitalidadExistente = state.areas.find((a) => a.id === "vitalidad");
+  const [alimentacionCfg, setAlimentacionCfg] = useState<ConfigAlimentacion>(
+    areaVitalidadExistente?.alimentacion ?? { modo: "dieta" }
+  );
+
   const [metas, setMetas] = useState<Record<string, number>>(() => {
     const m: Record<string, number> = {};
     for (const id of idsActivosIniciales) {
       const c = CATALOGO_AREAS.find((x) => x.id === id);
       if (!c) continue;
       m[id] = valorInicial(c, state.areas.find((a) => a.id === id));
+    }
+    // En modo calorías, la "meta" de vitalidad son las kcal/día, no la
+    // lectura binaria genérica — si ya había una meta diaria guardada de una
+    // planeación anterior, se retoma tal cual en vez del default binario.
+    if (m["vitalidad"] !== undefined && alimentacionCfg.modo === "calorias" && areaVitalidadExistente?.metaDiaria) {
+      m["vitalidad"] = areaVitalidadExistente.metaDiaria;
     }
     return m;
   });
@@ -101,7 +116,13 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
     setSeleccionados(nuevos);
     if (!(id in metas)) {
       const c = CATALOGO_AREAS.find((x) => x.id === id);
-      if (c) setMetas((m) => ({ ...m, [id]: valorInicial(c, state.areas.find((a) => a.id === id)) }));
+      if (!c) return;
+      const existente = state.areas.find((a) => a.id === id);
+      const valor =
+        id === "vitalidad" && alimentacionCfg.modo === "calorias" && existente?.metaDiaria
+          ? existente.metaDiaria
+          : valorInicial(c, existente);
+      setMetas((m) => ({ ...m, [id]: valor }));
     }
   };
 
@@ -111,9 +132,27 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
       mes,
       habitos: seleccionados.map((id) => {
         const c = CATALOGO_AREAS.find((x) => x.id === id)!;
-        return { id, peso: (pesos[id] ?? 0) / 100, metaSemanal: metaSemanalDesdeValor(c, metas[id] ?? 0) };
+        // Vitalidad en modo calorías: la "meta" son kcal/día, no la lectura
+        // binaria genérica de tipoMeta — se trata como cualquier meta diaria
+        // (x7 para la semanal), igual que horas/páginas/minutos.
+        const metaSemanal =
+          id === "vitalidad" && alimentacionCfg.modo === "calorias"
+            ? Math.round((metas[id] ?? 0) * 7 * 100) / 100
+            : metaSemanalDesdeValor(c, metas[id] ?? 0);
+        return { id, peso: (pesos[id] ?? 0) / 100, metaSemanal };
       }),
     });
+    // aplicarPlanMensual reconstruye cada AreaConfig desde cero y no conserva
+    // `alimentacion` — hay que reponerlo aparte, después. Además, su cálculo
+    // genérico de metaDiaria sale de plantilla.metaDiariaSugerida (null para
+    // vitalidad, pensado para el modo dieta), así que en modo calorías
+    // siempre daría metaDiaria=null — se corrige aquí con las kcal reales.
+    if (seleccionados.includes("vitalidad")) {
+      actualizarAreaConfig("vitalidad", {
+        alimentacion: alimentacionCfg,
+        ...(alimentacionCfg.modo === "calorias" ? { metaDiaria: metas["vitalidad"] ?? 0 } : {}),
+      });
+    }
     if (metaGrande.trim()) setMetaMensual(mes, metaGrande.trim());
     if (ingresoMensual > 0) setIngresoMensual(mes, ingresoMensual);
     for (const t of tarjetasNuevas) {
@@ -209,6 +248,7 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                 const semanal = metaSemanalDesdeValor(c, valor);
                 const Icono = iconoDeHabito(c.id);
                 const rango = rangoParaTipo(c);
+                const esVitalidad = id === "vitalidad";
 
                 return (
                   <div className="space-y-5">
@@ -221,22 +261,55 @@ export function PlanMensualWizard({ onClose }: { onClose: () => void }) {
                         <Icono className="w-5 h-5" style={{ color: c.color }} />
                         <span className="text-base font-semibold text-base-100">{c.nombre}</span>
                       </div>
-                      <div className="text-xs text-base-500 text-center mb-4">
-                        {diaria ? "meta diaria" : "meta semanal"} · {c.unidad}
-                      </div>
-                      <SelectorHorizontal
-                        value={valor}
-                        onChange={(v) => setMetas((m) => ({ ...m, [id]: v }))}
-                        min={rango.min}
-                        max={rango.max}
-                        step={rango.step}
-                        unidad={c.unidad}
-                        color={c.color}
-                      />
-                      {diaria && (
-                        <div className="text-xs text-base-500 text-center mt-1">
-                          = <span className="text-base-200 font-medium">{semanal}</span> a la semana
+
+                      {esVitalidad ? (
+                        <div className="space-y-4">
+                          <AlimentacionModoForm
+                            alimentacion={alimentacionCfg}
+                            metaDiariaActual={metas[id]}
+                            onChange={setAlimentacionCfg}
+                            onMetaKcal={(kcal) => setMetas((m) => ({ ...m, [id]: kcal }))}
+                          />
+                          {alimentacionCfg.modo === "dieta" && (
+                            <div className="pt-3 border-t border-base-700/60">
+                              <div className="text-xs text-base-500 text-center mb-3">meta semanal · días cumpliendo tu dieta</div>
+                              <SelectorHorizontal
+                                value={valor}
+                                onChange={(v) => setMetas((m) => ({ ...m, [id]: v }))}
+                                min={0}
+                                max={7}
+                                step={1}
+                                unidad="días"
+                                color={c.color}
+                              />
+                            </div>
+                          )}
+                          {alimentacionCfg.modo === "calorias" && valor > 0 && (
+                            <div className="text-xs text-base-500 text-center pt-3 border-t border-base-700/60">
+                              = <span className="text-base-200 font-medium">{Math.round(valor * 7)}</span> kcal a la semana
+                            </div>
+                          )}
                         </div>
+                      ) : (
+                        <>
+                          <div className="text-xs text-base-500 text-center mb-4">
+                            {diaria ? "meta diaria" : "meta semanal"} · {c.unidad}
+                          </div>
+                          <SelectorHorizontal
+                            value={valor}
+                            onChange={(v) => setMetas((m) => ({ ...m, [id]: v }))}
+                            min={rango.min}
+                            max={rango.max}
+                            step={rango.step}
+                            unidad={c.unidad}
+                            color={c.color}
+                          />
+                          {diaria && (
+                            <div className="text-xs text-base-500 text-center mt-1">
+                              = <span className="text-base-200 font-medium">{semanal}</span> a la semana
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
 

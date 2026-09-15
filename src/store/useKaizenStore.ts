@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type {
   AreaId,
+  ComidaRegistrada,
   Desafio,
   Evento,
   Gasto,
@@ -50,6 +51,9 @@ interface Acciones {
   registrarDia: (fecha: string, valores: Record<AreaId, number>, observacion: string) => void;
   editarRegistro: (id: string, valores: Record<AreaId, number>, observacion: string) => void;
   eliminarRegistro: (id: string) => void;
+
+  agregarComida: (comida: Omit<ComidaRegistrada, "id">) => void;
+  eliminarComida: (id: string) => void;
 
   agregarGasto: (gasto: Omit<Gasto, "id">) => void;
   eliminarGasto: (id: string) => void;
@@ -138,6 +142,11 @@ export const useKaizenStore = create<KaizenStore>()(
         })),
 
       eliminarRegistro: (id) => set((s) => ({ registrosDiarios: s.registrosDiarios.filter((r) => r.id !== id) })),
+
+      agregarComida: (comida) =>
+        set((s) => ({ comidas: [...s.comidas, { ...comida, id: generarId("cm") }] })),
+
+      eliminarComida: (id) => set((s) => ({ comidas: s.comidas.filter((c) => c.id !== id) })),
 
       agregarGasto: (gasto) =>
         set((s) => ({

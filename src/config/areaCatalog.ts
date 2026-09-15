@@ -9,7 +9,7 @@ export interface PlantillaArea {
   /** Una línea explicando qué se registra aquí — visible en el wizard y en las tarjetas de Hábitos. */
   descripcion: string;
   unidad: string;
-  tipoMeta: "horas" | "binaria" | "conteo3" | "paginas" | "minutos" | "veces";
+  tipoMeta: "horas" | "binaria" | "paginas" | "minutos" | "veces";
   metaDiariaSugerida: number | null;
   metaSemanalSugerida: number;
   topeMetaSemanalSugerida: number;
@@ -60,13 +60,13 @@ export const CATALOGO_AREAS: PlantillaArea[] = [
     id: "vitalidad",
     nombre: "Vitalidad",
     dominio: "Alimentación",
-    metrica: "Comidas correctas",
-    descripcion: "Cuenta cuántas comidas de hoy fueron realmente saludables.",
-    unidad: "comidas",
-    tipoMeta: "conteo3",
-    metaDiariaSugerida: 3,
-    metaSemanalSugerida: 21,
-    topeMetaSemanalSugerida: 21,
+    metrica: "Cumplimiento de alimentación",
+    descripcion: "Elige cómo llevarlo: cumpliendo tu dieta día a día, o con conteo de calorías por comida.",
+    unidad: "días",
+    tipoMeta: "binaria",
+    metaDiariaSugerida: null,
+    metaSemanalSugerida: 7,
+    topeMetaSemanalSugerida: 7,
     color: "#3DDC5A",
   },
   {

@@ -4,12 +4,18 @@
 // (o uno futuro) puede activarse, así que el id es un string libre.
 export type AreaId = string;
 
-export type ModoAlimentacion = "conteo" | "calorias" | "dieta";
+// Elegido una sola vez al configurar el hábito Alimentación (asistente de
+// planeación o Configuración) — nunca se vuelve a preguntar día a día.
+export type ModoAlimentacion = "dieta" | "calorias";
+export type SexoBiologico = "m" | "f";
 
 export interface ConfigAlimentacion {
   modo: ModoAlimentacion;
+  // Solo se usan en modo "calorias", para estimar el gasto calórico diario.
   tallaCm?: number;
   pesoKg?: number;
+  edad?: number;
+  sexo?: SexoBiologico;
 }
 
 export interface AreaConfig {
@@ -25,10 +31,18 @@ export interface AreaConfig {
   color: string; // color hex, ej. "#4D8DFF"
   nivel: number;
   semanasConsecutivas: number; // contador hacia el siguiente nivel de área
-  // Solo relevante para el hábito "vitalidad" (Alimentación): permite elegir
-  // entre contar comidas correctas (default), llevar un conteo calórico
-  // aproximado, o marcar cumplimiento de dieta sí/no. Ver src/lib/nutricion.ts.
+  // Solo relevante para el hábito "vitalidad" (Alimentación): elige entre
+  // cumplimiento de dieta sí/no o conteo calórico por comida. Ver
+  // src/lib/nutricion.ts y src/components/planeacion/AlimentacionModoForm.tsx.
   alimentacion?: ConfigAlimentacion;
+}
+
+/** Una comida registrada en modo "calorias" de Alimentación — mismo patrón que Gasto: entradas fechadas que se suman por día. */
+export interface ComidaRegistrada {
+  id: string;
+  fecha: string; // YYYY-MM-DD
+  nombre: string;
+  calorias: number;
 }
 
 export interface RegistroDiario {
@@ -263,6 +277,7 @@ export interface KaizenState {
   usuario: Usuario;
   areas: AreaConfig[];
   registrosDiarios: RegistroDiario[];
+  comidas: ComidaRegistrada[];
   finanzas: Finanzas;
   cierresSemanales: CierreSemanal[];
   temporadaActual: Temporada;

@@ -18,6 +18,8 @@ import { getPerfilActivo } from "@/store/profiles";
 import { Trophy } from "lucide-react";
 import { OriIcon } from "@/components/ui/OriIcon";
 import { estadoOriFinanzasResumen, estadoOriHabito } from "@/lib/ori";
+import { OriBienvenida } from "@/components/onboarding/OriBienvenida";
+import { marcarOriBienvenidaVista, oriBienvenidaYaVista } from "@/lib/oriBienvenida";
 
 function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
   const state = useKaizenStore();
@@ -358,8 +360,17 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
   const hoy = hoyISO();
   const [wizardAbierto, setWizardAbierto] = useState(false);
   const [mostrarCoach, setMostrarCoach] = useState(false);
+  const [mostrarOriBienvenida, setMostrarOriBienvenida] = useState(false);
   const mesPlaneado = state.planesMensuales.includes(mesDe(hoy));
   const esPerfilNuevo = state.planesMensuales.length === 0;
+
+  // Primera vez que entra este perfil: la presentación de Ori se monta sobre
+  // todo lo demás (wizard incluido) para que sea lo primero que se ve.
+  useEffect(() => {
+    const perfilId = getPerfilActivo();
+    if (perfilId && !oriBienvenidaYaVista(perfilId)) setMostrarOriBienvenida(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Primera vez que entra este perfil: lo llevamos derecho al asistente de planeación.
   useEffect(() => {
@@ -471,6 +482,16 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
       )}
 
       {mostrarCoach && <Coachmarks onTerminar={() => setMostrarCoach(false)} />}
+
+      {mostrarOriBienvenida && (
+        <OriBienvenida
+          onCerrar={() => {
+            const perfilId = getPerfilActivo();
+            if (perfilId) marcarOriBienvenidaVista(perfilId);
+            setMostrarOriBienvenida(false);
+          }}
+        />
+      )}
     </div>
   );
 }

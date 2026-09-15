@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, Textarea, Button, Badge, ProgressBar, Stat, InfoTip, useCountUp } from "@/components/ui/Primitives";
 import { finSemana, hoyISO, inicioSemana, sumarDias } from "@/lib/dates";
-import type { AreaConfig, AreaId, Gasto, ModoAlimentacion } from "@/types";
+import type { AreaConfig, AreaId, Gasto } from "@/types";
 import { plantillaPorId } from "@/config/areaCatalog";
 import { iconoDeHabito } from "@/config/habitIcons";
 import { cumplimientoSemanalArea, nivelDesdePP } from "@/lib/formulas";
@@ -10,11 +10,10 @@ import { HITOS_RACHA, rachaDiariaVigente } from "@/lib/achievements";
 import { COLOR_SECCION, colorPorNivel } from "@/lib/color";
 import { celebrarHito } from "@/lib/notificaciones";
 import { felicitacionDelDia } from "@/lib/felicitacion";
-import { claveCalorias, puntajeCalorias, rangoCaloricoReferencia } from "@/lib/nutricion";
 import { OriIcon } from "@/components/ui/OriIcon";
 import { estadoOriHabito } from "@/lib/ori";
 import { SelectorDiasYCalendario } from "@/components/ui/Calendario";
-import { CheckCircle2, Flame, Minus, Plus, ShieldCheck, Trash2, Trophy } from "lucide-react";
+import { CheckCircle2, Flame, Minus, Plus, ShieldCheck, Trash2, Trophy, X } from "lucide-react";
 
 function valoresVacios(areas: { id: AreaId }[]): Record<AreaId, number> {
   return Object.fromEntries(areas.map((a) => [a.id, 0]));
@@ -34,146 +33,23 @@ const FRASES_EXITO = [
   "Origo: constancia, no perfección.",
 ];
 
-const MODOS_ALIMENTACION: { id: ModoAlimentacion; label: string }[] = [
-  { id: "conteo", label: "Conteo" },
-  { id: "calorias", label: "Calorías" },
-  { id: "dieta", label: "Dieta" },
-];
-
-/** Segmentado de 3 opciones para elegir cómo registrar Alimentación — ver DESIGN.md motion: transición de color, sin saltos de layout. */
-function SelectorModoAlimentacion({
-  modo,
-  onElegir,
-  color,
-}: {
-  modo: ModoAlimentacion;
-  onElegir: (m: ModoAlimentacion) => void;
-  color: string;
-}) {
-  return (
-    <div className="grid grid-cols-3 gap-1.5 mb-3 bg-base-900/40 rounded-xl p-1">
-      {MODOS_ALIMENTACION.map((m) => (
-        <button
-          key={m.id}
-          onClick={() => onElegir(m.id)}
-          className={`h-8 rounded-lg text-xs font-semibold transition-all active:scale-95 ${
-            modo === m.id ? "text-base-100" : "text-base-400"
-          }`}
-          style={modo === m.id ? { background: color } : undefined}
-        >
-          {m.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/** Modo "Calorías" de Alimentación: pide talla/peso una vez, luego registra kcal del día contra un rango de referencia. */
-function AlimentacionCalorias({
-  area,
-  kcalHoy,
-  onGuardarKcal,
-  color,
-}: {
-  area: AreaConfig;
-  kcalHoy: number;
-  onGuardarKcal: (kcal: number, puntaje: number) => void;
-  color: string;
-}) {
-  const actualizarAreaConfig = useKaizenStore((s) => s.actualizarAreaConfig);
-  const cfg = area.alimentacion;
-  const tieneDatos = !!cfg?.tallaCm && !!cfg?.pesoKg;
-  const [editando, setEditando] = useState(!tieneDatos);
-  const [talla, setTalla] = useState(cfg?.tallaCm ? String(cfg.tallaCm) : "");
-  const [peso, setPeso] = useState(cfg?.pesoKg ? String(cfg.pesoKg) : "");
-  const [kcalTexto, setKcalTexto] = useState(kcalHoy > 0 ? String(kcalHoy) : "");
-
-  useEffect(() => setKcalTexto(kcalHoy > 0 ? String(kcalHoy) : ""), [kcalHoy]);
-
-  const guardarDatos = () => {
-    const t = parseFloat(talla);
-    const p = parseFloat(peso);
-    if (!t || t <= 0 || !p || p <= 0) return;
-    actualizarAreaConfig(area.id, { alimentacion: { modo: "calorias", tallaCm: t, pesoKg: p } });
-    setEditando(false);
-  };
-
-  if (editando) {
-    return (
-      <div className="space-y-2">
-        <p className="text-xs text-base-400">
-          Con tu talla y peso calculamos un rango calórico de referencia aproximado (no es una indicación médica).
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          <Input type="number" inputMode="decimal" placeholder="Talla (cm)" value={talla} onChange={(e) => setTalla(e.target.value)} />
-          <Input type="number" inputMode="decimal" placeholder="Peso (kg)" value={peso} onChange={(e) => setPeso(e.target.value)} />
-        </div>
-        <Button variant="secondary" className="w-full" onClick={guardarDatos}>
-          Calcular rango
-        </Button>
-      </div>
-    );
-  }
-
-  const rango = rangoCaloricoReferencia(cfg!.pesoKg!, cfg!.tallaCm!);
-  const puntaje = puntajeCalorias(kcalHoy, rango);
-  const estado =
-    kcalHoy <= 0
-      ? null
-      : puntaje === 3
-        ? { texto: "Dentro del rango", tono: "text-kaizen-400" }
-        : puntaje === 2
-          ? { texto: "Cerca del rango", tono: "text-gold-400" }
-          : { texto: "Lejos del rango", tono: "text-rose-400" };
-
-  return (
-    <div className="space-y-2">
-      <div className="text-xs text-base-500">
-        Rango de referencia: <span className="font-medium text-base-300">{rango.min}–{rango.max} kcal</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          inputMode="decimal"
-          placeholder="Kcal de hoy"
-          value={kcalTexto}
-          onChange={(e) => {
-            setKcalTexto(e.target.value);
-            const kcal = parseFloat(e.target.value) || 0;
-            onGuardarKcal(kcal, puntajeCalorias(kcal, rango));
-          }}
-        />
-        {estado && <span className={`text-xs font-medium whitespace-nowrap ${estado.tono}`}>{estado.texto}</span>}
-      </div>
-      <button onClick={() => setEditando(true)} className="text-xs text-base-500 underline underline-offset-2 hover:text-base-300">
-        Editar talla/peso
-      </button>
-    </div>
-  );
-}
-
 function HabitoCard({
   area,
   valor,
-  kcalHoy,
   onCambiar,
-  onCambiarKcal,
 }: {
   area: AreaConfig;
   valor: number;
-  kcalHoy: number;
   onCambiar: (v: number) => void;
-  onCambiarKcal: (kcal: number, puntaje: number) => void;
 }) {
-  const actualizarAreaConfig = useKaizenStore((s) => s.actualizarAreaConfig);
   const plantilla = plantillaPorId(area.id);
   const tipo = plantilla?.tipoMeta ?? "horas";
   const paso = PASO_POR_TIPO[tipo] ?? 1;
-  const esAlimentacion = tipo === "conteo3";
-  const modoAlimentacion: ModoAlimentacion = area.alimentacion?.modo ?? "conteo";
-  const contestado =
-    (tipo !== "binaria" && tipo !== "conteo3" && valor > 0) ||
-    (esAlimentacion && modoAlimentacion === "calorias" && valor > 0);
+  // El modo se elige una sola vez al configurar el hábito (asistente de
+  // planeación o Configuración) — aquí solo se lee para decidir qué UI de
+  // registro mostrar hoy. Ver AlimentacionModoForm.
+  const esVitalidadCalorias = area.id === "vitalidad" && area.alimentacion?.modo === "calorias";
+  const contestado = (tipo !== "binaria" || esVitalidadCalorias) && valor > 0;
   const Icono = iconoDeHabito(area.id);
   const color = colorPorNivel(area.color, area.nivel);
   const valorMostrado = useCountUp(valor);
@@ -211,7 +87,15 @@ function HabitoCard({
         {contestado && <CheckCircle2 className="w-4 h-4 shrink-0 animate-pop mt-0.5" style={{ color }} />}
       </div>
 
-      {tipo === "binaria" && (
+      {esVitalidadCalorias ? (
+        <div className="text-center py-1">
+          <div className="text-xl font-semibold tabular-nums" style={{ color }}>
+            {valorMostrado}
+            <span className="text-sm text-base-500 font-normal"> {area.metaDiaria ? `/ ${area.metaDiaria} ` : ""}kcal</span>
+          </div>
+          <div className="text-xs text-base-500 mt-1">Agrega tus comidas más abajo ↓</div>
+        </div>
+      ) : tipo === "binaria" ? (
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => marcar(1)}
@@ -231,78 +115,27 @@ function HabitoCard({
             No
           </button>
         </div>
-      )}
-
-      {esAlimentacion && (
-        <SelectorModoAlimentacion
-          modo={modoAlimentacion}
-          color={color}
-          onElegir={(m) => actualizarAreaConfig(area.id, { alimentacion: { ...area.alimentacion, modo: m } })}
-        />
-      )}
-
-      {esAlimentacion && modoAlimentacion === "conteo" && (
-        <div className="grid grid-cols-4 gap-2">
-          {[0, 1, 2, 3].map((n) => (
+      ) : (
+        (tipo === "horas" || tipo === "paginas" || tipo === "minutos" || tipo === "veces") && (
+          <div className="flex items-center gap-3">
             <button
-              key={n}
-              onClick={() => marcar(n)}
-              className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-                valor === n ? "text-base-100" : "bg-base-850 text-base-400"
-              }`}
-              style={valor === n ? { background: color } : undefined}
+              onClick={() => marcar(Math.max(0, Math.round((valor - paso) * 100) / 100))}
+              className="w-11 h-11 rounded-xl bg-base-850 text-base-300 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
             >
-              {n}
+              <Minus className="w-4 h-4" />
             </button>
-          ))}
-        </div>
-      )}
-
-      {esAlimentacion && modoAlimentacion === "dieta" && (
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => marcar(3)}
-            className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-              valor === 3 ? "text-base-100" : "bg-base-850 text-base-400"
-            }`}
-            style={valor === 3 ? { background: color } : undefined}
-          >
-            Sí, cumplí mi dieta
-          </button>
-          <button
-            onClick={() => marcar(0)}
-            className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-              valor === 0 ? "bg-base-700 text-base-100" : "bg-base-850 text-base-400"
-            }`}
-          >
-            No
-          </button>
-        </div>
-      )}
-
-      {esAlimentacion && modoAlimentacion === "calorias" && (
-        <AlimentacionCalorias area={area} kcalHoy={kcalHoy} onGuardarKcal={onCambiarKcal} color={color} />
-      )}
-
-      {(tipo === "horas" || tipo === "paginas" || tipo === "minutos" || tipo === "veces") && (
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => marcar(Math.max(0, Math.round((valor - paso) * 100) / 100))}
-            className="w-11 h-11 rounded-xl bg-base-850 text-base-300 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          <div className="flex-1 text-center">
-            <span className="text-xl font-semibold tabular-nums">{valorMostrado || 0}</span>
+            <div className="flex-1 text-center">
+              <span className="text-xl font-semibold tabular-nums">{valorMostrado || 0}</span>
+            </div>
+            <button
+              onClick={() => marcar(Math.round((valor + paso) * 100) / 100)}
+              className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-white active:scale-90 transition-transform"
+              style={{ background: color }}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={() => marcar(Math.round((valor + paso) * 100) / 100)}
-            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-white active:scale-90 transition-transform"
-            style={{ background: color }}
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
+        )
       )}
     </div>
   );
@@ -319,6 +152,8 @@ export function RegistroDiarioView({
   const registrarDia = useKaizenStore((s) => s.registrarDia);
   const agregarGasto = useKaizenStore((s) => s.agregarGasto);
   const eliminarGasto = useKaizenStore((s) => s.eliminarGasto);
+  const agregarComida = useKaizenStore((s) => s.agregarComida);
+  const eliminarComida = useKaizenStore((s) => s.eliminarComida);
 
   const hoy = hoyISO();
   const limiteAtras = sumarDias(hoy, -state.config.economia.diasRegistroRetroactivo);
@@ -328,8 +163,23 @@ export function RegistroDiarioView({
   const [valores, setValores] = useState<Record<AreaId, number>>(
     registroExistente?.valores ?? valoresVacios(state.areas)
   );
+
+  // Alimentación en modo calorías no se ajusta con +/-: es la suma de las
+  // comidas del día (ver "Comidas de hoy" más abajo, mismo patrón que Gastos).
+  const areaVitalidad = state.areas.find((a) => a.id === "vitalidad");
+  const enModoCalorias = areaVitalidad?.alimentacion?.modo === "calorias";
+  const comidasDelDia = state.comidas.filter((c) => c.fecha === fecha);
+  const totalCaloriasDelDia = comidasDelDia.reduce((acc, c) => acc + c.calorias, 0);
   const [observacion, setObservacion] = useState(registroExistente?.observacion ?? "");
   const [confirmacion, setConfirmacion] = useState<{ titulo: string | null; mensaje: string } | null>(null);
+  const confirmacionTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cerrarCelebracion = () => {
+    if (confirmacionTimeoutRef.current) clearTimeout(confirmacionTimeoutRef.current);
+    setConfirmacion(null);
+  };
+  useEffect(() => () => {
+    if (confirmacionTimeoutRef.current) clearTimeout(confirmacionTimeoutRef.current);
+  }, []);
   const [hitoCelebrado, setHitoCelebrado] = useState<(typeof HITOS_RACHA)[number] | null>(null);
 
   const cambiarFecha = (nueva: string) => {
@@ -341,7 +191,8 @@ export function RegistroDiarioView({
 
   const guardar = () => {
     const antes = new Set(useKaizenStore.getState().historial.reconocimientos.map((r) => r.id));
-    registrarDia(fecha, valores, observacion.slice(0, 200));
+    const valoresFinal = enModoCalorias ? { ...valores, vitalidad: totalCaloriasDelDia } : valores;
+    registrarDia(fecha, valoresFinal, observacion.slice(0, 200));
     const despues = useKaizenStore.getState().historial.reconocimientos;
     const hito = HITOS_RACHA.find((h) => !antes.has(h.id) && despues.some((r) => r.id === h.id));
     if (hito) {
@@ -355,8 +206,19 @@ export function RegistroDiarioView({
           ? { titulo: felicitacion.titulo, mensaje: felicitacion.mensaje }
           : { titulo: null, mensaje: FRASES_EXITO[Math.floor(Math.random() * FRASES_EXITO.length)] }
       );
-      setTimeout(() => setConfirmacion(null), 3200);
+      confirmacionTimeoutRef.current = setTimeout(() => setConfirmacion(null), 4500);
     }
+  };
+
+  const [nombreComida, setNombreComida] = useState("");
+  const [caloriasComida, setCaloriasComida] = useState("");
+
+  const agregarComidaDelDia = () => {
+    const calorias = parseFloat(caloriasComida);
+    if (!nombreComida.trim() || !calorias || calorias <= 0) return;
+    agregarComida({ fecha, nombre: nombreComida.trim(), calorias });
+    setNombreComida("");
+    setCaloriasComida("");
   };
 
   const gastosDelDia = state.finanzas.gastos.filter((g) => g.fecha === fecha);
@@ -479,18 +341,17 @@ export function RegistroDiarioView({
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {state.areas.map((area) => (
-            <HabitoCard
-              key={area.id}
-              area={area}
-              valor={valores[area.id] ?? 0}
-              kcalHoy={valores[claveCalorias(area.id)] ?? 0}
-              onCambiar={(v) => setValores((prev) => ({ ...prev, [area.id]: v }))}
-              onCambiarKcal={(kcal, puntaje) =>
-                setValores((prev) => ({ ...prev, [area.id]: puntaje, [claveCalorias(area.id)]: kcal }))
-              }
-            />
-          ))}
+          {state.areas.map((area) => {
+            const esVitalidadCalorias = area.id === "vitalidad" && enModoCalorias;
+            return (
+              <HabitoCard
+                key={area.id}
+                area={area}
+                valor={esVitalidadCalorias ? totalCaloriasDelDia : valores[area.id] ?? 0}
+                onCambiar={esVitalidadCalorias ? () => {} : (v) => setValores((prev) => ({ ...prev, [area.id]: v }))}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -504,6 +365,53 @@ export function RegistroDiarioView({
             placeholder="¿Algo que valga la pena recordar de hoy?"
           />
         </Field>
+
+        {enModoCalorias && (
+          <div className="mt-6 border-t border-base-700 pt-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs uppercase tracking-wide text-base-400">Comidas de hoy</div>
+              <div className="text-sm font-medium text-base-200">
+                {totalCaloriasDelDia}
+                {areaVitalidad?.metaDiaria ? ` / ${areaVitalidad.metaDiaria}` : ""} kcal
+              </div>
+            </div>
+            {comidasDelDia.length > 0 && (
+              <ul className="space-y-1.5 mb-3">
+                {comidasDelDia.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between text-sm bg-base-850 rounded-xl px-3 py-2">
+                    <span className="text-base-300">{c.nombre}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium">{c.calorias} kcal</span>
+                      <button onClick={() => eliminarComida(c.id)} className="text-base-500 hover:text-rose-400">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Input
+                className="w-40"
+                placeholder="Ej. Desayuno"
+                value={nombreComida}
+                onChange={(e) => setNombreComida(e.target.value)}
+              />
+              <Input
+                className="w-28"
+                type="number"
+                inputMode="numeric"
+                placeholder="Kcal"
+                value={caloriasComida}
+                onChange={(e) => setCaloriasComida(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && agregarComidaDelDia()}
+              />
+              <Button variant="secondary" onClick={agregarComidaDelDia} className="inline-flex items-center gap-1">
+                <Plus className="w-4 h-4" /> Agregar comida
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 border-t border-base-700 pt-5">
           <div className="text-xs uppercase tracking-wide text-base-400 mb-3">Gastos del día</div>
@@ -574,9 +482,16 @@ export function RegistroDiarioView({
       {confirmacion && (
         <div
           className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/60 animate-pop"
-          onClick={() => setConfirmacion(null)}
+          onClick={cerrarCelebracion}
         >
-          <div className="flex flex-col items-center gap-3 max-w-[min(90vw,360px)]" onClick={(e) => e.stopPropagation()}>
+          <div className="relative flex flex-col items-center gap-3 max-w-[min(90vw,360px)]" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={cerrarCelebracion}
+              aria-label="Cerrar"
+              className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-base-900 border border-base-700 text-base-400 hover:text-base-100 flex items-center justify-center shadow-soft z-10"
+            >
+              <X className="w-4 h-4" />
+            </button>
             <OriIcon mode="habito" state="celebrando" size="lg" />
             <div className="relative overflow-hidden bg-base-900 text-base-100 px-5 py-3 rounded-2xl shadow-soft border border-habitos-500/40 text-center">
               <div className="relative z-10">
