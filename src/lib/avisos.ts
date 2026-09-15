@@ -2,6 +2,7 @@ import type { KaizenState } from "@/types";
 import { diasEntre, hoyISO } from "@/lib/dates";
 import { cicloTarjeta } from "@/lib/formulas";
 import { rachaDiariaVigente } from "@/lib/achievements";
+import { DIAS_AVISO_CORTE_ORI } from "@/lib/ori";
 
 export interface Aviso {
   id: string;
@@ -11,7 +12,8 @@ export interface Aviso {
 }
 
 const HORA_RECORDATORIO_RACHA = 20; // 8pm: suficientemente tarde para que valga la pena avisar
-const DIAS_AVISO_CORTE = 3;
+// Misma ventana que usa el chip "hay que pagar" de Ori (ver lib/ori.ts) — una sola fuente de verdad.
+const DIAS_AVISO_CORTE = DIAS_AVISO_CORTE_ORI;
 
 /**
  * Avisos calculados en el momento (sin backend, sin push): todo se deriva del

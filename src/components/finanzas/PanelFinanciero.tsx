@@ -5,6 +5,8 @@ import { GraficaCategoriasPastel } from "@/components/finanzas/charts/FinanzasCh
 import { distribucionCategorias } from "@/lib/formulas";
 import { diasDelMes, formatoMes, hoyISO, mesDe } from "@/lib/dates";
 import { Plus, Trash2 } from "lucide-react";
+import { OriIcon } from "@/components/ui/OriIcon";
+import { estadoOriFinanzasResumen } from "@/lib/ori";
 
 function IngresoMensualInline() {
   const state = useKaizenStore();
@@ -119,14 +121,17 @@ export function PanelFinancieroTab() {
           <IngresoMensualInline />
         </div>
         {pctIngreso !== null && (
-          <div className="mt-5 pt-5 border-t border-base-700">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm text-base-400">Llevas gastado del ingreso del mes</span>
-              <span className={`text-2xl font-bold tabular-nums ${pctIngreso > 1 ? "text-rose-400" : "text-base-100"}`}>
-                {Math.round(pctIngreso * 100)}%
-              </span>
+          <div className="mt-5 pt-5 border-t border-base-700 flex items-center gap-3">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm text-base-400">Llevas gastado del ingreso del mes</span>
+                <span className={`text-2xl font-bold tabular-nums ${pctIngreso > 1 ? "text-rose-400" : "text-base-100"}`}>
+                  {Math.round(pctIngreso * 100)}%
+                </span>
+              </div>
+              <ProgressBar value={pctIngreso} colorClass={pctIngreso > 1 ? "bg-rose-500" : "bg-finanzas-500"} height="h-1.5" />
             </div>
-            <ProgressBar value={pctIngreso} colorClass={pctIngreso > 1 ? "bg-rose-500" : "bg-finanzas-500"} height="h-1.5" />
+            <OriIcon mode="finanzas" state={estadoOriFinanzasResumen(state) ?? "reposo"} />
           </div>
         )}
       </Card>

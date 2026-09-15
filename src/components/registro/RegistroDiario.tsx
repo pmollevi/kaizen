@@ -2,13 +2,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useKaizenStore } from "@/store/useKaizenStore";
 import { Card, SectionTitle, Field, Input, Textarea, Button, Badge, ProgressBar, Stat, InfoTip, useCountUp } from "@/components/ui/Primitives";
 import { finSemana, hoyISO, inicioSemana, sumarDias } from "@/lib/dates";
-import type { AreaId, Gasto } from "@/types";
+import type { AreaConfig, AreaId, Gasto, ModoAlimentacion } from "@/types";
 import { plantillaPorId } from "@/config/areaCatalog";
 import { iconoDeHabito } from "@/config/habitIcons";
 import { cumplimientoSemanalArea, nivelDesdePP } from "@/lib/formulas";
 import { HITOS_RACHA, rachaDiariaVigente } from "@/lib/achievements";
 import { COLOR_SECCION, colorPorNivel } from "@/lib/color";
 import { celebrarHito } from "@/lib/notificaciones";
+import { felicitacionDelDia } from "@/lib/felicitacion";
+import { claveCalorias, puntajeCalorias, rangoCaloricoReferencia } from "@/lib/nutricion";
+import { OriIcon } from "@/components/ui/OriIcon";
+import { estadoOriHabito } from "@/lib/ori";
 import { SelectorDiasYCalendario } from "@/components/ui/Calendario";
 import { CheckCircle2, Flame, Minus, Plus, ShieldCheck, Trash2, Trophy } from "lucide-react";
 
@@ -30,19 +34,146 @@ const FRASES_EXITO = [
   "Origo: constancia, no perfección.",
 ];
 
+const MODOS_ALIMENTACION: { id: ModoAlimentacion; label: string }[] = [
+  { id: "conteo", label: "Conteo" },
+  { id: "calorias", label: "Calorías" },
+  { id: "dieta", label: "Dieta" },
+];
+
+/** Segmentado de 3 opciones para elegir cómo registrar Alimentación — ver DESIGN.md motion: transición de color, sin saltos de layout. */
+function SelectorModoAlimentacion({
+  modo,
+  onElegir,
+  color,
+}: {
+  modo: ModoAlimentacion;
+  onElegir: (m: ModoAlimentacion) => void;
+  color: string;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-1.5 mb-3 bg-base-900/40 rounded-xl p-1">
+      {MODOS_ALIMENTACION.map((m) => (
+        <button
+          key={m.id}
+          onClick={() => onElegir(m.id)}
+          className={`h-8 rounded-lg text-xs font-semibold transition-all active:scale-95 ${
+            modo === m.id ? "text-base-100" : "text-base-400"
+          }`}
+          style={modo === m.id ? { background: color } : undefined}
+        >
+          {m.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Modo "Calorías" de Alimentación: pide talla/peso una vez, luego registra kcal del día contra un rango de referencia. */
+function AlimentacionCalorias({
+  area,
+  kcalHoy,
+  onGuardarKcal,
+  color,
+}: {
+  area: AreaConfig;
+  kcalHoy: number;
+  onGuardarKcal: (kcal: number, puntaje: number) => void;
+  color: string;
+}) {
+  const actualizarAreaConfig = useKaizenStore((s) => s.actualizarAreaConfig);
+  const cfg = area.alimentacion;
+  const tieneDatos = !!cfg?.tallaCm && !!cfg?.pesoKg;
+  const [editando, setEditando] = useState(!tieneDatos);
+  const [talla, setTalla] = useState(cfg?.tallaCm ? String(cfg.tallaCm) : "");
+  const [peso, setPeso] = useState(cfg?.pesoKg ? String(cfg.pesoKg) : "");
+  const [kcalTexto, setKcalTexto] = useState(kcalHoy > 0 ? String(kcalHoy) : "");
+
+  useEffect(() => setKcalTexto(kcalHoy > 0 ? String(kcalHoy) : ""), [kcalHoy]);
+
+  const guardarDatos = () => {
+    const t = parseFloat(talla);
+    const p = parseFloat(peso);
+    if (!t || t <= 0 || !p || p <= 0) return;
+    actualizarAreaConfig(area.id, { alimentacion: { modo: "calorias", tallaCm: t, pesoKg: p } });
+    setEditando(false);
+  };
+
+  if (editando) {
+    return (
+      <div className="space-y-2">
+        <p className="text-xs text-base-400">
+          Con tu talla y peso calculamos un rango calórico de referencia aproximado (no es una indicación médica).
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <Input type="number" inputMode="decimal" placeholder="Talla (cm)" value={talla} onChange={(e) => setTalla(e.target.value)} />
+          <Input type="number" inputMode="decimal" placeholder="Peso (kg)" value={peso} onChange={(e) => setPeso(e.target.value)} />
+        </div>
+        <Button variant="secondary" className="w-full" onClick={guardarDatos}>
+          Calcular rango
+        </Button>
+      </div>
+    );
+  }
+
+  const rango = rangoCaloricoReferencia(cfg!.pesoKg!, cfg!.tallaCm!);
+  const puntaje = puntajeCalorias(kcalHoy, rango);
+  const estado =
+    kcalHoy <= 0
+      ? null
+      : puntaje === 3
+        ? { texto: "Dentro del rango", tono: "text-kaizen-400" }
+        : puntaje === 2
+          ? { texto: "Cerca del rango", tono: "text-gold-400" }
+          : { texto: "Lejos del rango", tono: "text-rose-400" };
+
+  return (
+    <div className="space-y-2">
+      <div className="text-xs text-base-500">
+        Rango de referencia: <span className="font-medium text-base-300">{rango.min}–{rango.max} kcal</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          inputMode="decimal"
+          placeholder="Kcal de hoy"
+          value={kcalTexto}
+          onChange={(e) => {
+            setKcalTexto(e.target.value);
+            const kcal = parseFloat(e.target.value) || 0;
+            onGuardarKcal(kcal, puntajeCalorias(kcal, rango));
+          }}
+        />
+        {estado && <span className={`text-xs font-medium whitespace-nowrap ${estado.tono}`}>{estado.texto}</span>}
+      </div>
+      <button onClick={() => setEditando(true)} className="text-xs text-base-500 underline underline-offset-2 hover:text-base-300">
+        Editar talla/peso
+      </button>
+    </div>
+  );
+}
+
 function HabitoCard({
   area,
   valor,
+  kcalHoy,
   onCambiar,
+  onCambiarKcal,
 }: {
-  area: { id: AreaId; nombre: string; metrica: string; color: string; nivel: number };
+  area: AreaConfig;
   valor: number;
+  kcalHoy: number;
   onCambiar: (v: number) => void;
+  onCambiarKcal: (kcal: number, puntaje: number) => void;
 }) {
+  const actualizarAreaConfig = useKaizenStore((s) => s.actualizarAreaConfig);
   const plantilla = plantillaPorId(area.id);
   const tipo = plantilla?.tipoMeta ?? "horas";
   const paso = PASO_POR_TIPO[tipo] ?? 1;
-  const contestado = tipo !== "binaria" && tipo !== "conteo3" && valor > 0;
+  const esAlimentacion = tipo === "conteo3";
+  const modoAlimentacion: ModoAlimentacion = area.alimentacion?.modo ?? "conteo";
+  const contestado =
+    (tipo !== "binaria" && tipo !== "conteo3" && valor > 0) ||
+    (esAlimentacion && modoAlimentacion === "calorias" && valor > 0);
   const Icono = iconoDeHabito(area.id);
   const color = colorPorNivel(area.color, area.nivel);
   const valorMostrado = useCountUp(valor);
@@ -102,7 +233,15 @@ function HabitoCard({
         </div>
       )}
 
-      {tipo === "conteo3" && (
+      {esAlimentacion && (
+        <SelectorModoAlimentacion
+          modo={modoAlimentacion}
+          color={color}
+          onElegir={(m) => actualizarAreaConfig(area.id, { alimentacion: { ...area.alimentacion, modo: m } })}
+        />
+      )}
+
+      {esAlimentacion && modoAlimentacion === "conteo" && (
         <div className="grid grid-cols-4 gap-2">
           {[0, 1, 2, 3].map((n) => (
             <button
@@ -117,6 +256,32 @@ function HabitoCard({
             </button>
           ))}
         </div>
+      )}
+
+      {esAlimentacion && modoAlimentacion === "dieta" && (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => marcar(3)}
+            className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+              valor === 3 ? "text-base-100" : "bg-base-850 text-base-400"
+            }`}
+            style={valor === 3 ? { background: color } : undefined}
+          >
+            Sí, cumplí mi dieta
+          </button>
+          <button
+            onClick={() => marcar(0)}
+            className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+              valor === 0 ? "bg-base-700 text-base-100" : "bg-base-850 text-base-400"
+            }`}
+          >
+            No
+          </button>
+        </div>
+      )}
+
+      {esAlimentacion && modoAlimentacion === "calorias" && (
+        <AlimentacionCalorias area={area} kcalHoy={kcalHoy} onGuardarKcal={onCambiarKcal} color={color} />
       )}
 
       {(tipo === "horas" || tipo === "paginas" || tipo === "minutos" || tipo === "veces") && (
@@ -164,7 +329,7 @@ export function RegistroDiarioView({
     registroExistente?.valores ?? valoresVacios(state.areas)
   );
   const [observacion, setObservacion] = useState(registroExistente?.observacion ?? "");
-  const [confirmacion, setConfirmacion] = useState<string | null>(null);
+  const [confirmacion, setConfirmacion] = useState<{ titulo: string | null; mensaje: string } | null>(null);
   const [hitoCelebrado, setHitoCelebrado] = useState<(typeof HITOS_RACHA)[number] | null>(null);
 
   const cambiarFecha = (nueva: string) => {
@@ -184,8 +349,13 @@ export function RegistroDiarioView({
       celebrarHito(hito.titulo, `Racha de ${hito.dias} días — nuevo título activo.`);
       setTimeout(() => setHitoCelebrado(null), 3400);
     } else {
-      setConfirmacion(FRASES_EXITO[Math.floor(Math.random() * FRASES_EXITO.length)]);
-      setTimeout(() => setConfirmacion(null), 2600);
+      const felicitacion = felicitacionDelDia(useKaizenStore.getState(), fecha);
+      setConfirmacion(
+        felicitacion
+          ? { titulo: felicitacion.titulo, mensaje: felicitacion.mensaje }
+          : { titulo: null, mensaje: FRASES_EXITO[Math.floor(Math.random() * FRASES_EXITO.length)] }
+      );
+      setTimeout(() => setConfirmacion(null), 3200);
     }
   };
 
@@ -235,7 +405,7 @@ export function RegistroDiarioView({
         <SectionTitle title="Progreso" accent={COLOR_SECCION.habitos} />
         <div className="flex items-center gap-3 sm:gap-4 mb-5 rounded-xl bg-amber-500/[0.08] border border-amber-500/25 px-4 py-3">
           <Flame className={`w-8 h-8 sm:w-9 sm:h-9 text-amber-400 shrink-0 ${racha > 0 ? "animate-flicker" : ""}`} />
-          <div>
+          <div className="flex-1">
             <div className="text-4xl sm:text-5xl font-bold tabular-nums text-base-100 leading-none">{rachaMostrada}</div>
             <div className="text-xs uppercase tracking-wider text-amber-400/90 font-semibold mt-1">
               {racha === 1 ? "día de racha" : "días de racha"}
@@ -244,6 +414,7 @@ export function RegistroDiarioView({
               <div className="text-xs text-base-500 mt-1">Se pausó, no se borró. Hoy es buen día para reiniciarla.</div>
             )}
           </div>
+          {state.areas.length > 0 && <OriIcon mode="habito" state={estadoOriHabito(state)} />}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
           <Stat label="Nivel global" value={nivel.nivel} hint={`${Math.round(nivel.progresoPct * 100)}% al siguiente nivel`} />
@@ -313,7 +484,11 @@ export function RegistroDiarioView({
               key={area.id}
               area={area}
               valor={valores[area.id] ?? 0}
+              kcalHoy={valores[claveCalorias(area.id)] ?? 0}
               onCambiar={(v) => setValores((prev) => ({ ...prev, [area.id]: v }))}
+              onCambiarKcal={(kcal, puntaje) =>
+                setValores((prev) => ({ ...prev, [area.id]: puntaje, [claveCalorias(area.id)]: kcal }))
+              }
             />
           ))}
         </div>
@@ -397,10 +572,21 @@ export function RegistroDiarioView({
       </Card>
 
       {confirmacion && (
-        <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-40 animate-pop">
-          <div className="relative overflow-hidden bg-base-900 text-base-100 text-sm font-medium px-5 py-3 rounded-2xl shadow-soft border border-habitos-500/40 min-w-[200px] text-center">
-            <span className="relative z-10">{confirmacion}</span>
-            <span className="absolute inset-x-0 bottom-0 h-0.5 bg-habitos-500 animate-toast-fill" />
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/60 animate-pop"
+          onClick={() => setConfirmacion(null)}
+        >
+          <div className="flex flex-col items-center gap-3 max-w-[min(90vw,360px)]" onClick={(e) => e.stopPropagation()}>
+            <OriIcon mode="habito" state="celebrando" size="lg" />
+            <div className="relative overflow-hidden bg-base-900 text-base-100 px-5 py-3 rounded-2xl shadow-soft border border-habitos-500/40 text-center">
+              <div className="relative z-10">
+                {confirmacion.titulo && (
+                  <div className="text-sm font-semibold text-habitos-400 mb-0.5">{confirmacion.titulo}</div>
+                )}
+                <div className="text-sm font-medium">{confirmacion.mensaje}</div>
+              </div>
+              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-habitos-500 animate-toast-fill" />
+            </div>
           </div>
         </div>
       )}

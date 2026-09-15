@@ -16,6 +16,7 @@ import { useKaizenStore } from "@/store/useKaizenStore";
 import { crearPerfil, getPerfilActivo, listarPerfiles, setPerfilActivo, verificarPassword } from "@/store/profiles";
 import { Button, Card, Field, Input, Badge } from "@/components/ui/Primitives";
 import { OrigoMark } from "@/components/ui/OrigoMark";
+import { OriDefs } from "@/components/ui/OriIcon";
 import { FabAgregarGasto } from "@/components/finanzas/FabAgregarGasto";
 import { PanelPrincipal } from "@/components/panel/PanelPrincipal";
 import { BienvenidaFlow } from "@/components/onboarding/Bienvenida";
@@ -408,6 +409,7 @@ export default function App() {
   return (
     <>
       {splashVisible && <SplashScreen saliendo={splashSaliendo} />}
+      <OriDefs />
       <div className="min-h-screen text-base-100 flex">
       {/* Sidebar de escritorio: sticky para que no se desplace con el scroll de la pagina cuando el contenido es mas alto que la pantalla. */}
       <aside className="hidden md:flex w-56 shrink-0 border-r border-base-700 flex-col bg-base-900 sticky top-0 h-screen overflow-y-auto">

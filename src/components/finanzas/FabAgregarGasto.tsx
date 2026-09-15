@@ -33,6 +33,7 @@ export function FabAgregarGasto() {
   useBodyScrollLock(abierto);
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errores, setErrores] = useState<{ monto?: boolean; categoria?: boolean; tarjeta?: boolean; palabra?: boolean }>({});
   const alturaVisible = useAlturaVisible();
   const hojaRef = useRef<HTMLDivElement>(null);
 
@@ -51,14 +52,22 @@ export function FabAgregarGasto() {
     setTarjetaId("");
     setGuardado(false);
     setError(null);
+    setErrores({});
   };
 
   const guardar = () => {
     const m = parseFloat(monto);
-    if (!m || m <= 0) return setError("Indica un monto válido.");
-    if (!categoriaId) return setError("Elige una categoría.");
-    if (!palabraClave.trim()) return setError("Indica qué compraste.");
-    if (metodo === "tarjeta" && !tarjetaId) return setError("Elige con qué tarjeta pagaste.");
+    const nuevosErrores: typeof errores = {};
+    if (!m || m <= 0) nuevosErrores.monto = true;
+    if (!categoriaId) nuevosErrores.categoria = true;
+    if (!palabraClave.trim()) nuevosErrores.palabra = true;
+    if (metodo === "tarjeta" && !tarjetaId) nuevosErrores.tarjeta = true;
+    if (Object.keys(nuevosErrores).length > 0) {
+      setErrores(nuevosErrores);
+      setError("Completa los campos marcados en rojo.");
+      return;
+    }
+    setErrores({});
     setError(null);
     agregarGasto({
       fecha: hoy,
@@ -110,19 +119,31 @@ export function FabAgregarGasto() {
               <p className="text-sm text-finanzas-400 py-4 text-center">Gasto guardado.</p>
             ) : (
               <div className="space-y-3">
-                <Field label="Monto">
+                <Field label="Monto" required>
                   <Input
                     type="number"
                     inputMode="decimal"
                     autoFocus
+                    error={errores.monto}
                     value={monto}
-                    onChange={(e) => setMonto(e.target.value)}
+                    onChange={(e) => {
+                      setMonto(e.target.value);
+                      if (errores.monto) setErrores((prev) => ({ ...prev, monto: false }));
+                    }}
                     onFocus={llevarAlaVista}
                     placeholder="0"
                   />
                 </Field>
-                <Field label="Categoría">
-                  <Select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} onFocus={llevarAlaVista}>
+                <Field label="Categoría" required>
+                  <Select
+                    value={categoriaId}
+                    error={errores.categoria}
+                    onChange={(e) => {
+                      setCategoriaId(e.target.value);
+                      if (errores.categoria) setErrores((prev) => ({ ...prev, categoria: false }));
+                    }}
+                    onFocus={llevarAlaVista}
+                  >
                     <option value="">Elige...</option>
                     {state.finanzas.categorias.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -151,8 +172,16 @@ export function FabAgregarGasto() {
                   </button>
                 </div>
                 {metodo === "tarjeta" && (
-                  <Field label="Tarjeta">
-                    <Select value={tarjetaId} onChange={(e) => setTarjetaId(e.target.value)} onFocus={llevarAlaVista}>
+                  <Field label="Tarjeta" required>
+                    <Select
+                      value={tarjetaId}
+                      error={errores.tarjeta}
+                      onChange={(e) => {
+                        setTarjetaId(e.target.value);
+                        if (errores.tarjeta) setErrores((prev) => ({ ...prev, tarjeta: false }));
+                      }}
+                      onFocus={llevarAlaVista}
+                    >
                       <option value="">Elige...</option>
                       {state.finanzas.tarjetas.map((t) => (
                         <option key={t.id} value={t.id}>
@@ -162,10 +191,14 @@ export function FabAgregarGasto() {
                     </Select>
                   </Field>
                 )}
-                <Field label="¿Qué compraste?">
+                <Field label="¿Qué compraste?" required>
                   <Input
+                    error={errores.palabra}
                     value={palabraClave}
-                    onChange={(e) => setPalabraClave(e.target.value)}
+                    onChange={(e) => {
+                      setPalabraClave(e.target.value);
+                      if (errores.palabra) setErrores((prev) => ({ ...prev, palabra: false }));
+                    }}
                     onKeyDown={(e) => e.key === "Enter" && guardar()}
                     onFocus={llevarAlaVista}
                     placeholder="café, uber..."

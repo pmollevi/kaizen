@@ -16,6 +16,8 @@ import { SelectorDiasConDetalle } from "@/components/ui/Calendario";
 import { coachmarksYaVistos, marcarCoachmarksVistos } from "@/lib/coachmarks";
 import { getPerfilActivo } from "@/store/profiles";
 import { Trophy } from "lucide-react";
+import { OriIcon } from "@/components/ui/OriIcon";
+import { estadoOriFinanzasResumen, estadoOriHabito } from "@/lib/ori";
 
 function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
   const state = useKaizenStore();
@@ -72,12 +74,13 @@ function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
         className="flex items-center gap-3 sm:gap-4 mb-4 rounded-xl bg-amber-500/[0.08] border border-amber-500/25 px-4 py-3"
       >
         <Flame className={`w-8 h-8 sm:w-9 sm:h-9 text-amber-400 shrink-0 ${racha > 0 ? "animate-flicker" : ""}`} />
-        <div>
+        <div className="flex-1">
           <div className="text-4xl sm:text-5xl font-bold tabular-nums text-base-100 leading-none">{rachaMostrada}</div>
           <div className="text-xs uppercase tracking-wider text-amber-400/90 font-semibold mt-1">
             {racha === 1 ? "día de racha" : "días de racha"}
           </div>
         </div>
+        {state.areas.length > 0 && <OriIcon mode="habito" state={estadoOriHabito(state)} />}
       </div>
       <div className="flex items-center gap-6">
         <Stat label="Esta semana" value={`${Math.round(cumplimientoGlobal * 100)}%`} hint="cumplimiento global" />
@@ -118,11 +121,16 @@ function TarjetaGastosMensuales({ irA }: { irA: (tab: string) => void }) {
           </div>
           {pctIngreso !== null && (
             <div className="mt-4 pt-4 border-t border-base-700">
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-base-400">Llevas gastado del ingreso del mes</span>
-                <span className="font-medium text-base-200">{Math.round(pctIngreso * 100)}%</span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="text-base-400">Llevas gastado del ingreso del mes</span>
+                    <span className="font-medium text-base-200">{Math.round(pctIngreso * 100)}%</span>
+                  </div>
+                  <ProgressBar value={pctIngreso} colorClass={pctIngreso > 1 ? "bg-rose-500" : "bg-finanzas-500"} />
+                </div>
+                <OriIcon mode="finanzas" state={estadoOriFinanzasResumen(state) ?? "reposo"} />
               </div>
-              <ProgressBar value={pctIngreso} colorClass={pctIngreso > 1 ? "bg-rose-500" : "bg-finanzas-500"} />
             </div>
           )}
         </>
@@ -275,7 +283,8 @@ function SeccionRachaYProtecciones() {
         <div className="text-xs uppercase tracking-wider text-amber-400/90 font-semibold mb-2">Racha diaria actual</div>
         <div className="flex items-center gap-3 sm:gap-4">
           <Flame className={`w-8 h-8 sm:w-9 sm:h-9 text-amber-400 shrink-0 ${racha > 0 ? "animate-flicker" : ""}`} />
-          <div className="text-4xl sm:text-5xl font-bold tabular-nums text-base-100 leading-none">{racha}</div>
+          <div className="text-4xl sm:text-5xl font-bold tabular-nums text-base-100 leading-none flex-1">{racha}</div>
+          {state.areas.length > 0 && <OriIcon mode="habito" state={estadoOriHabito(state)} />}
         </div>
         <div className="text-xs text-base-500 mt-2">días seguidos cumpliendo todos tus hábitos</div>
       </Card>

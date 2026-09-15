@@ -67,7 +67,15 @@ interface Acciones {
   canjearRachaPorProteccion: () => { ok: boolean; motivo?: string };
 
   actualizarPesos: (pesos: Record<AreaId, number>) => void;
-  actualizarAreaConfig: (areaId: AreaId, cambios: Partial<{ metaDiaria: number | null; metaSemanalBase: number; topeMetaSemanal: number }>) => void;
+  actualizarAreaConfig: (
+    areaId: AreaId,
+    cambios: Partial<{
+      metaDiaria: number | null;
+      metaSemanalBase: number;
+      topeMetaSemanal: number;
+      alimentacion: KaizenState["areas"][number]["alimentacion"];
+    }>
+  ) => void;
   actualizarConfigEconomia: (cambios: Partial<KaizenState["config"]["economia"]>) => void;
   actualizarTextos: (cambios: Partial<KaizenState["config"]["textos"]>) => void;
   setCatalogoReconocimientos: (catalogo: ReconocimientoCatalogo[]) => void;

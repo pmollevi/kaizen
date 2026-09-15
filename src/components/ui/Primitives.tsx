@@ -221,12 +221,22 @@ function anchoBase(className: string): string {
 const CAMPO_BASE =
   "bg-base-850 border border-base-700 rounded-xl px-3 py-2 text-base sm:text-sm text-base-100 transition-colors focus:outline-none focus:border-kaizen-400 focus:bg-base-800 focus:ring-2 focus:ring-kaizen-400/40";
 
-export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  const { className = "", ...rest } = props;
+// Cuando `error` es true, el contorno rojo reemplaza (no se suma a) el foco
+// verde normal — así el campo faltante salta a la vista de inmediato al
+// intentar guardar, sin esperar a que el usuario lo toque.
+const CAMPO_ERROR = "border-rose-500 focus:border-rose-500 focus:ring-rose-500/40";
+
+interface ConError {
+  /** Marca el campo con contorno rojo — usar en el primer campo obligatorio faltante al validar. */
+  error?: boolean;
+}
+
+export function Input(props: React.InputHTMLAttributes<HTMLInputElement> & ConError) {
+  const { className = "", error, ...rest } = props;
   return (
     <input
       {...rest}
-      className={`${anchoBase(className)} ${CAMPO_BASE} placeholder:text-base-500 ${className}`}
+      className={`${anchoBase(className)} ${CAMPO_BASE} placeholder:text-base-500 ${error ? CAMPO_ERROR : ""} ${className}`}
     />
   );
 }
@@ -273,29 +283,49 @@ export function InputDiaDelMes({
 export function Select({
   children,
   className = "",
+  error,
   ...rest
-}: React.SelectHTMLAttributes<HTMLSelectElement>) {
+}: React.SelectHTMLAttributes<HTMLSelectElement> & ConError) {
   return (
-    <select {...rest} className={`${anchoBase(className)} ${CAMPO_BASE} ${className}`}>
+    <select {...rest} className={`${anchoBase(className)} ${CAMPO_BASE} ${error ? CAMPO_ERROR : ""} ${className}`}>
       {children}
     </select>
   );
 }
 
-export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  const { className = "", ...rest } = props;
+export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement> & ConError) {
+  const { className = "", error, ...rest } = props;
   return (
     <textarea
       {...rest}
-      className={`${anchoBase(className)} ${CAMPO_BASE} placeholder:text-base-500 ${className}`}
+      className={`${anchoBase(className)} ${CAMPO_BASE} placeholder:text-base-500 ${error ? CAMPO_ERROR : ""} ${className}`}
     />
   );
 }
 
-export function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+export function Field({
+  label,
+  children,
+  hint,
+  required,
+}: {
+  label: string;
+  children: React.ReactNode;
+  hint?: string;
+  /** Añade un asterisco rojo junto a la etiqueta para campos obligatorios. */
+  required?: boolean;
+}) {
   return (
     <label className="block">
-      <span className="block text-xs font-medium text-base-400 mb-1.5">{label}</span>
+      <span className="block text-xs font-medium text-base-400 mb-1.5">
+        {label}
+        {required && (
+          <span className="text-rose-400" aria-hidden="true">
+            {" "}
+            *
+          </span>
+        )}
+      </span>
       {children}
       {hint && <span className="block text-xs text-base-500 mt-1">{hint}</span>}
     </label>

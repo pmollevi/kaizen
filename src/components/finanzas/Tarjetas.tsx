@@ -4,6 +4,8 @@ import { Card, SectionTitle, Field, Input, InputDiaDelMes, Button, Badge, EmptyS
 import { COLOR_SECCION } from "@/lib/color";
 import { distribucionCategorias } from "@/lib/formulas";
 import { Plus, Trash2, CreditCard } from "lucide-react";
+import { OriIcon } from "@/components/ui/OriIcon";
+import { tarjetaProximaACortar } from "@/lib/ori";
 
 // La librería de gráficas solo se necesita aquí — separada en su propio chunk.
 const GraficaCategoriasPastel = lazy(() =>
@@ -83,6 +85,7 @@ export function TarjetasTab() {
                     <div className="text-sm font-medium text-base-200">{t.nombre}</div>
                     <div className="text-xs text-base-500">Corte el día {t.diaCorte}</div>
                   </div>
+                  {tarjetaProximaACortar(t) && <OriIcon mode="finanzas" state="protegido" title={`${t.nombre}: corte próximo`} />}
                 </div>
                 <button onClick={() => eliminarTarjeta(t.id)} className="text-base-500 hover:text-rose-400">
                   <Trash2 className="w-4 h-4" />

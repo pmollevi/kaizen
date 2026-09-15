@@ -4,6 +4,14 @@
 // (o uno futuro) puede activarse, así que el id es un string libre.
 export type AreaId = string;
 
+export type ModoAlimentacion = "conteo" | "calorias" | "dieta";
+
+export interface ConfigAlimentacion {
+  modo: ModoAlimentacion;
+  tallaCm?: number;
+  pesoKg?: number;
+}
+
 export interface AreaConfig {
   id: AreaId;
   nombre: string;
@@ -17,6 +25,10 @@ export interface AreaConfig {
   color: string; // color hex, ej. "#4D8DFF"
   nivel: number;
   semanasConsecutivas: number; // contador hacia el siguiente nivel de área
+  // Solo relevante para el hábito "vitalidad" (Alimentación): permite elegir
+  // entre contar comidas correctas (default), llevar un conteo calórico
+  // aproximado, o marcar cumplimiento de dieta sí/no. Ver src/lib/nutricion.ts.
+  alimentacion?: ConfigAlimentacion;
 }
 
 export interface RegistroDiario {

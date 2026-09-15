@@ -109,16 +109,46 @@ export default {
           "0%": { transform: "scale(0.85)", opacity: "0" },
           "100%": { transform: "scale(1)", opacity: "1" },
         },
+        // Ori (mascota): ver src/components/ui/OriIcon.tsx — timings tal cual el
+        // diseño de referencia, para que el personaje se sienta consistente en
+        // cualquier tamaño/contexto donde aparezca.
+        "ori-float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" },
+        },
+        "ori-bounce": {
+          "0%, 100%": { transform: "translateY(0) scale(1)" },
+          "35%": { transform: "translateY(-9px) scale(1.03)" },
+          "55%": { transform: "translateY(0) scale(0.98)" },
+        },
+        "ori-twinkle": {
+          "0%, 100%": { opacity: "0.25", transform: "scale(0.7)" },
+          "50%": { opacity: "1", transform: "scale(1)" },
+        },
+        "ori-wobble": {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "25%": { transform: "rotate(-2deg)" },
+          "75%": { transform: "rotate(2deg)" },
+        },
+        "ori-shimmer": {
+          "0%, 100%": { opacity: "0.9" },
+          "50%": { opacity: "1", filter: "brightness(1.3)" },
+        },
       },
       animation: {
         pop: "pop 0.22s cubic-bezier(0.16,1,0.3,1)",
         "fade-up": "fade-up 0.25s ease-out",
         wiggle: "wiggle 0.4s ease-in-out",
         confetti: "confetti-fall 0.9s ease-in forwards",
-        "toast-fill": "toast-fill 2.4s cubic-bezier(0.16,1,0.3,1) forwards",
+        "toast-fill": "toast-fill 3.2s cubic-bezier(0.16,1,0.3,1) forwards",
         tap: "tap 0.12s ease-out",
         flicker: "flicker 1.8s ease-in-out infinite",
         "radar-in": "radar-in 0.45s cubic-bezier(0.16,1,0.3,1)",
+        "ori-float": "ori-float 3.6s ease-in-out infinite",
+        "ori-bounce": "ori-bounce 1.1s ease-in-out infinite",
+        "ori-twinkle": "ori-twinkle 1.4s ease-in-out infinite",
+        "ori-wobble": "ori-wobble 2.6s ease-in-out infinite",
+        "ori-shimmer": "ori-shimmer 2.2s ease-in-out infinite",
       },
     },
   },
