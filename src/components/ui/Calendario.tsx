@@ -67,6 +67,9 @@ function DiaDetalleModal({ fecha, onCerrar }: { fecha: string; onCerrar: () => v
                           <span className="text-base-400 shrink-0">{valor}</span>
                         </div>
                         {cumplimiento !== null && <ProgressBar value={cumplimiento} color={color} />}
+                        {a.id === "gratitud" && registro.notaGratitud && (
+                          <p className="text-xs text-base-400 italic mt-1">"{registro.notaGratitud}"</p>
+                        )}
                       </div>
                     </div>
                   );

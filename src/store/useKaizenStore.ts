@@ -48,9 +48,12 @@ interface Acciones {
   setNombreUsuario: (nombre: string) => void;
   setTituloActivo: (id: string | null) => void;
 
-  registrarDia: (fecha: string, valores: Record<AreaId, number>, observacion: string) => void;
+  registrarDia: (fecha: string, valores: Record<AreaId, number>, observacion: string, notaGratitud?: string) => void;
   editarRegistro: (id: string, valores: Record<AreaId, number>, observacion: string) => void;
   eliminarRegistro: (id: string) => void;
+
+  pausarHabito: (areaId: AreaId) => void;
+  reactivarHabito: (areaId: AreaId) => void;
 
   agregarComida: (comida: Omit<ComidaRegistrada, "id">) => void;
   eliminarComida: (id: string) => void;
@@ -116,11 +119,18 @@ export const useKaizenStore = create<KaizenStore>()(
       setNombreUsuario: (nombre) => set((s) => ({ usuario: { ...s.usuario, nombre } })),
       setTituloActivo: (id) => set((s) => ({ usuario: { ...s.usuario, tituloActivo: id } })),
 
-      registrarDia: (fecha, valores, observacion) => {
+      registrarDia: (fecha, valores, observacion, notaGratitud) => {
         set((s) => ({
           registrosDiarios: [
             ...s.registrosDiarios.filter((r) => r.fecha !== fecha),
-            { id: generarId("r"), fecha, valores, observacion, creadoEn: new Date().toISOString() },
+            {
+              id: generarId("r"),
+              fecha,
+              valores,
+              observacion,
+              creadoEn: new Date().toISOString(),
+              ...(notaGratitud ? { notaGratitud } : {}),
+            },
           ],
         }));
         const nuevos = evaluarReconocimientos(get());
@@ -142,6 +152,12 @@ export const useKaizenStore = create<KaizenStore>()(
         })),
 
       eliminarRegistro: (id) => set((s) => ({ registrosDiarios: s.registrosDiarios.filter((r) => r.id !== id) })),
+
+      pausarHabito: (areaId) =>
+        set((s) => ({ areas: s.areas.map((a) => (a.id === areaId ? { ...a, pausada: true } : a)) })),
+
+      reactivarHabito: (areaId) =>
+        set((s) => ({ areas: s.areas.map((a) => (a.id === areaId ? { ...a, pausada: false } : a)) })),
 
       agregarComida: (comida) =>
         set((s) => ({ comidas: [...s.comidas, { ...comida, id: generarId("cm") }] })),
@@ -383,6 +399,7 @@ export const useKaizenStore = create<KaizenStore>()(
             color: plantilla.color,
             nivel: existente?.nivel ?? 1,
             semanasConsecutivas: existente?.semanasConsecutivas ?? 0,
+            pausada: existente?.pausada ?? false,
           };
         });
 

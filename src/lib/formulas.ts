@@ -70,7 +70,12 @@ export function cumplimientoGlobalSemanal(
   cumplimientoPorArea: Record<AreaId, number>,
   areas: AreaConfig[]
 ): number {
-  return areas.reduce((acc, a) => acc + a.peso * (cumplimientoPorArea[a.id] ?? 0), 0);
+  // Un hábito pausado no debe arrastrar el cumplimiento global hacia abajo:
+  // se excluye del promedio y se reparte el peso restante entre las áreas activas.
+  const activas = areas.filter((a) => !a.pausada);
+  const pesoTotal = activas.reduce((acc, a) => acc + a.peso, 0);
+  if (pesoTotal <= 0) return 0;
+  return activas.reduce((acc, a) => acc + a.peso * (cumplimientoPorArea[a.id] ?? 0), 0) / pesoTotal;
 }
 
 // ---------------------------------------------------------------------------

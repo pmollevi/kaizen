@@ -83,6 +83,8 @@ function IdentidadYAreas() {
   const actualizarTextos = useKaizenStore((s) => s.actualizarTextos);
   const actualizarPesos = useKaizenStore((s) => s.actualizarPesos);
   const actualizarAreaConfig = useKaizenStore((s) => s.actualizarAreaConfig);
+  const pausarHabito = useKaizenStore((s) => s.pausarHabito);
+  const reactivarHabito = useKaizenStore((s) => s.reactivarHabito);
 
   const [pesos, setPesos] = useState<Record<AreaId, number>>(
     Object.fromEntries(state.areas.map((a) => [a.id, Math.round(a.peso * 100)])) as Record<AreaId, number>
@@ -113,35 +115,51 @@ function IdentidadYAreas() {
         />
         <div className="space-y-4">
           {state.areas.map((a) => (
-            <div key={a.id} className="grid grid-cols-12 gap-2 items-center">
-              <div className="col-span-2 text-sm font-medium truncate">{a.nombre}</div>
-              <div className="col-span-3">
-                <StepperPorcentaje value={pesos[a.id]} onChange={(v) => setPesos((p) => ({ ...p, [a.id]: v }))} />
+            <div key={a.id} className={a.pausada ? "opacity-60" : ""}>
+              <div className="grid grid-cols-12 gap-2 items-center">
+                <div className="col-span-2 text-sm font-medium truncate">{a.nombre}</div>
+                <div className="col-span-3">
+                  <StepperPorcentaje value={pesos[a.id]} onChange={(v) => setPesos((p) => ({ ...p, [a.id]: v }))} />
+                </div>
+                <div className="col-span-3">
+                  <Input
+                    type="number"
+                    disabled={a.metaDiaria === null}
+                    value={a.metaDiaria ?? ""}
+                    placeholder="meta diaria"
+                    onChange={(e) => actualizarAreaConfig(a.id, { metaDiaria: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Input
+                    type="number"
+                    value={a.metaSemanalBase}
+                    placeholder="meta semanal base"
+                    onChange={(e) => actualizarAreaConfig(a.id, { metaSemanalBase: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Input
+                    type="number"
+                    value={a.topeMetaSemanal}
+                    placeholder="tope"
+                    onChange={(e) => actualizarAreaConfig(a.id, { topeMetaSemanal: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
               </div>
-              <div className="col-span-3">
-                <Input
-                  type="number"
-                  disabled={a.metaDiaria === null}
-                  value={a.metaDiaria ?? ""}
-                  placeholder="meta diaria"
-                  onChange={(e) => actualizarAreaConfig(a.id, { metaDiaria: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div className="col-span-2">
-                <Input
-                  type="number"
-                  value={a.metaSemanalBase}
-                  placeholder="meta semanal base"
-                  onChange={(e) => actualizarAreaConfig(a.id, { metaSemanalBase: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div className="col-span-2">
-                <Input
-                  type="number"
-                  value={a.topeMetaSemanal}
-                  placeholder="tope"
-                  onChange={(e) => actualizarAreaConfig(a.id, { topeMetaSemanal: parseFloat(e.target.value) || 0 })}
-                />
+              <div className="flex items-center gap-2 mt-1.5">
+                {a.pausada ? (
+                  <>
+                    <Badge tone="yellow">En pausa · racha congelada en {a.semanasConsecutivas}</Badge>
+                    <button onClick={() => reactivarHabito(a.id)} className="text-xs text-kaizen-400 hover:text-kaizen-300">
+                      Reactivar
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={() => pausarHabito(a.id)} className="text-xs text-base-500 hover:text-base-300">
+                    Pausar hábito
+                  </button>
+                )}
               </div>
             </div>
           ))}

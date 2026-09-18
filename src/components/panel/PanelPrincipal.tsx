@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { CalendarRange, Flame, ShieldCheck, Target } from "lucide-react";
 import { useKaizenStore } from "@/store/useKaizenStore";
-import { Card, SectionTitle, ProgressBar, Stat, Badge, Button, EmptyState, Textarea, useCountUp } from "@/components/ui/Primitives";
+import { Card, SectionTitle, ProgressBar, Stat, Badge, Button, EmptyState, Input, Textarea, useCountUp } from "@/components/ui/Primitives";
 import { RadarChart } from "@/components/RadarChart";
 import { PlanMensualWizard } from "@/components/planeacion/PlanMensualWizard";
 import { iconoDeHabito } from "@/config/habitIcons";
 import { cumplimientoGlobalSemanal, cumplimientoSemanalArea } from "@/lib/formulas";
 import { rachaDiariaVigente } from "@/lib/achievements";
 import { COLOR_SECCION, colorPorNivel } from "@/lib/color";
-import { finSemana, hoyISO, inicioSemana, mesDe, sumarDias, formatoLargo, formatoMes } from "@/lib/dates";
+import { finSemana, hoyISO, inicioSemana, mesAnterior, mesDe, sumarDias, formatoLargo, formatoMes } from "@/lib/dates";
 import { semanasPendientes } from "@/lib/cierre";
 import { Coachmarks } from "@/components/onboarding/Coachmarks";
 import { CentroAvisos } from "@/components/panel/CentroAvisos";
@@ -20,6 +20,13 @@ import { OriIcon } from "@/components/ui/OriIcon";
 import { estadoOriFinanzasResumen, estadoOriHabito } from "@/lib/ori";
 import { OriBienvenida } from "@/components/onboarding/OriBienvenida";
 import { marcarOriBienvenidaVista, oriBienvenidaYaVista } from "@/lib/oriBienvenida";
+import { DIAS_PARA_SUGERIR_PAUSA, diasSeguidosSinHabito, marcarPausaDescartada, pausaFueDescartada } from "@/lib/pausas";
+import {
+  cambiosParaNuevaMeta,
+  calcularSugerenciasMeta,
+  marcarSugerenciaMetaResuelta,
+  sugerenciaMetaResuelta,
+} from "@/lib/sugerenciasMeta";
 
 function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
   const state = useKaizenStore();
@@ -47,11 +54,11 @@ function TarjetaRegistroDiario({ irA }: { irA: (tab: string) => void }) {
           </Button>
         }
       />
-      {state.areas.length === 0 ? (
+      {state.areas.filter((a) => !a.pausada).length === 0 ? (
         <EmptyState text="Aún no tienes hábitos activos." />
       ) : (
         <div className="flex flex-wrap gap-2 mb-5">
-          {state.areas.map((a) => {
+          {state.areas.filter((a) => !a.pausada).map((a) => {
             const Icono = iconoDeHabito(a.id);
             const hecho = (registroHoy?.valores[a.id] ?? 0) > 0;
             const color = colorPorNivel(a.color, a.nivel);
@@ -222,6 +229,92 @@ function SpotlightPrimerDia({ irA }: { irA: (tab: string) => void }) {
         </div>
         <Button onClick={() => irA("registro")} className="shrink-0">
           Registrar ahora
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+/** Punto 8: hábito con 5+ días seguidos sin registrarse mientras el resto sigue con normalidad — ofrece pausarlo. */
+function SugerenciaPausaHabito() {
+  const state = useKaizenStore();
+  const pausarHabito = useKaizenStore((s) => s.pausarHabito);
+  const perfilId = getPerfilActivo();
+  const [, forzarRefresco] = useState(0);
+
+  const candidata = state.areas
+    .filter((a) => !a.pausada)
+    .map((area) => ({ area, dias: diasSeguidosSinHabito(state, area.id) }))
+    .filter((c) => c.dias >= DIAS_PARA_SUGERIR_PAUSA && !(perfilId && pausaFueDescartada(perfilId, c.area.id, c.dias)))
+    .sort((a, b) => b.dias - a.dias)[0];
+
+  if (!candidata) return null;
+
+  return (
+    <Card className="border border-base-700 bg-base-850/60">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="text-sm text-base-200">
+          Llevas {candidata.dias} días sin registrar <span className="font-medium">{candidata.area.nombre}</span>, mientras
+          sigues con tus otros hábitos. ¿Lo pausamos para que no te pida registro ni rompa tu racha?
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button onClick={() => pausarHabito(candidata.area.id)}>Pausar hábito</Button>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              if (perfilId) marcarPausaDescartada(perfilId, candidata.area.id, candidata.dias);
+              forzarRefresco((n) => n + 1);
+            }}
+          >
+            Ignorar por ahora
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/** Punto 9: al cerrar el mes, sugiere subir o bajar la meta de un hábito según lo logrado — nunca se aplica sin confirmar. */
+function SugerenciaMetaMensual() {
+  const state = useKaizenStore();
+  const actualizarAreaConfig = useKaizenStore((s) => s.actualizarAreaConfig);
+  const perfilId = getPerfilActivo();
+  const [, forzarRefresco] = useState(0);
+  const [edicion, setEdicion] = useState<number | null>(null);
+
+  const mesEvaluado = mesAnterior(mesDe(hoyISO()));
+  const sugerencia = calcularSugerenciasMeta(state, mesEvaluado).find(
+    (s) => !(perfilId && sugerenciaMetaResuelta(perfilId, s))
+  );
+  const area = sugerencia ? state.areas.find((a) => a.id === sugerencia.areaId) : undefined;
+
+  if (!sugerencia || !area) return null;
+  const valorPropuesto = edicion ?? sugerencia.metaSugerida;
+
+  const resolver = (aplicar: boolean) => {
+    if (aplicar) actualizarAreaConfig(area.id, cambiosParaNuevaMeta(area, valorPropuesto));
+    if (perfilId) marcarSugerenciaMetaResuelta(perfilId, sugerencia);
+    forzarRefresco((n) => n + 1);
+  };
+
+  return (
+    <Card className="border border-kaizen-500/40 bg-kaizen-500/[0.08]">
+      <div className="text-sm text-base-200 mb-3">
+        {sugerencia.direccion === "subir"
+          ? `En ${area.nombre} superaste tu meta casi todo ${formatoMes(mesEvaluado)} — ¿la subimos para este mes?`
+          : `En ${area.nombre} te quedaste corto casi todo ${formatoMes(mesEvaluado)} — ¿la bajamos a algo más alcanzable?`}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-base-500">Meta semanal ({area.metaSemanalBase} actual):</span>
+        <Input
+          type="number"
+          className="w-24"
+          value={valorPropuesto}
+          onChange={(e) => setEdicion(parseFloat(e.target.value) || 0)}
+        />
+        <Button onClick={() => resolver(true)}>Aplicar</Button>
+        <Button variant="ghost" onClick={() => resolver(false)}>
+          Ignorar
         </Button>
       </div>
     </Card>
@@ -444,6 +537,8 @@ export function PanelPrincipal({ irA }: { irA: (tab: string) => void }) {
       )}
 
       <BannerMetaPendiente />
+      <SugerenciaPausaHabito />
+      <SugerenciaMetaMensual />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <TarjetaRegistroDiario irA={irA} />

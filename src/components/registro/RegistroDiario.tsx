@@ -37,10 +37,13 @@ function HabitoCard({
   area,
   valor,
   onCambiar,
+  extra,
 }: {
   area: AreaConfig;
   valor: number;
   onCambiar: (v: number) => void;
+  /** Contenido adicional dentro del mismo cuadro (ej. comidas de Alimentación o la nota de Gratitud) — para que se sienta parte del mismo registro, no una pantalla aparte. */
+  extra?: React.ReactNode;
 }) {
   const plantilla = plantillaPorId(area.id);
   const tipo = plantilla?.tipoMeta ?? "horas";
@@ -93,7 +96,6 @@ function HabitoCard({
             {valorMostrado}
             <span className="text-sm text-base-500 font-normal"> {area.metaDiaria ? `/ ${area.metaDiaria} ` : ""}kcal</span>
           </div>
-          <div className="text-xs text-base-500 mt-1">Agrega tus comidas más abajo ↓</div>
         </div>
       ) : tipo === "binaria" ? (
         <div className="grid grid-cols-2 gap-2">
@@ -137,6 +139,7 @@ function HabitoCard({
           </div>
         )
       )}
+      {extra}
     </div>
   );
 }
@@ -159,18 +162,31 @@ export function RegistroDiarioView({
   const limiteAtras = sumarDias(hoy, -state.config.economia.diasRegistroRetroactivo);
   const [fecha, setFecha] = useState(hoy);
 
+  // Un hábito pausado no se pide en el registro diario — ver lib/pausas.ts.
+  const areasActivas = useMemo(() => state.areas.filter((a) => !a.pausada), [state.areas]);
+  const areasPausadas = useMemo(() => state.areas.filter((a) => a.pausada), [state.areas]);
+
   const registroExistente = state.registrosDiarios.find((r) => r.fecha === fecha);
   const [valores, setValores] = useState<Record<AreaId, number>>(
-    registroExistente?.valores ?? valoresVacios(state.areas)
+    registroExistente?.valores ?? valoresVacios(areasActivas)
   );
 
   // Alimentación en modo calorías no se ajusta con +/-: es la suma de las
-  // comidas del día (ver "Comidas de hoy" más abajo, mismo patrón que Gastos).
+  // comidas del día (ver tarjeta de Vitalidad más abajo, mismo patrón que Gastos).
   const areaVitalidad = state.areas.find((a) => a.id === "vitalidad");
   const enModoCalorias = areaVitalidad?.alimentacion?.modo === "calorias";
   const comidasDelDia = state.comidas.filter((c) => c.fecha === fecha);
   const totalCaloriasDelDia = comidasDelDia.reduce((acc, c) => acc + c.calorias, 0);
   const [observacion, setObservacion] = useState(registroExistente?.observacion ?? "");
+  const [notaGratitud, setNotaGratitud] = useState(registroExistente?.notaGratitud ?? "");
+  const historialGratitud = useMemo(
+    () =>
+      [...state.registrosDiarios]
+        .filter((r) => r.notaGratitud && r.notaGratitud.trim() && r.fecha !== fecha)
+        .sort((a, b) => (a.fecha < b.fecha ? 1 : -1))
+        .slice(0, 5),
+    [state.registrosDiarios, fecha]
+  );
   const [confirmacion, setConfirmacion] = useState<{ titulo: string | null; mensaje: string } | null>(null);
   const confirmacionTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const cerrarCelebracion = () => {
@@ -185,14 +201,15 @@ export function RegistroDiarioView({
   const cambiarFecha = (nueva: string) => {
     setFecha(nueva);
     const r = state.registrosDiarios.find((x) => x.fecha === nueva);
-    setValores(r?.valores ?? valoresVacios(state.areas));
+    setValores(r?.valores ?? valoresVacios(areasActivas));
     setObservacion(r?.observacion ?? "");
+    setNotaGratitud(r?.notaGratitud ?? "");
   };
 
   const guardar = () => {
     const antes = new Set(useKaizenStore.getState().historial.reconocimientos.map((r) => r.id));
     const valoresFinal = enModoCalorias ? { ...valores, vitalidad: totalCaloriasDelDia } : valores;
-    registrarDia(fecha, valoresFinal, observacion.slice(0, 200));
+    registrarDia(fecha, valoresFinal, observacion.slice(0, 200), notaGratitud.trim().slice(0, 300) || undefined);
     const despues = useKaizenStore.getState().historial.reconocimientos;
     const hito = HITOS_RACHA.find((h) => !antes.has(h.id) && despues.some((r) => r.id === h.id));
     if (hito) {
@@ -307,7 +324,7 @@ export function RegistroDiarioView({
           <span>Nivel {nivel.nivel + 1}</span>
         </div>
         <div className="space-y-3">
-          {state.areas.map((a) => {
+          {areasActivas.map((a) => {
             const Icono = iconoDeHabito(a.id);
             const cumplimiento = cumplimientoSemanalArea(a, state.config, state.registrosDiarios, inicio, fin);
             const color = colorPorNivel(a.color, a.nivel);
@@ -333,7 +350,7 @@ export function RegistroDiarioView({
         <SelectorDiasYCalendario dias={ultimos7} fechaActiva={fecha} alElegirDia={cambiarFecha} deshabilitarAntes={limiteAtras} />
       </div>
 
-      {state.areas.length === 0 ? (
+      {areasActivas.length === 0 ? (
         <Card>
           <div className="text-sm text-base-500">
             Aún no tienes hábitos activos. Ve al Panel → "Planear el mes" para elegirlos.
@@ -341,17 +358,96 @@ export function RegistroDiarioView({
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {state.areas.map((area) => {
+          {areasActivas.map((area) => {
             const esVitalidadCalorias = area.id === "vitalidad" && enModoCalorias;
+            const esGratitud = area.id === "gratitud";
+            const valorArea = esVitalidadCalorias ? totalCaloriasDelDia : valores[area.id] ?? 0;
+
+            let extra: React.ReactNode = null;
+            if (esVitalidadCalorias) {
+              extra = (
+                <div className="mt-3 pt-3 border-t border-base-700/60">
+                  {comidasDelDia.length > 0 && (
+                    <ul className="space-y-1.5 mb-2">
+                      {comidasDelDia.map((c) => (
+                        <li key={c.id} className="flex items-center justify-between text-sm bg-base-800/60 rounded-lg px-2.5 py-1.5">
+                          <span className="text-base-300 truncate">{c.nombre}</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="font-medium">{c.calorias} kcal</span>
+                            <button onClick={() => eliminarComida(c.id)} className="text-base-500 hover:text-rose-400">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="flex flex-wrap gap-1.5">
+                    <Input
+                      className="flex-1 min-w-[7rem]"
+                      placeholder="Ej. Desayuno"
+                      value={nombreComida}
+                      onChange={(e) => setNombreComida(e.target.value)}
+                    />
+                    <Input
+                      className="w-20"
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="Kcal"
+                      value={caloriasComida}
+                      onChange={(e) => setCaloriasComida(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && agregarComidaDelDia()}
+                    />
+                    <Button variant="secondary" onClick={agregarComidaDelDia} className="inline-flex items-center gap-1 shrink-0">
+                      <Plus className="w-4 h-4" /> Agregar
+                    </Button>
+                  </div>
+                </div>
+              );
+            } else if (esGratitud) {
+              extra = (
+                <div className="mt-3 pt-3 border-t border-base-700/60 space-y-2">
+                  {valorArea > 0 && (
+                    <Textarea
+                      rows={2}
+                      maxLength={300}
+                      value={notaGratitud}
+                      onChange={(e) => setNotaGratitud(e.target.value)}
+                      placeholder="¿Qué agradeces hoy?"
+                    />
+                  )}
+                  {historialGratitud.length > 0 && (
+                    <details className="text-xs text-base-500">
+                      <summary className="cursor-pointer select-none hover:text-base-300">Ver gratitudes anteriores</summary>
+                      <ul className="mt-2 space-y-1.5">
+                        {historialGratitud.map((r) => (
+                          <li key={r.id} className="text-base-400">
+                            <span className="text-base-500">{r.fecha}:</span> {r.notaGratitud}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <HabitoCard
                 key={area.id}
                 area={area}
-                valor={esVitalidadCalorias ? totalCaloriasDelDia : valores[area.id] ?? 0}
+                valor={valorArea}
                 onCambiar={esVitalidadCalorias ? () => {} : (v) => setValores((prev) => ({ ...prev, [area.id]: v }))}
+                extra={extra}
               />
             );
           })}
+        </div>
+      )}
+
+      {areasPausadas.length > 0 && (
+        <div className="text-xs text-base-500 -mt-2">
+          {areasPausadas.length === 1 ? "1 hábito en pausa" : `${areasPausadas.length} hábitos en pausa`} — reactívalos desde Configuración.
         </div>
       )}
 
@@ -365,53 +461,6 @@ export function RegistroDiarioView({
             placeholder="¿Algo que valga la pena recordar de hoy?"
           />
         </Field>
-
-        {enModoCalorias && (
-          <div className="mt-6 border-t border-base-700 pt-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-xs uppercase tracking-wide text-base-400">Comidas de hoy</div>
-              <div className="text-sm font-medium text-base-200">
-                {totalCaloriasDelDia}
-                {areaVitalidad?.metaDiaria ? ` / ${areaVitalidad.metaDiaria}` : ""} kcal
-              </div>
-            </div>
-            {comidasDelDia.length > 0 && (
-              <ul className="space-y-1.5 mb-3">
-                {comidasDelDia.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between text-sm bg-base-850 rounded-xl px-3 py-2">
-                    <span className="text-base-300">{c.nombre}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium">{c.calorias} kcal</span>
-                      <button onClick={() => eliminarComida(c.id)} className="text-base-500 hover:text-rose-400">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <Input
-                className="w-40"
-                placeholder="Ej. Desayuno"
-                value={nombreComida}
-                onChange={(e) => setNombreComida(e.target.value)}
-              />
-              <Input
-                className="w-28"
-                type="number"
-                inputMode="numeric"
-                placeholder="Kcal"
-                value={caloriasComida}
-                onChange={(e) => setCaloriasComida(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && agregarComidaDelDia()}
-              />
-              <Button variant="secondary" onClick={agregarComidaDelDia} className="inline-flex items-center gap-1">
-                <Plus className="w-4 h-4" /> Agregar comida
-              </Button>
-            </div>
-          </div>
-        )}
 
         <div className="mt-6 border-t border-base-700 pt-5">
           <div className="text-xs uppercase tracking-wide text-base-400 mb-3">Gastos del día</div>

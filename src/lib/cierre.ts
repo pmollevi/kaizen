@@ -49,7 +49,9 @@ export function calcularCierreSemanal(
 
   const nivelesAreaSubidos: AreaId[] = [];
   const areas = state.areas.map((area) => {
-    if (protegerSemana) return { ...area };
+    // Un hábito pausado se queda exactamente como estaba: su racha semanal
+    // (semanasConsecutivas) y nivel no avanzan ni se resetean mientras dure la pausa.
+    if (protegerSemana || area.pausada) return { ...area };
     const cumplió = cumplimientoPorArea[area.id] >= config.economia.umbralNivelArea;
     let semanasConsecutivas = cumplió ? area.semanasConsecutivas + 1 : 0;
     let nivel = area.nivel;

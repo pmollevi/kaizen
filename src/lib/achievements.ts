@@ -32,12 +32,13 @@ export function evaluarReconocimientos(state: KaizenState): string[] {
   return nuevos;
 }
 
-/** ¿Ese día se registraron todos los hábitos activos (valor > 0)? */
+/** ¿Ese día se registraron todos los hábitos activos y no pausados (valor > 0)? */
 export function esDiaCompleto(state: KaizenState, fecha: string): boolean {
-  if (state.areas.length === 0) return false;
+  const activas = state.areas.filter((a) => !a.pausada);
+  if (activas.length === 0) return false;
   const r = state.registrosDiarios.find((x) => x.fecha === fecha);
   if (!r) return false;
-  return state.areas.every((a) => (r.valores[a.id] ?? 0) > 0);
+  return activas.every((a) => (r.valores[a.id] ?? 0) > 0);
 }
 
 /**
@@ -78,7 +79,8 @@ function rachaGlobalActual(state: KaizenState): number {
 
 /** La racha diaria más larga (todos los hábitos activos cumplidos) dentro de un mes dado. */
 export function mejorRachaEnMes(state: KaizenState, mes: string): number {
-  if (state.areas.length === 0) return 0;
+  const activas = state.areas.filter((a) => !a.pausada);
+  if (activas.length === 0) return 0;
   const registros = [...state.registrosDiarios]
     .filter((r) => mesDe(r.fecha) === mes)
     .sort((a, b) => (a.fecha < b.fecha ? -1 : 1));
@@ -86,7 +88,7 @@ export function mejorRachaEnMes(state: KaizenState, mes: string): number {
   let actual = 0;
   let fechaAnterior: string | null = null;
   for (const r of registros) {
-    const completo = state.areas.every((a) => (r.valores[a.id] ?? 0) > 0);
+    const completo = activas.every((a) => (r.valores[a.id] ?? 0) > 0);
     const consecutivo = fechaAnterior === null || diasEntre(fechaAnterior, r.fecha) === 1;
     actual = completo && consecutivo ? actual + 1 : completo ? 1 : 0;
     mejor = Math.max(mejor, actual);

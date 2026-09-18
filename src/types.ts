@@ -31,6 +31,10 @@ export interface AreaConfig {
   color: string; // color hex, ej. "#4D8DFF"
   nivel: number;
   semanasConsecutivas: number; // contador hacia el siguiente nivel de área
+  // Hábito en pausa: no se pide en el registro diario ni rompe la racha diaria
+  // global, y `semanasConsecutivas`/`nivel` quedan congelados (no se tocan en
+  // el cierre semanal) hasta que se reactive. Ver lib/pausas.ts.
+  pausada?: boolean;
   // Solo relevante para el hábito "vitalidad" (Alimentación): elige entre
   // cumplimiento de dieta sí/no o conteo calórico por comida. Ver
   // src/lib/nutricion.ts y src/components/planeacion/AlimentacionModoForm.tsx.
@@ -51,6 +55,9 @@ export interface RegistroDiario {
   valores: Record<AreaId, number>;
   observacion: string;
   creadoEn: string; // ISO timestamp, para detectar registro tardío
+  // Texto libre del hábito Gratitud ese día — mismo patrón de persistencia
+  // que el resto del registro diario (no una entidad aparte como Comida/Gasto).
+  notaGratitud?: string;
 }
 
 export type MetodoPago = "efectivo" | "tarjeta";
